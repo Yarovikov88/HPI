@@ -1,0 +1,186 @@
+[
+  {
+    "recommendation_id": "rec_9959",
+    "timestamp": "2025-06-10T00:34:36.378473",
+    "sphere": "Отношения с любимыми",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Отношения с любимыми'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_3198",
+    "timestamp": "2025-06-10T00:34:36.378535",
+    "sphere": "Отношения с родными",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Отношения с родными'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_6160",
+    "timestamp": "2025-06-10T00:34:36.378549",
+    "sphere": "Друзья",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Друзья'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_9677",
+    "timestamp": "2025-06-10T00:34:36.378559",
+    "sphere": "Карьера",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Карьера'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_7646",
+    "timestamp": "2025-06-10T00:34:36.378572",
+    "sphere": "Физическое здоровье",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Физическое здоровье'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_5480",
+    "timestamp": "2025-06-10T00:34:36.378584",
+    "sphere": "Ментальное здоровье",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Ментальное здоровье'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_8618",
+    "timestamp": "2025-06-10T00:34:36.378594",
+    "sphere": "Хобби и увлечения",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Хобби и увлечения'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  },
+  {
+    "recommendation_id": "rec_8909",
+    "timestamp": "2025-06-10T00:34:36.378603",
+    "sphere": "Благосостояние",
+    "type": "immediate",
+    "priority": 5.0,
+    "data": {
+      "title": "Рекомендация для сферы 'Благосостояние'",
+      "description": "",
+      "action_steps": [],
+      "metrics": {
+        "target_improvement": 0,
+        "timeframe": "",
+        "success_criteria": []
+      },
+      "related_spheres": [],
+      "evidence": {
+        "data_points": [],
+        "correlations": [],
+        "historical_success": 0
+      }
+    }
+  }
+]

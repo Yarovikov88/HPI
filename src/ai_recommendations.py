@@ -95,7 +95,7 @@ class HPIRecommendationEngine:
         return sorted(recommendations, 
                      key=lambda x: (x.priority, -len(x.data.action_steps)))
 
-    def save_recommendations(self, filepath: str) -> None:
+    def save_recommendations(self, recommendations: List[Recommendation], filepath: str) -> None:
         """Сохранение рекомендаций в JSON файл."""
         recommendations_dict = [
             {
@@ -130,7 +130,7 @@ class HPIRecommendationEngine:
                     }
                 }
             }
-            for r in self.recommendations
+            for r in recommendations
         ]
         
         with open(filepath, 'w', encoding='utf-8') as f:

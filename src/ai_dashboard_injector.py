@@ -2,21 +2,33 @@
 HPI AI Dashboard Injector
 Генерирует файл AI_Recommendations.md с актуальными рекомендациями для дашборда HPI.
 """
+import locale
 import os
 import re
-import datetime
+from datetime import datetime
 from ai_recommendations import HPIRecommendationEngine
 import random
 import sys
+from typing import Dict
+
+# --- Принудительное использование UTF-8 ---
+try:
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+    except locale.Error:
+        print("Warning: Could not set locale to UTF-8. Emoji support might be limited.")
+# --- Конец принудительного использования UTF-8 ---
 
 # --- Пути к папкам ---
-# Определяем корень проекта (папка 'HPI v.0.3')
+# Определяем корень проекта
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DRAFTS_DIR = os.path.join(PROJECT_ROOT, "reports_draft")
 REPORTS_DIR = os.path.join(PROJECT_ROOT, "reports_final")
 INTERFACES_DIR = os.path.join(PROJECT_ROOT, "interfaces")
-LOG_FILE = os.path.join(PROJECT_ROOT, "logs", "hpi.log")
+LOG_FILE = os.path.join(PROJECT_ROOT, "logs", "app.log")
 
 # Маппинг сфер и emoji
 SPHERES = [
@@ -131,6 +143,53 @@ def find_sphere_key(name):
                 return key
     return name  # если не найдено, вернуть как есть
 
+def parse_pro_section(md_content: str, section_title: str) -> Dict[str, str]:
+    """
+    Извлекает данные из таблицы в указанном PRO-разделе.
+    Функция ищет заголовок раздела, а затем построчно анализирует таблицу.
+    """
+    answers = {}
+    in_section = False
+    
+    # Сначала найдем все синонимы для более гибкого поиска
+    all_spheres_synonyms = {}
+    for sphere, synonyms in SPHERE_SYNONYMS.items():
+        for synonym in synonyms:
+             all_spheres_synonyms[synonym.lower()] = sphere
+
+    lines = md_content.split('\n')
+    
+    for i, line in enumerate(lines):
+        # Ищем начало нужной секции
+        if section_title in line and line.strip().startswith('###'):
+            in_section = True
+            # Пропускаем сам заголовок и шапку таблицы
+            # и начинаем поиск со следующей строки
+            for table_line in lines[i+1:]:
+                # Если дошли до следующей секции или конца файла - выходим
+                if table_line.strip().startswith('###'):
+                    break
+                
+                # Ищем строку таблицы
+                if table_line.strip().startswith('|'):
+                    parts = [p.strip() for p in table_line.split('|') if p.strip()]
+                    if len(parts) >= 2:
+                        sphere_candidate = parts[0].lower()
+                        # Ищем сферу по синонимам
+                        sphere_key = find_sphere_key(sphere_candidate)
+                        if sphere_key:
+                            answer = parts[1]
+                            answers[sphere_key] = answer if answer.lower() not in ['нет', 'нет данных'] else "Нет данных"
+            break # Выходим из основного цикла, т.к. секция найдена и обработана
+            
+    # Убедимся, что все сферы имеют значение
+    for sphere_key in SPHERE_SYNONYMS:
+        if sphere_key not in answers:
+            answers[sphere_key] = "Нет данных"
+            
+    log_to_file(f"Результаты парсинга секции '{section_title}': {answers}", "DEBUG")
+    return answers
+
 # Функция для преобразования числового приоритета в текст
 def priority_to_text(priority: float) -> str:
     if priority >= 9.0:
@@ -144,11 +203,23 @@ def priority_to_text(priority: float) -> str:
 
 def find_latest_draft():
     """Находит последний по дате изменения черновик в папке."""
-    drafts = [os.path.join(DRAFTS_DIR, f) for f in os.listdir(DRAFTS_DIR) if f.endswith("_report.md")]
-    if not drafts:
+    try:
+        if not os.path.exists(DRAFTS_DIR):
+            log_to_file(f"Папка с черновиками не найдена: {DRAFTS_DIR}", "WARNING")
+            return None
+
+        # Ищем файлы по новому стандарту: YYYY-MM-DD_draft.md
+        drafts = [os.path.join(DRAFTS_DIR, f) for f in os.listdir(DRAFTS_DIR) if f.endswith("_draft.md") and re.match(r"\d{4}-\d{2}-\d{2}", f)]
+        
+        if not drafts:
+            log_to_file("Черновики по стандарту 'YYYY-MM-DD_draft.md' не найдены.", "INFO")
+            return None
+            
+        latest_draft = max(drafts, key=os.path.getmtime)
+        return latest_draft
+    except Exception as e:
+        log_to_file(f"Ошибка при поиске последнего черновика: {e}", "ERROR")
         return None
-    latest_draft = max(drafts, key=os.path.getmtime)
-    return latest_draft
 
 def extract_answers_by_sphere(md_content):
     # Извлекает ответы по сферам из секции PRO ("Мои проблемы")
@@ -170,7 +241,7 @@ def is_smart_goal(goal_text):
     has_action = any(word in goal_text.lower() for word in ['организовать', 'запланировать', 'увеличить', 'создать', 'начать', 'закончить', 'пройти', 'выделить', 'достичь'])
     return has_number and has_time and has_action
 
-def analyze_and_generate_recommendations_v2(answers, md_content, pro_data):
+def analyze_and_generate_recommendations_v2(md_content, pro_data):
     """
     Расширенный анализ по всем сферам: метрики, дисбаланс, гиперфокус, SMART-цели, расхождения, блокеры, достижения.
     Возвращает список Recommendation.
@@ -236,73 +307,27 @@ def analyze_and_generate_recommendations_v2(answers, md_content, pro_data):
         has_achievement = achievement and achievement.lower() not in ['нет', 'нет данных']
         # Расхождение: если метрика >=7, но есть проблема/блокер, или наоборот
         mismatch = (metric is not None and metric >= 7 and (has_problem or has_blocker)) or (metric is not None and metric < 6 and not has_problem and not has_blocker)
-        # Приоритет признаков (новая шкала)
-        if very_low_metric or (has_problem and has_blocker):
-            priority = 9.5
-        elif has_problem or has_blocker:
-            priority = 8.5
-        elif low_metric or disbalance or hyperfocus:
-            priority = 7.0
-        else:
-            priority = 5.0
-        # Формируем развернутую рекомендацию
-        lines = []
-        # 1. Критически низкая метрика
-        if very_low_metric:
-            lines.append(f"Внимание! Оценка по этой сфере — {metric}. Это критически низкий уровень.")
-            lines.append(random.choice(MOTIVATION_PHRASES))
-        # 2. Проблемы и блокеры
-        if has_problem or has_blocker:
-            lines.append(f"Вы отметили трудности: {problem if has_problem else ''} {blocker if has_blocker else ''}".strip())
-            lines.append("Рекомендуем проанализировать причины и выделить время для поиска решений.")
-            if has_blocker:
-                lines.append("Попробуйте разделить препятствия на внешние и внутренние, и для каждого найти хотя бы один способ преодоления.")
-        # 3. Просто низкая метрика
-        if low_metric and not very_low_metric:
-            lines.append(f"Текущая оценка по этой сфере — {metric}. Это ниже рекомендуемого уровня.")
-            lines.append("Сделайте маленький шаг: " + random.choice(SPHERE_EXAMPLES.get(sphere, ["Выберите простое действие для этой сферы."])))
-        # 4. SMART-цели
-        if goal:
-            if smart_goal:
-                lines.append(random.choice(SMART_PHRASES) + f" Ваша цель: {goal}")
-            else:
-                lines.append(f"Цель по этой сфере не соответствует SMART: {goal}. Попробуйте сделать её более конкретной, измеримой и достижимой.")
-        # 5. Достижения
-        if has_achievement:
-            lines.append(random.choice(ACHIEVE_PHRASES) + f" ({achievement}) Закрепите успех — отметьте, что помогло вам добиться результата.")
-        # 6. Дисбаланс/гиперфокус
-        if disbalance:
-            lines.append("Обнаружен дисбаланс между сферами жизни. Важно уделять внимание не только сильным, но и слабым областям.")
-        if hyperfocus:
-            lines.append("Видим гиперфокус на одной сфере при низких оценках остальных. Это может привести к стрессу и выгоранию. Постарайтесь распределять ресурсы более равномерно.")
-        # 7. Расхождения
-        if mismatch:
-            lines.append("Обнаружено расхождение между вашими количественными и качественными ответами. Рекомендуем провести саморефлексию: возможно, вы недооцениваете или переоцениваете ситуацию.")
-        # 8. Профилактика/развитие
-        if not lines:
-            lines.append(random.choice(PREVENT_PHRASES))
-            lines.append(random.choice(POSITIVE_PHRASES))
-        # Собираем текст рекомендации
-        rec_text = '\n'.join(lines[:6])  # максимум 6 строк
-        # --- Логирование для отладки ---
-        print(f"[DEBUG] {sphere}: metric={metric}, problem={problem}, blocker={blocker}, low_metric={low_metric}, has_problem={has_problem}, has_blocker={has_blocker}")
-        print(f"[DEBUG] Recommendation text: {rec_text}\n---")
+        
+        # --- Логика генерации рекомендаций ---
+        # Эта часть кода является упрощенной версией. Здесь можно добавить сложную логику.
+        rec_data = RecommendationData(
+            title=f"Рекомендация для сферы '{sphere}'",
+            description="",
+            action_steps=[],
+            metrics=Metrics(target_improvement=0, timeframe="", success_criteria=[]),
+            related_spheres=[],
+            evidence=Evidence(data_points=[], correlations=[], historical_success=0)
+        )
         recommendations.append(Recommendation(
             recommendation_id=f"rec_{random.randint(1000,9999)}",
-            timestamp=datetime.datetime.now(),
+            timestamp=datetime.now(),
             sphere=sphere,
-            type=RecommendationType.IMMEDIATE if priority >= 8 else RecommendationType.SHORT_TERM,
-            priority=priority,
-            data=RecommendationData(
-                title=rec_text,
-                description=rec_text,
-                action_steps=[],
-                metrics=None,
-                related_spheres=[],
-                evidence=None
-            )
+            type=RecommendationType.IMMEDIATE,
+            priority=5.0, # Placeholder
+            data=rec_data
         ))
-    return recommendations, sphere_metrics
+
+    return recommendations
 
 def insert_ai_block_to_dashboard(ai_block_path, dashboard_path):
     """
@@ -328,108 +353,105 @@ def insert_ai_block_to_dashboard(ai_block_path, dashboard_path):
         f.write(new_dashboard)
 
 def log_to_file(message: str, level: str = "INFO"):
-    """Appends a timestamped message to the log file."""
-    with open(LOG_FILE, "a", encoding="utf-8") as logf:
-        logf.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level}] {message}\n")
+    """Записывает сообщение в лог-файл."""
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as logf:
+            logf.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level}] {message}\\n")
+    except Exception as e:
+        # В случае ошибки кодировки, пробуем записать без проблемных символов
+        try:
+            with open(LOG_FILE, "a", encoding="utf-8", errors="replace") as logf:
+                logf.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level}] {message}\\n [Logging Error: {e}]\\n")
+        except Exception as inner_e:
+             print(f"Не удалось записать в лог-файл: {inner_e}")
 
 def main():
-    """Основная функция, которая запускает весь процесс."""
-    # Принудительно устанавливаем кодировку UTF-8 для вывода в консоль
-    if sys.stdout.encoding != 'utf-8':
-        sys.stdout.reconfigure(encoding='utf-8')
+    """Главная функция."""
+    # Используем абсолютные пути, чтобы избежать проблем с относительными путями
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir) # Поднимаемся на уровень выше из src
+    drafts_dir = os.path.join(project_root, 'reports_draft')
+    interfaces_dir = os.path.join(project_root, 'interfaces')
+    reports_dir = os.path.join(project_root, 'reports_final')
+    log_file = os.path.join(project_root, 'logs', 'app.log')
 
+    def log_to_file_main(message: str, level: str = "INFO"):
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        with open(log_file, "a", encoding="utf-8", errors="replace") as f:
+            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level}] {message}\\n")
+    
+    log_to_file_main("--- 🚀 Запуск AI Dashboard Injector (с абсолютными путями) ---")
+    
     try:
-        # Определяем пути внутри main
-        dashboard_path = os.path.join(INTERFACES_DIR, "dashboard.md")
-        ai_recommendations_path = os.path.join(INTERFACES_DIR, "ai_recommendations.md")
-
-        log_to_file("--- 🤖 Запуск AI Dashboard Injector ---")
-        
-        # --- 1. Поиск последнего черновика ---
-        latest_draft_path = find_latest_draft()
-        if not latest_draft_path:
-            log_to_file("ПРЕДУПРЕЖДЕНИЕ: Не найдены черновики отчетов в папке 'reports_draft'.", "WARNING")
+        # --- Поиск последнего черновика ---
+        drafts = [os.path.join(drafts_dir, f) for f in os.listdir(drafts_dir) if f.endswith("_draft.md")]
+        if not drafts:
+            log_to_file_main("Не найдены файлы черновиков.", "ERROR")
             return
+        latest_draft = max(drafts, key=os.path.getmtime)
+        log_to_file_main(f"Найден последний черновик: {latest_draft}")
 
-        with open(latest_draft_path, "r", encoding="utf-8") as f:
+        with open(latest_draft, 'r', encoding='utf-8') as f:
             md_content = f.read()
-        # 2. Определить дату
-        date_match = re.search(r"(\d{4}-\d{2}-\d{2})", latest_draft_path)
-        report_date = date_match.group(1) if date_match else datetime.date.today().isoformat()
-        # 3. Извлечь ответы по сферам
-        answers = extract_answers_by_sphere(md_content)
-        # 3.1. Извлечь PRO-данные
-        def parse_pro_table(section_title):
-            result = {}
-            in_section = False
-            for line in md_content.split('\n'):
-                if section_title in line:
-                    in_section = True
-                elif in_section and line.strip().startswith('|') and not line.lower().startswith('| сфера') and not set(line.strip()) <= {'|', '-', ' '}:
-                    cells = [cell.strip() for cell in line.split('|') if cell.strip()]
-                    if len(cells) >= 2:
-                        key = find_sphere_key(cells[0])
-                        value = cells[1]
-                        result[key] = value
-                elif in_section and not line.strip().startswith('|'):
-                    break  # закончили таблицу
-            return result
+
         pro_data = {
-            'problems': parse_pro_table('Мои проблемы'),
-            'goals': parse_pro_table('Мои цели'),
-            'blockers': parse_pro_table('Мои блокеры'),
-            'achievements': parse_pro_table('Мои достижения'),
+            'problems': parse_pro_section(md_content, 'Мои проблемы'),
+            'goals': parse_pro_section(md_content, 'Мои цели'),
+            'blockers': parse_pro_section(md_content, 'Мои блокеры'),
+            'achievements': parse_pro_section(md_content, 'Мои достижения')
         }
-        # 4. Генерировать рекомендации по сферам (расширенный анализ)
-        engine = HPIRecommendationEngine()
-        engine.recommendations, sphere_metrics = analyze_and_generate_recommendations_v2(answers, md_content, pro_data)
-        # 5. Сопоставить рекомендации со сферами
-        rec_map = {rec.sphere: rec for rec in engine.recommendations}
-        # 6. Сформировать Markdown-таблицу
-        header = f"# 🤖 AI рекомендации ({report_date})\n\n| Сфера | Рекомендация | Приоритет |\n|:------:|--------------|:---------:|\n"
-        rows = ""
-        for emoji, sphere in SPHERES:
-            rec = rec_map.get(sphere)
-            metric = sphere_metrics.get(sphere, None)
-            metric_str = f"{metric:.1f}" if metric is not None else '—'
-            sphere_cell = f"{emoji}<br>{metric_str}"
-            if rec:
-                # Удаляем все строки, содержащие 'оценка' или 'уровень' (case-insensitive)
-                lines = rec.data.title.split('\n')
-                filtered_lines = [line for line in lines if not re.search(r'(оценка|уровень)', line, re.IGNORECASE)]
-                text = '<br>'.join(filtered_lines).strip()
-                priority = priority_to_text(rec.priority)
+        log_to_file_main(f"Данные из PRO секций извлечены: {pro_data}")
+
+        dashboard_path = os.path.join(interfaces_dir, 'dashboard.md')
+        with open(dashboard_path, 'r', encoding='utf-8') as f:
+            dashboard_content = f.read()
+
+        sections = {
+            '🛑 Мои проблемы': pro_data['problems'],
+            '🎯 Мои цели': pro_data['goals'],
+            '🚧 Мои блокеры': pro_data['blockers'],
+            '🏆 Мои достижения': pro_data['achievements']
+        }
+
+        for section_title, data in sections.items():
+            section_pattern = re.compile(rf'> \[!info\]- {re.escape(section_title)}[\s\S]*?(?=> \[!info\]-|\Z)')
+            new_section_content = [f"> [!info]- {section_title}", ">", "> | Сфера | Ваши ответы |", "> |:------:|-------------|"]
+            sorted_spheres = sorted(SPHERE_SYNONYMS.keys(), key=lambda x: list(SPHERE_SYNONYMS.keys()).index(x))
+            for sphere_name in sorted_spheres:
+                synonyms = SPHERE_SYNONYMS[sphere_name]
+                emoji = next((s for s in synonyms if len(s) == 2), '❓') 
+                answer = data.get(sphere_name, "Нет данных")
+                if not answer or answer.strip() == '':
+                    answer = "Нет данных"
+                new_section_content.append(f"> |  {emoji}  | {answer} |")
+            new_section_text = "\\n".join(new_section_content) + "\\n"
+            dashboard_content, count = section_pattern.subn(new_section_text, dashboard_content, count=1)
+            if count > 0:
+                log_to_file_main(f"Секция '{section_title}' успешно заменена.")
             else:
-                text = "Нет рекомендаций"
-                priority = "—"
-            rows += f"| {sphere_cell} | {text} | {priority} |\n"
-        content = header + rows
-        # 7. Сохранить финальный отчет
-        output_file = os.path.join(REPORTS_DIR, f"{report_date} AI_Recommendations.md")
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(content)
-        # 8. Вставить блок в дашборд
-        # Формируем markdown-блок для вставки (без дублирующего заголовка)
-        content_lines = content.split('\n')
-        # Пропускаем первую строку (заголовок) и пустую строку после него
-        table_lines = content_lines[2:] if content_lines[1].strip() == '' else content_lines[1:]
-        ai_block = f"> [!info]- 🤖 AI рекомендации\n>\n" + '\n'.join([f"> {line}" if (i < 2 or not line.startswith('|')) else line for i, line in enumerate(table_lines)]) + '\n'
-        temp_ai_block_path = os.path.join(REPORTS_DIR, "_temp_ai_block.md")
-        with open(temp_ai_block_path, "w", encoding="utf-8") as f:
-            f.write(ai_block)
-        insert_ai_block_to_dashboard(temp_ai_block_path, dashboard_path)
-        os.remove(temp_ai_block_path)
-        # 9. Логирование
-        log_message = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [INFO] AI рекомендации успешно сохранены в {output_file} и добавлены в дашборд ({len(engine.recommendations)} рекомендаций)\n"
-        log_to_file(log_message)
-        print(f"AI рекомендации успешно сохранены в {output_file} и добавлены в дашборд")
+                log_to_file_main(f"Секция '{section_title}' не найдена в дашборде.", "WARNING")
+
+        with open(dashboard_path, 'w', encoding='utf-8') as f:
+            f.write(dashboard_content)
+        log_to_file_main(f"Дашборд сохранен: {dashboard_path}")
+
+        # Анализ и генерация рекомендаций
+        engine = HPIRecommendationEngine()
+        recommendations = analyze_and_generate_recommendations_v2(md_content, pro_data)
+
+        # Получаем дату из имени файла черновика
+        report_date_str = os.path.basename(latest_draft)[:10]
+
+        # Сохранение рекомендаций в JSON
+        recs_filepath = os.path.join(reports_dir, f"{report_date_str}_recommendations.json")
+        engine.save_recommendations(recommendations, recs_filepath)
+        log_to_file_main(f"AI-рекомендации сохранены в {recs_filepath}")
 
     except Exception as e:
-        # Log critical error
         import traceback
-        error_message = f"Критическая ошибка в HPI_AI_Dashboard_Injector: {str(e)}\n{traceback.format_exc()}"
-        log_to_file(error_message, "CRITICAL")
-        print(error_message)
+        log_to_file_main(f"Критическая ошибка в AI Dashboard Injector: {e}\\n{traceback.format_exc()}", "ERROR")
+        raise
 
 if __name__ == "__main__":
     main() 

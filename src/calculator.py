@@ -129,10 +129,13 @@ def extract_answers_from_section(content: str, section_name: str) -> Optional[Li
         # Убираем ### из названия секции
         clean_section_name = section_name.replace("### ", "")
         
-        # Ищем секцию по точному названию (один # вместо двух)
-        section_pattern = f"## {clean_section_name}.*?\\n\\n(.*?)(?=\\n##|$)"
+        # Ищем секцию по номеру и названию, допуская любые символы (включая emoji) между ними
+        number = clean_section_name.split('.')[0]
+        name = '.'.join(clean_section_name.split('.')[1:]).strip()
+        section_pattern = rf"##\s*{number}\.\s*.*?\s*{re.escape(name)}.*?(\n\|[\s\S]*?)(?=\n##|\Z)"
+
         print(f"Ищем по шаблону: {section_pattern}")
-        section_match = re.search(section_pattern, content, re.DOTALL)
+        section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
         
         if not section_match:
             print(f"Секция не найдена: {clean_section_name}")
@@ -263,10 +266,11 @@ def find_latest_draft() -> Optional[str]:
             print(f"Папка с черновиками не найдена: {DRAFT_FOLDER}")
             return None
 
-        drafts = [os.path.join(DRAFT_FOLDER, f) for f in os.listdir(DRAFT_FOLDER) if f.startswith("HPI_Report_") and f.endswith(".md")]
+        # Ищем файлы по новому стандарту: YYYY-MM-DD_draft.md
+        drafts = [os.path.join(DRAFT_FOLDER, f) for f in os.listdir(DRAFT_FOLDER) if f.endswith("_draft.md") and re.match(r"\d{4}-\d{2}-\d{2}", f)]
         
         if not drafts:
-            print("Черновики не найдены.")
+            print("Черновики по стандарту 'YYYY-MM-DD_draft.md' не найдены.")
             return None
             
         latest_draft = max(drafts, key=os.path.getmtime)
@@ -276,48 +280,42 @@ def find_latest_draft() -> Optional[str]:
         return None
 
 def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
-    """Создает финальный отчет на основе черновика и оценок."""
-    try:
-        # Папка для изображений
-        images_folder = os.path.join(FINAL_FOLDER, "images")
-        os.makedirs(images_folder, exist_ok=True)
-            
-        # Создаем имя для финального отчета и связанных файлов
-        date_str = os.path.basename(draft_path).split('_')[0]
-        final_filename = f"{date_str}_final_report.md"
-        final_report_path = os.path.join(FINAL_FOLDER, final_filename)
+    """Создает финальную версию отчета с добавленными расчетами."""
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    final_report_name = f"{today_str}_report.md"
+    final_report_path = os.path.join(FINAL_FOLDER, final_report_name)
+    
+    # Копируем черновик в финальную папку
+    shutil.copy(draft_path, final_report_path)
+
+    # 5. Создать радарную диаграмму для финального отчета
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    images_dir = os.path.join(FINAL_FOLDER, "images")
+    os.makedirs(images_dir, exist_ok=True)
+    radar_chart_path = os.path.join(images_dir, f"{today_str}_radar.png")
+    create_radar_chart(scores, radar_chart_path, is_dashboard=False)
+    print(f"🎨 Создана радарная диаграмма для отчета: {radar_chart_path}")
+
+    # Добавляем в конец файла блок с итоговыми оценками и диаграммой
+    with open(final_report_path, 'a', encoding='utf-8') as f:
+        f.write("\n\n---\n\n")
+        f.write("## 🏆 Итоговые оценки HPI\n\n")
+        f.write(f"![Радарная диаграмма](./images/{os.path.basename(radar_chart_path)})\n\n")
+        f.write("| Сфера | Оценка (1-10) | Индикатор |\n")
+        f.write("|:---|:---:|:---:|\n")
         
-        # Путь для радар-диаграммы отчета
-        radar_report_path = os.path.join(images_folder, f"{date_str}_radar.png")
-        create_radar_chart(scores, radar_report_path, is_dashboard=False)
-
-        # Копируем содержимое черновика в финальный отчет
-        shutil.copy(draft_path, final_report_path)
-
-        # Добавляем в конец файла блок с итоговыми оценками и диаграммой
-        with open(final_report_path, 'a', encoding='utf-8') as f:
-            f.write("\n\n---\n\n")
-            f.write("## 🏆 Итоговые оценки HPI\n\n")
-            f.write(f"![Радарная диаграмма](./images/{os.path.basename(radar_report_path)})\n\n")
-            f.write("| Сфера | Оценка (1-10) | Индикатор |\n")
-            f.write("|:---|:---:|:---:|\n")
-            
-            # Добавляем оценки по сферам
-            for sphere in SPHERE_CONFIG:
-                score = scores.get(sphere['number'], 0.0)
-                emoji = get_score_emoji(score)
-                f.write(f"| {sphere['name']} | {score} | {emoji} |\n")
-            
-            # Добавляем итоговый HPI
-            hpi_score = scores.get('HPI', 0.0)
-            hpi_emoji = get_score_emoji(hpi_score, is_hpi=True)
-            f.write(f"| **Итоговый HPI** | **{hpi_score}** | {hpi_emoji} |\n")
+        # Добавляем оценки по сферам
+        for sphere in SPHERE_CONFIG:
+            score = scores.get(sphere['number'], 0.0)
+            emoji = get_score_emoji(score)
+            f.write(f"| {sphere['name']} | {score} | {emoji} |\n")
         
-        print(f"Финальный отчет сохранен: {final_report_path}")
-
-    except Exception as e:
-        print(f"Ошибка при создании финального отчета: {e}")
-        traceback.print_exc()
+        # Добавляем итоговый HPI
+        hpi_score = scores.get('HPI', 0.0)
+        hpi_emoji = get_score_emoji(hpi_score, is_hpi=True)
+        f.write(f"| **Итоговый HPI** | **{hpi_score}** | {hpi_emoji} |\n")
+    
+    print(f"✅ Финальный отчет сохранен: {final_report_path}")
 
 def collect_all_reports_data() -> List[Tuple[str, float, Dict[str, float]]]:
     """
@@ -373,43 +371,27 @@ def update_dashboard(scores: Dict[str, float], draft_path: str) -> None:
         images_folder = os.path.join(FINAL_FOLDER, "images")
         os.makedirs(images_folder, exist_ok=True)
         
-        # Для дашборда радар всегда один и тот же - последний
         radar_dashboard_path = os.path.join(images_folder, "latest_radar.png")
 
-        # Генерируем радарную диаграмму для дашборда
         try:
             create_radar_chart(scores, radar_dashboard_path, is_dashboard=True)
             print(f"Радарная диаграмма для дашборда обновлена: {radar_dashboard_path}")
         except Exception as e:
             print(f"Ошибка при генерации радарной диаграммы для дашборда: {str(e)}")
 
-        # Получаем текущую дату из имени файла черновика
-        base_name = os.path.basename(draft_path)
-        current_date = base_name[:10]  # Берем дату из имени файла
-        
-        # Читаем черновик для получения ответов на вопросы
         with open(draft_path, 'r', encoding='utf-8') as f:
             draft_content = f.read()
         
-        # Извлекаем ответы из черновика
-        answers = {}
-        for sphere in SPHERE_CONFIG:
-            section_name = f"{sphere['number']}. {sphere['name']}"  # Убираем двойной ##
-            answers[sphere['number']] = extract_answers_from_section(draft_content, section_name)
-        
-        # Собираем данные из всех отчетов
         all_reports_data = collect_all_reports_data()
         
-        # Формируем таблицу истории
         history_table = ""
         for date, hpi, _ in all_reports_data:
             emoji = get_score_emoji(hpi, is_hpi=True)
             history_table += f"| {date} | {hpi:.1f} | {emoji} |\n"
 
-        # Короткие названия и emoji для заголовка
         emojis = [s['emoji'] for s in SPHERE_CONFIG]
         detailed_table = "| Дата | " + " | ".join(emojis) + " |\n"
-        detailed_table += "|------|" + "------|"*8 + "\n"
+        detailed_table += "|------|" + "------|" * 8 + "\n"
         for date, hpi, sphere_scores in all_reports_data:
             row = f"| {date} "
             for i in range(1, 9):
@@ -421,7 +403,6 @@ def update_dashboard(scores: Dict[str, float], draft_path: str) -> None:
             row += "|\n"
             detailed_table += row
 
-        # Новый формат HPI PRO: для каждого подраздела формируем таблицу по сферам
         sub_map = [
             ('Мои проблемы', '🛑'),
             ('Мои цели', '🎯'),
@@ -453,53 +434,20 @@ def update_dashboard(scores: Dict[str, float], draft_path: str) -> None:
 """
         for sub, emoji in sub_map:
             if sub == 'Мои метрики':
-                # Для метрик — таблица с 4 колонками, первый столбец по центру
                 dashboard_content += f"\n> [!info]- {emoji} {sub}\n>\n> | Сфера | Метрика | Текущее | Целевое |\n> |:------:|---------|---------|---------|\n"
-                # Универсальный паттерн: ищем заголовок любого уровня и всё до следующего заголовка того же или меньшего уровня
-                section_pat = rf"(#+\s*[0-9]+\. {sub}[\s\S]*?)(?=\n#|\Z)"
-                section_match = re.search(section_pat, draft_content, re.DOTALL)
-                if section_match:
-                    section_text = section_match.group(1)
-                    print("[DEBUG] Найденный блок 'Мои метрики':\n", section_text[:300])
-                else:
-                    # Fallback: ищем первое вхождение 'Мои метрики' и первую таблицу после него
-                    idx = draft_content.find('Мои метрики')
-                    if idx != -1:
-                        section_text = draft_content[idx:]
-                        print("[DEBUG] Fallback-блок после 'Мои метрики':\n", section_text[:300])
-                    else:
-                        section_text = ''
-                        print("[DEBUG] Секция 'Мои метрики' не найдена вообще!")
-                # Ищем первую таблицу с 4+ колонками после заголовка
-                table_lines = []
-                found_table = False
-                for line in section_text.split('\n'):
-                    if line.strip().startswith('|') and line.count('|') >= 5:
-                        table_lines.append(line)
-                        found_table = True
-                    elif found_table and (not line.strip().startswith('|') or line.strip() == ''):
-                        break  # закончили таблицу
-                    elif found_table:
-                        table_lines.append(line)
-                print("[DEBUG] Строки таблицы метрик:", table_lines)
-                # Собираем все строки по сферам (с учётом пустых ячеек в первой колонке)
+                section_pat = rf"###\s*[\d\.]+\s*.*?\s*{re.escape(sub)}.*?(\n\|[\s\S]*?)(?=\n###|\n##|\n#|\Z)"
+                section_match = re.search(section_pat, draft_content, re.DOTALL | re.IGNORECASE)
+                section_text = section_match.group(1) if section_match else ""
+                
+                table_lines = [line for line in section_text.splitlines() if line.strip().startswith('|')]
+                
                 rows_by_sphere = {s['name']: [] for s in SPHERE_CONFIG}
-                last_sphere = None
                 for line in table_lines:
-                    cells = [c.strip() for c in line.strip().split('|')[1:-1]]
-                    # Пропускаем заголовки и разделители
-                    if not cells or cells[0] in ('Сфера жизни', 'Метрика', 'Текущее значение', 'Текущее', 'Целевое значение', 'Целевое') or all(set(cell) <= {'-'} for cell in cells) or len(cells) < 4:
+                    cells = [c.strip() for c in line.split('|')[1:-1]]
+                    if len(cells) < 4 or any(x in cells[0] for x in ['Сфера', ':---']):
                         continue
-                    # Если первая ячейка пустая, используем последнее непустое значение
+                    
                     sphere_identifier = cells[0]
-                    if sphere_identifier:
-                        last_sphere = sphere_identifier
-                    elif last_sphere:
-                        sphere_identifier = last_sphere
-                    else:
-                        continue  # если нет сферы, пропускаем
-
-                    # Ищем сферу по имени, синониму или emoji
                     sphere_key = EMOJI_TO_SPHERE_NAME.get(sphere_identifier, sphere_identifier)
                     sphere_key = SPHERE_SYNONYMS.get(sphere_key, sphere_key)
 
@@ -510,34 +458,33 @@ def update_dashboard(scores: Dict[str, float], draft_path: str) -> None:
                     rows = rows_by_sphere[sphere['name']]
                     if rows:
                         for cells in rows:
-                            # В первом столбце только emoji, по центру
                             dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | {cells[1]} | {cells[2]} | {cells[3]} |\n"
                     else:
-                        dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | Нет данных |  |  |\n"
+                        dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | Нет данных | | |\n"
             else:
-                # Для остальных — таблица с 2 колонками, первый столбец по центру
                 dashboard_content += f"\n> [!info]- {emoji} {sub}\n>\n> | Сфера | Ваши ответы |\n> |:------:|-------------|\n"
-                section_pat = rf"### [0-9]+\. {sub}([\s\S]*?)(?=###|##|#|\Z)"
-                section_match = re.search(section_pat, draft_content, re.DOTALL)
+                section_pat = rf"###\s*[\d\.]+\s*.*?\s*{re.escape(sub)}.*?(\n\|[\s\S]*?)(?=\n###|\n##|\n#|\Z)"
+                section_match = re.search(section_pat, draft_content, re.DOTALL | re.IGNORECASE)
                 section_text = section_match.group(1) if section_match else ""
-                table_lines = [line for line in section_text.split('\n') if line.strip().startswith('|')]
+                table_lines = [line for line in section_text.splitlines() if line.strip().startswith('|')]
                 answers = {}
                 for line in table_lines:
-                    cells = [c.strip() for c in line.strip().split('|')[1:-1]]
-                    if len(cells) >= 2:
-                        answers[cells[0]] = cells[1]
+                    cells = [c.strip() for c in line.split('|')[1:-1]]
+                    if len(cells) >= 2 and not any(x in cells[0] for x in ['Сфера', ':---']):
+                        sphere_identifier = cells[0]
+                        sphere_key = EMOJI_TO_SPHERE_NAME.get(sphere_identifier, sphere_identifier)
+                        sphere_key = SPHERE_SYNONYMS.get(sphere_key, sphere_key)
+                        answers[sphere_key] = cells[1]
+
                 for sphere in SPHERE_CONFIG:
-                    key = sphere['name']
-                    value = answers.get(key, 'Нет данных')
+                    value = answers.get(sphere['name'], 'Нет данных')
                     dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | {value} |\n"
         
-        # Сохраняем обновленный дашборд
         with open(dashboard_path, 'w', encoding='utf-8') as f:
             f.write(dashboard_content)
             
         print(f"Дашборд обновлен: {dashboard_path}")
         
-        # Обновляем график тренда
         try:
             import subprocess
             trend_script = os.path.join(os.path.dirname(__file__), "trend.py")

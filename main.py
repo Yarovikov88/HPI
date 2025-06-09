@@ -13,7 +13,7 @@ APP_VERSION = "0.4.0-dev"
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.join(PROJECT_ROOT, 'src')
 LOG_DIR = os.path.join(PROJECT_ROOT, 'logs')
-LOG_PATH = os.path.join(LOG_DIR, 'hpi.log')
+LOG_PATH = os.path.join(LOG_DIR, 'app.log')
 
 # Настраиваем логгер для вывода в файл и в консоль
 logger = logging.getLogger()
@@ -57,7 +57,7 @@ def run_script(script_name: str):
             check=False,  # Не выбрасывать исключение при ошибке, а анализировать вручную
             encoding='utf-8', # Принудительно используем UTF-8
             errors='replace', # Заменять некорректные символы
-            cwd=BACKEND_DIR
+            cwd=PROJECT_ROOT  # Запускаем из корня проекта
         )
 
         # Логируем stdout
