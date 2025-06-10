@@ -503,66 +503,34 @@ def print_scores(scores):
         sphere_num = sphere["number"]
         print(f"{sphere['emoji']} {sphere['name']}: {scores[sphere_num]:.1f} {get_score_emoji(scores[sphere_num])}")
 
-def main():
-    """Основная функция для обработки отчета."""
-    # Принудительно устанавливаем кодировку UTF-8 для вывода в консоль
-    if sys.stdout.encoding != 'utf-8':
-        sys.stdout.reconfigure(encoding='utf-8')
-        
+def run_calculator():
+    """Основная функция для запуска калькулятора."""
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        version_dir = os.path.dirname(script_dir)
-        log_path = os.path.join(version_dir, "HPI_log")
+        draft_path = find_latest_draft()
+        if not draft_path:
+            print("Черновики для обработки не найдены.")
+            return
 
-        with open(log_path, "a", encoding="utf-8") as log:
-            log.write("\n" + "="*50 + "\n")
-            log.write(f"[HPI_Calculator.py] Запуск: {datetime.now()}\n\n")
+        print(f"Найден последний черновик: {draft_path}")
+        
+        scores = process_hpi_report(draft_path)
+        print_scores(scores)
+        
+        create_final_report(draft_path, scores)
 
-            # Новый блок: если нет аргумента — ищу последний черновик
-            if len(sys.argv) == 2:
-                draft_path = sys.argv[1]
-            else:
-                log.write("Аргумент не передан, ищу последний черновик...\n")
-                draft_path = find_latest_draft()
-                if not draft_path:
-                    log.write("Не найден ни один черновик для обработки!\n")
-                    print("Не найден ни один черновик для обработки!")
-                    sys.exit(1)
-                log.write(f"Найден последний черновик: {draft_path}\n")
+        # Отключаем прямое обновление дашборда из калькулятора.
+        # За это теперь отвечает ai_dashboard_injector.py
+        # update_dashboard(scores, draft_path)
 
-            log.write(f"Обработка отчета: {draft_path}\n")
-            # Расчет показателей
-            scores = process_hpi_report(draft_path)
-            log.write("\nРезультаты расчета:\n")
-            for sphere in SPHERE_CONFIG:
-                score = scores.get(sphere["number"], 0.0)
-                log.write(f"{sphere['name']}: {score:.1f}\n")
-            log.write(f"Итоговый HPI: {scores['HPI']:.1f}\n")
-
-            # Создание финального отчета
-            log.write("\nСоздание финального отчета...\n")
-            create_final_report(draft_path, scores)
-
-            # Обновление дашборда
-            log.write("\nОбновление дашборда...\n")
-            update_dashboard(scores, draft_path)
-
-            # Обновляем график тренда
-            try:
-                import subprocess
-                trend_script = os.path.join(os.path.dirname(__file__), "trend.py")
-                subprocess.run([sys.executable, trend_script], check=True)
-                log.write("График тренда обновлен\n")
-            except Exception as e:
-                log.write(f"Ошибка при обновлении графика тренда: {str(e)}\n")
-
-            log.write("\nОбработка завершена успешно!\n")
+        from trend import update_trend_chart
+        if update_trend_chart():
+            print("График тренда обновлен")
+        else:
+            print("Не удалось обновить график тренда.")
 
     except Exception as e:
-        with open(log_path, "a", encoding="utf-8") as log:
-            log.write(f"\nОшибка при обработке отчета: {str(e)}\n")
-            traceback.print_exc(file=log)
-        sys.exit(1)
+        print(f"Произошла ошибка в работе калькулятора: {e}")
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    main() 
+    run_calculator() 
