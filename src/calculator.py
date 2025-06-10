@@ -280,21 +280,35 @@ def find_latest_draft() -> Optional[str]:
         return None
 
 def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
-    """Создает финальную версию отчета с добавленными расчетами."""
+    """
+    Создает финальную версию отчета, очищенную от PRO-данных,
+    с добавленными расчетами HPI.
+    """
     today_str = datetime.now().strftime("%Y-%m-%d")
     final_report_name = f"{today_str}_report.md"
     final_report_path = os.path.join(FINAL_FOLDER, final_report_name)
     
-    # Копируем черновик в финальную папку
-    shutil.copy(draft_path, final_report_path)
+    # Читаем содержимое черновика
+    with open(draft_path, 'r', encoding='utf-8') as f:
+        content = f.read()
 
-    # 5. Создать радарную диаграмму для финального отчета
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    # Отсекаем все, что начинается с заголовка '# HPI PRO'
+    pro_section_marker = '# HPI PRO'
+    if pro_section_marker in content:
+        content = content.split(pro_section_marker)[0]
+    
+    # Записываем очищенный контент в финальный файл
+    with open(final_report_path, 'w', encoding='utf-8') as f:
+        f.write(content.strip())
+
+    # Создаем единую радар-диаграмму с датой (версия для дашборда)
     images_dir = os.path.join(FINAL_FOLDER, "images")
     os.makedirs(images_dir, exist_ok=True)
+    
     radar_chart_path = os.path.join(images_dir, f"{today_str}_radar.png")
-    create_radar_chart(scores, radar_chart_path, is_dashboard=False)
-    print(f"🎨 Создана радарная диаграмма для отчета: {radar_chart_path}")
+    # Используем is_dashboard=True для компактного вида
+    create_radar_chart(scores, radar_chart_path, is_dashboard=True)
+    print(f"🎨 Создана радарная диаграмма: {radar_chart_path}")
 
     # Добавляем в конец файла блок с итоговыми оценками и диаграммой
     with open(final_report_path, 'a', encoding='utf-8') as f:
@@ -317,185 +331,6 @@ def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
     
     print(f"✅ Финальный отчет сохранен: {final_report_path}")
 
-def collect_all_reports_data() -> List[Tuple[str, float, Dict[str, float]]]:
-    """
-    Собирает данные из всех финальных отчетов.
-    Возвращает список кортежей (дата, HPI, {оценки_сфер}).
-    """
-    all_data = []
-    try:
-        if not os.path.exists(FINAL_FOLDER):
-            print("Папка с финальными отчетами не найдена.")
-            return []
-
-        report_files = [f for f in os.listdir(FINAL_FOLDER) if f.startswith("HPI_Final_Report_") and f.endswith(".md")]
-        
-        for filename in report_files:
-            try:
-                # Извлекаем дату из имени файла
-                date_str = filename.replace("HPI_Final_Report_", "").replace(".md", "")
-                report_date = datetime.strptime(date_str, "%Y-%m-%d")
-                
-                # Читаем файл и парсим оценки
-                filepath = os.path.join(FINAL_FOLDER, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
-                hpi_match = re.search(r"Итоговый HPI\*\* \| \*\*([\d\.]+)\*\*", content)
-                hpi_score = float(hpi_match.group(1)) if hpi_match else 0.0
-                
-                sphere_scores = {}
-                for sphere in SPHERE_CONFIG:
-                    # Ищем оценку для каждой сферы
-                    pattern = rf"\| {re.escape(sphere['name'])} \| ([\d\.]+) \|"
-                    match = re.search(pattern, content)
-                    if match:
-                        sphere_scores[sphere['name']] = float(match.group(1))
-                
-                all_data.append((report_date, hpi_score, sphere_scores))
-            except Exception as e:
-                print(f"Ошибка при обработке отчета {filename}: {e}")
-                continue
-
-    except Exception as e:
-        print(f"Общая ошибка при сборе данных отчетов: {e}")
-
-    # Сортируем данные по дате
-    all_data.sort(key=lambda x: x[0])
-    return all_data
-
-def update_dashboard(scores: Dict[str, float], draft_path: str) -> None:
-    """Обновляет dashboard.md актуальными данными."""
-    try:
-        dashboard_path = os.path.join(INTERFACES_FOLDER, "dashboard.md")
-        images_folder = os.path.join(FINAL_FOLDER, "images")
-        os.makedirs(images_folder, exist_ok=True)
-        
-        radar_dashboard_path = os.path.join(images_folder, "latest_radar.png")
-
-        try:
-            create_radar_chart(scores, radar_dashboard_path, is_dashboard=True)
-            print(f"Радарная диаграмма для дашборда обновлена: {radar_dashboard_path}")
-        except Exception as e:
-            print(f"Ошибка при генерации радарной диаграммы для дашборда: {str(e)}")
-
-        with open(draft_path, 'r', encoding='utf-8') as f:
-            draft_content = f.read()
-        
-        all_reports_data = collect_all_reports_data()
-        
-        history_table = ""
-        for date, hpi, _ in all_reports_data:
-            emoji = get_score_emoji(hpi, is_hpi=True)
-            history_table += f"| {date} | {hpi:.1f} | {emoji} |\n"
-
-        emojis = [s['emoji'] for s in SPHERE_CONFIG]
-        detailed_table = "| Дата | " + " | ".join(emojis) + " |\n"
-        detailed_table += "|------|" + "------|" * 8 + "\n"
-        for date, hpi, sphere_scores in all_reports_data:
-            row = f"| {date} "
-            for i in range(1, 9):
-                val = sphere_scores.get(str(i), "-")
-                if isinstance(val, float):
-                    row += f"| {val:.1f} {get_score_emoji(val)} "
-                else:
-                    row += f"| {val} "
-            row += "|\n"
-            detailed_table += row
-
-        sub_map = [
-            ('Мои проблемы', '🛑'),
-            ('Мои цели', '🎯'),
-            ('Мои блокеры', '🚧'),
-            ('Мои метрики', '📊'),
-            ('Мои достижения', '🏆')
-        ]
-        dashboard_content = f"""# HPI
-
-> [!tip]- 📊 Мой HPI {scores["HPI"]:.1f} {get_score_emoji(scores["HPI"], is_hpi=True)}
-> 
-> ## Динамика HPI
-> ![hpi trend](../reports_final/images/latest_trend.png)
-> 
-> ## История измерений
-> | Дата | HPI | Тренд |
-> |------|-----|--------|
-{history_table}
-
-> [!tip]- ⚖️ HPI баланс
-> 
-> ![radar chart](../reports_final/images/latest_radar.png)
-> 
-> ## История по сферам
-{detailed_table}
-
-# HPI PRO
-
-"""
-        for sub, emoji in sub_map:
-            if sub == 'Мои метрики':
-                dashboard_content += f"\n> [!info]- {emoji} {sub}\n>\n> | Сфера | Метрика | Текущее | Целевое |\n> |:------:|---------|---------|---------|\n"
-                section_pat = rf"###\s*[\d\.]+\s*.*?\s*{re.escape(sub)}.*?(\n\|[\s\S]*?)(?=\n###|\n##|\n#|\Z)"
-                section_match = re.search(section_pat, draft_content, re.DOTALL | re.IGNORECASE)
-                section_text = section_match.group(1) if section_match else ""
-                
-                table_lines = [line for line in section_text.splitlines() if line.strip().startswith('|')]
-                
-                rows_by_sphere = {s['name']: [] for s in SPHERE_CONFIG}
-                for line in table_lines:
-                    cells = [c.strip() for c in line.split('|')[1:-1]]
-                    if len(cells) < 4 or any(x in cells[0] for x in ['Сфера', ':---']):
-                        continue
-                    
-                    sphere_identifier = cells[0]
-                    sphere_key = EMOJI_TO_SPHERE_NAME.get(sphere_identifier, sphere_identifier)
-                    sphere_key = SPHERE_SYNONYMS.get(sphere_key, sphere_key)
-
-                    if sphere_key in rows_by_sphere:
-                        rows_by_sphere[sphere_key].append(cells)
-
-                for sphere in SPHERE_CONFIG:
-                    rows = rows_by_sphere[sphere['name']]
-                    if rows:
-                        for cells in rows:
-                            dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | {cells[1]} | {cells[2]} | {cells[3]} |\n"
-                    else:
-                        dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | Нет данных | | |\n"
-            else:
-                dashboard_content += f"\n> [!info]- {emoji} {sub}\n>\n> | Сфера | Ваши ответы |\n> |:------:|-------------|\n"
-                section_pat = rf"###\s*[\d\.]+\s*.*?\s*{re.escape(sub)}.*?(\n\|[\s\S]*?)(?=\n###|\n##|\n#|\Z)"
-                section_match = re.search(section_pat, draft_content, re.DOTALL | re.IGNORECASE)
-                section_text = section_match.group(1) if section_match else ""
-                table_lines = [line for line in section_text.splitlines() if line.strip().startswith('|')]
-                answers = {}
-                for line in table_lines:
-                    cells = [c.strip() for c in line.split('|')[1:-1]]
-                    if len(cells) >= 2 and not any(x in cells[0] for x in ['Сфера', ':---']):
-                        sphere_identifier = cells[0]
-                        sphere_key = EMOJI_TO_SPHERE_NAME.get(sphere_identifier, sphere_identifier)
-                        sphere_key = SPHERE_SYNONYMS.get(sphere_key, sphere_key)
-                        answers[sphere_key] = cells[1]
-
-                for sphere in SPHERE_CONFIG:
-                    value = answers.get(sphere['name'], 'Нет данных')
-                    dashboard_content += f"> | {' ' + sphere['emoji'] + ' '} | {value} |\n"
-        
-        with open(dashboard_path, 'w', encoding='utf-8') as f:
-            f.write(dashboard_content)
-            
-        print(f"Дашборд обновлен: {dashboard_path}")
-        
-        try:
-            import subprocess
-            trend_script = os.path.join(os.path.dirname(__file__), "trend.py")
-            subprocess.run([sys.executable, trend_script], check=True)
-            print("График тренда обновлен")
-        except Exception as e:
-            print(f"Ошибка при обновлении графика тренда: {str(e)}")
-        
-    except Exception as e:
-        print(f"Ошибка при обновлении дашборда: {str(e)}")
-
 def print_scores(scores):
     """Выводит рассчитанные показатели в консоль."""
     print(f"HPI: {scores['HPI']:.1f} {get_score_emoji(scores['HPI'])}")
@@ -517,16 +352,6 @@ def run_calculator():
         print_scores(scores)
         
         create_final_report(draft_path, scores)
-
-        # Отключаем прямое обновление дашборда из калькулятора.
-        # За это теперь отвечает ai_dashboard_injector.py
-        # update_dashboard(scores, draft_path)
-
-        from trend import update_trend_chart
-        if update_trend_chart():
-            print("График тренда обновлен")
-        else:
-            print("Не удалось обновить график тренда.")
 
     except Exception as e:
         print(f"Произошла ошибка в работе калькулятора: {e}")

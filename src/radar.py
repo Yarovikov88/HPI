@@ -56,7 +56,7 @@ def create_radar_chart(scores: Dict[str, float], output_path: str, is_dashboard:
     if is_dashboard:
         fig_size = (8, 8)
         title_size = 12
-        label_size = 8
+        label_size = 10
         marker_size = 6
         line_width = 2
         grid_width = 0.5
@@ -108,18 +108,6 @@ def create_radar_chart(scores: Dict[str, float], output_path: str, is_dashboard:
     for y in levels[:-1]:
         ax.plot(angles, [y] * len(angles), '--', color='white', alpha=0.3, linewidth=grid_width)
         
-        # Добавляем подписи уровней только для полной версии
-        if not is_dashboard:
-            if y == 4:
-                ax.text(-0.2, y, 'Satisfactory', color='#cccccc', fontsize=label_size-3, 
-                       ha='right', va='center')
-            elif y == 6:
-                ax.text(-0.2, y, 'Good', color='#cccccc', fontsize=label_size-3, 
-                       ha='right', va='center')
-            elif y == 8:
-                ax.text(-0.2, y, 'Excellent', color='#cccccc', fontsize=label_size-3, 
-                       ha='right', va='center')
-    
     # Добавляем радиальные линии
     for angle in angles[:-1]:
         ax.plot([angle, angle], [0, 10], '--', color='white', alpha=0.3, linewidth=grid_width)
