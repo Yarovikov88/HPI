@@ -12,6 +12,7 @@ import sys
 from typing import Dict, List
 import logging
 from trend import generate_trend_chart
+import json
 
 # --- Принудительное использование UTF-8 ---
 try:
@@ -40,6 +41,46 @@ SPHERES_CONFIG = [
     {"key": "Хобби и увлечения", "emoji": "🎨"},
     {"key": "Благосостояние", "emoji": "💰"}
 ]
+
+def parse_questions_database() -> Dict[str, List[str]]:
+    """
+    Парсит файл questions.md и извлекает все стандартные метрики для каждой сферы.
+    Возвращает словарь, где ключ - название сферы, а значение - список названий метрик.
+    """
+    db_path = os.path.join(PROJECT_ROOT, 'database', 'questions.md')
+    if not os.path.exists(db_path):
+        logging.error(f"Файл базы данных вопросов не найден: {db_path}")
+        return {}
+
+    with open(db_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    sphere_metrics = {}
+    
+    # Регулярное выражение для поиска JSON-блоков для каждой сферы
+    # Ищет заголовок типа "## 💖 Отношения с любимыми" и следующий за ним блок ```json ... ```
+    pattern = re.compile(r"##\s*(?P<emoji>[\U0001F000-\U0001FA95\s\S]+?)\s*(?P<name>.*?)\n```json\n([\s\S]+?)\n```", re.DOTALL)
+
+    matches = pattern.finditer(content)
+    
+    for match in matches:
+        sphere_name = match.group('name').strip()
+        json_content = match.group(3)
+
+        try:
+            data = json.loads(json_content)
+            for item in data:
+                if item.get("category") == "metrics" and "metrics" in item:
+                    # Собираем имена всех метрик для данной сферы
+                    metric_names = [m.get("name") for m in item["metrics"] if m.get("name")]
+                    if sphere_name in [s['key'] for s in SPHERES_CONFIG]:
+                        sphere_metrics[sphere_name] = metric_names
+        except json.JSONDecodeError as e:
+            logging.error(f"Ошибка декодирования JSON для сферы '{sphere_name}': {e}")
+            continue
+            
+    logging.info(f"Из базы данных загружены стандартные метрики для {len(sphere_metrics)} сфер.")
+    return sphere_metrics
 
 # --- УТИЛИТЫ ---
 
@@ -169,35 +210,51 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
                     metrics_data = []
                     for table_line in lines[i+1:]:
                         if table_line.strip().startswith('###'): break
-                        if table_line.strip().startswith('|'):
-                            parts = [p.strip() for p in table_line.split('|') if p.strip()]
-                            if len(parts) >= 4 and '---' not in parts[0]:
-                                for config in SPHERES_CONFIG:
-                                    if config['key'] in parts[0] or config['emoji'] in parts[0]:
-                                        metrics_data.append({
-                                            'sphere': config['key'],
-                                            'metric': parts[1],
-                                            'current': parts[2],
-                                            'target': parts[3]
-                                        })
-                                        break
+                        if not table_line.strip().startswith('|'): continue
+                        
+                        parts = [p.strip() for p in table_line.split('|') if p.strip()]
+                        if len(parts) >= 4 and '---' not in parts[0]:
+                            sphere_candidate = parts[0]
+                            # Ищем, к какой сфере относится строка
+                            for config in SPHERES_CONFIG:
+                                if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
+                                    metrics_data.append({
+                                        'sphere': config['key'],
+                                        'metric': parts[1],
+                                        'current': parts[2],
+                                        'target': parts[3]
+                                    })
+                                    # Не прерываем, чтобы найти все метрики для всех сфер
                     all_pro_data[section_title] = metrics_data
                     logging.info(f"Для секции '{section_title}' извлечены метрики: {metrics_data}")
                 else:
                     # Стандартная обработка для остальных секций
                     section_data = {}
+                    current_sphere_key = None
                     for table_line in lines[i+1:]:
                         if table_line.strip().startswith('###'): break
-                        if table_line.strip().startswith('|'):
-                            parts = [p.strip() for p in table_line.split('|') if p.strip()]
-                            if len(parts) >= 2:
-                                sphere_candidate = parts[0]
-                                answer = parts[1]
-                                final_answer = answer if answer and answer.lower() not in ['нет', ''] else "Нет данных"
-                                for config in SPHERES_CONFIG:
-                                    if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
-                                        section_data[config['key']] = final_answer
-                                        break
+                        if not table_line.strip().startswith('|'): continue
+
+                        parts = [p.strip() for p in table_line.split('|') if p.strip()]
+                        if len(parts) >= 2:
+                            sphere_candidate = parts[0]
+                            answer = parts[1]
+                            final_answer = answer if answer and answer.lower() not in ['нет', ''] else "Нет данных"
+
+                            # Проверяем, новая ли это сфера
+                            found_sphere = False
+                            for config in SPHERES_CONFIG:
+                                if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
+                                    current_sphere_key = config['key']
+                                    section_data[current_sphere_key] = final_answer
+                                    found_sphere = True
+                                    break # Нашли сферу, выходим из внутреннего цикла
+                            
+                            # Если сфера не найдена в первой колонке, используем предыдущую
+                            # (для многострочных ответов в одной сфере)
+                            if not found_sphere and current_sphere_key and section_data.get(current_sphere_key) != "Нет данных":
+                               section_data[current_sphere_key] += f"\\n{final_answer}"
+
                     all_pro_data[section_title] = section_data
                     logging.info(f"Для секции '{section_title}' извлечены следующие данные: {section_data}")
                 
@@ -229,6 +286,9 @@ def run_injector():
         return
 
     pro_data = parse_pro_data(draft_content)
+    
+    # Загружаем стандартные метрики из БД
+    standard_metrics = parse_questions_database()
 
     reports_history = collect_reports_history()
     
@@ -348,13 +408,30 @@ def run_injector():
                 dashboard_content.append(f"> | {sphere['emoji']} {sphere['key']} | {achievement} |")
 
     # Мои метрики
-    if pro_data.get('Мои метрики'):
+    if pro_data.get('Мои метрики') or standard_metrics:
         dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝📊 Мои метрики')
         dashboard_content.append("> | Сфера | Метрика | Текущее значение | Целевое значение |")
         dashboard_content.append("> |:---|:---|:---:|:---:|")
-        for metric in pro_data['Мои метрики']:
-            sphere_emoji = next((s['emoji'] for s in SPHERES_CONFIG if s['key'] == metric['sphere']), '')
-            dashboard_content.append(f"> | {sphere_emoji} {metric['sphere']} | {metric['metric']} | {metric['current']} | {metric['target']} |")
+        
+        # Получаем фактические данные из черновика
+        actual_metrics_list = pro_data.get('Мои метрики', [])
+        # Преобразуем их в словарь для быстрого доступа: {(сфера, название): {данные}}
+        actual_metrics_map = {(m['sphere'], m['metric']): m for m in actual_metrics_list}
+
+        # Итерируемся по стандартным метрикам из БД
+        for sphere_config in SPHERES_CONFIG:
+            sphere_key = sphere_config['key']
+            sphere_emoji = sphere_config['emoji']
+            
+            # Проходим по всем стандартным метрикам для данной сферы
+            for metric_name in standard_metrics.get(sphere_key, []):
+                # Ищем фактические данные для этой стандартной метрики
+                metric_data = actual_metrics_map.get((sphere_key, metric_name))
+                
+                current = metric_data['current'] if metric_data else "-"
+                target = metric_data['target'] if metric_data else "-"
+
+                dashboard_content.append(f"> | {sphere_emoji} {sphere_key} | {metric_name} | {current} | {target} |")
 
     # --- Рекомендации AI ---
     if recommendations:
