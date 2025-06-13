@@ -273,63 +273,93 @@ def find_latest_draft() -> Optional[str]:
             print("Черновики по стандарту 'YYYY-MM-DD_draft.md' не найдены.")
             return None
             
-        latest_draft = max(drafts, key=os.path.getmtime)
+        # Сортируем по дате в имени файла
+        latest_draft = max(drafts, key=lambda x: re.search(r"(\d{4}-\d{2}-\d{2})", os.path.basename(x)).group(1))
+        print(f"Найден последний черновик по дате в имени: {latest_draft}")
         return latest_draft
     except Exception as e:
         print(f"Ошибка при поиске последнего черновика: {e}")
         return None
 
 def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
-    """
-    Создает финальную версию отчета, очищенную от PRO-данных,
-    с добавленными расчетами HPI.
-    """
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    final_report_name = f"{today_str}_report.md"
-    final_report_path = os.path.join(FINAL_FOLDER, final_report_name)
-    
-    # Читаем содержимое черновика
-    with open(draft_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    """Создает финальный отчет на основе черновика и рассчитанных показателей."""
+    try:
+        # Читаем содержимое черновика
+        with open(draft_path, 'r', encoding='utf-8') as f:
+            content = f.read()
 
-    # Отсекаем все, что начинается с заголовка '# HPI PRO'
-    pro_section_marker = '# HPI PRO'
-    if pro_section_marker in content:
-        content = content.split(pro_section_marker)[0]
-    
-    # Записываем очищенный контент в финальный файл
-    with open(final_report_path, 'w', encoding='utf-8') as f:
-        f.write(content.strip())
-
-    # Создаем единую радар-диаграмму с датой (версия для дашборда)
-    images_dir = os.path.join(FINAL_FOLDER, "images")
-    os.makedirs(images_dir, exist_ok=True)
-    
-    radar_chart_path = os.path.join(images_dir, f"{today_str}_radar.png")
-    # Используем is_dashboard=True для компактного вида
-    create_radar_chart(scores, radar_chart_path, is_dashboard=True)
-    print(f"🎨 Создана радарная диаграмма: {radar_chart_path}")
-
-    # Добавляем в конец файла блок с итоговыми оценками и диаграммой
-    with open(final_report_path, 'a', encoding='utf-8') as f:
-        f.write("\n\n---\n\n")
-        f.write("## 🏆 Итоговые оценки HPI\n\n")
-        f.write(f"![Радарная диаграмма](./images/{os.path.basename(radar_chart_path)})\n\n")
-        f.write("| Сфера | Оценка (1-10) | Индикатор |\n")
-        f.write("|:---|:---:|:---:|\n")
+        # Получаем текущую дату
+        current_date = datetime.now().strftime("%Y-%m-%d")
         
-        # Добавляем оценки по сферам
+        # Создаем имя для финального отчета
+        final_report_name = f"{current_date}_report.md"
+        final_report_path = os.path.join(FINAL_FOLDER, final_report_name)
+
+        # Создаем радарную диаграмму
+        radar_filename = f"{current_date}_radar.png"
+        radar_path = os.path.join(FINAL_FOLDER, "images", radar_filename)
+        os.makedirs(os.path.dirname(radar_path), exist_ok=True)
+
+        # Создаем радарную диаграмму
+        create_radar_chart(scores, radar_path)
+
+        # Обновляем дату в черновике
+        content = re.sub(r'Дата: \d{4}-\d{2}-\d{2}', f'Дата: {current_date}', content)
+
+        # Обрабатываем метрики
+        metrics_section = re.search(r'### 📊 Мои метрики\n\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|\n\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|(.*?)(?=###|$)', content, re.DOTALL)
+        if metrics_section:
+            metrics_lines = metrics_section.group(1).strip().split('\n')
+            unique_metrics = {}
+            
+            for line in metrics_lines:
+                if not line.strip() or not line.startswith('|'):
+                    continue
+                    
+                parts = [p.strip() for p in line.split('|') if p.strip()]
+                if len(parts) >= 4:
+                    sphere = parts[0]
+                    metric = parts[1]
+                    current = parts[2] if parts[2] else '-'
+                    target = parts[3] if parts[3] else '-'
+                    
+                    # Используем комбинацию сферы и метрики как ключ
+                    key = (sphere, metric)
+                    if key not in unique_metrics or (current != '-' and target != '-'):
+                        unique_metrics[key] = (current, target)
+
+            # Заменяем старую секцию метрик на новую
+            new_metrics = "### 📊 Мои метрики\n| Сфера | Метрика | Текущее | Целевое |\n|:---|:---|:---:|:---:|\n"
+            for (sphere, metric), (current, target) in unique_metrics.items():
+                new_metrics += f"| {sphere} | {metric} | {current} | {target} |\n"
+            
+            content = re.sub(r'### 📊 Мои метрики.*?(?=###|$)', new_metrics, content, flags=re.DOTALL)
+
+        # Добавляем итоговые оценки
+        content += "\n---\n\n## 🏆 Итоговые оценки HPI\n\n"
+        content += f"![Радарная диаграмма](./images/{radar_filename})\n\n"
+        content += "| Сфера | Оценка (1-10) | Индикатор |\n"
+        content += "|:---|:---:|:---:|\n"
+
+        # Добавляем оценки по каждой сфере
         for sphere in SPHERE_CONFIG:
-            score = scores.get(sphere['number'], 0.0)
+            score = scores[sphere["number"]]
             emoji = get_score_emoji(score)
-            f.write(f"| {sphere['name']} | {score} | {emoji} |\n")
-        
+            content += f"| {sphere['name']} | {score:.1f} | {emoji} |\n"
+
         # Добавляем итоговый HPI
-        hpi_score = scores.get('HPI', 0.0)
-        hpi_emoji = get_score_emoji(hpi_score, is_hpi=True)
-        f.write(f"| **Итоговый HPI** | **{hpi_score}** | {hpi_emoji} |\n")
-    
-    print(f"✅ Финальный отчет сохранен: {final_report_path}")
+        total_hpi = calculate_total_hpi(scores)
+        hpi_emoji = get_score_emoji(total_hpi, is_hpi=True)
+        content += f"| **Итоговый HPI** | **{total_hpi:.1f}** | {hpi_emoji} |\n"
+
+        # Сохраняем финальный отчет
+        with open(final_report_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+    except Exception as e:
+        print(f"Ошибка при создании финального отчета: {e}")
+        traceback.print_exc()
+        raise
 
 def print_scores(scores):
     """Выводит рассчитанные показатели в консоль."""

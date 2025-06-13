@@ -66,20 +66,23 @@
 
 ### Установка
 1. Установите Python 3.8 или выше
-2. Установите зависимости: `pip install -r requirements.txt`
-3. Установите Obsidian для просмотра отчетов
+2. Клонируйте репозиторий: `git clone https://github.com/yourusername/hpi.git`
+3. Установите зависимости: `pip install -r requirements.txt`
+   - matplotlib==3.8.2
+   - numpy==1.26.3
+4. Рекомендуется использовать Obsidian или VS Code для просмотра отчетов
 
 ### Первый запуск
-1. Откройте папку проекта в Obsidian
-2. Перейдите в `HPI/1.HPI_Interfaces/HPI_Dashboard.md`
+1. Откройте папку проекта в вашем редакторе
+2. Перейдите в `interfaces/dashboard.md`
 3. Ознакомьтесь с текущими показателями
 
 ## Заполнение опросника
 
 ### Создание черновика
-1. Откройте `HPI/4.HPI_Reports_Draft/`
-2. Создайте новый файл с датой: `YYYY-MM-DD HPI.md`
-3. Используйте шаблон из `HPI_Report_Template.md`
+1. Откройте `reports_draft/`
+2. Запустите скрипт создания черновика: `python scripts/create_draft.py`
+3. Будет создан файл с текущей датой: `YYYY-MM-DD_draft.md`
 
 ### Ответы на вопросы
 - Оценка по шкале от 1 до 4

@@ -152,6 +152,40 @@ def normalize_sphere_name(name):
     # Убираем пробелы и приводим к нижнему регистру
     return name.strip().lower()
 
+def normalize_metric_name(name: str) -> str:
+    """
+    Нормализует название метрики для сравнения.
+    Убирает единицы измерения, приводит к нижнему регистру,
+    убирает лишние пробелы и специальные символы.
+    """
+    # Убираем единицы измерения в скобках и после слова "в"
+    name = re.sub(r'\s*\([^)]*\)', '', name)
+    name = re.sub(r'\s+в\s+(?:неделю|месяц|квартал|день)(?:\s*\(.*?\))?', '', name)
+    
+    # Стандартизируем общие слова
+    replacements = {
+        'часов': 'часы',
+        'минут': 'минуты',
+        'новых': 'новые',
+        'освоено': '',
+        'начато': '',
+        'количество': 'число',
+    }
+    
+    # Приводим к нижнему регистру
+    name = name.lower()
+    
+    # Применяем замены
+    for old, new in replacements.items():
+        name = re.sub(rf'\b{old}\b', new, name)
+    
+    # Убираем специальные символы и лишние пробелы
+    name = re.sub(r'[^\w\s]', '', name)
+    # Заменяем множественные пробелы на один
+    name = re.sub(r'\s+', ' ', name)
+    
+    return name.strip()
+
 class HPIRecommendationEngine:
     def __init__(self):
         self._emoji_to_sphere = {
@@ -322,6 +356,9 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
                 # Специальная обработка для 'Мои метрики'
                 if section_title == 'Мои метрики':
                     metrics_data = []
+                    current_sphere = None
+                    unique_metrics = {}  # Для отслеживания уникальных метрик
+                    
                     for table_line in lines[i+1:]:
                         if table_line.strip().startswith('###'): break
                         if not table_line.strip().startswith('|'): continue
@@ -329,16 +366,42 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
                         parts = [p.strip() for p in table_line.split('|') if p.strip()]
                         if len(parts) >= 4 and '---' not in parts[0]:
                             sphere_candidate = parts[0]
+                            metric_name = parts[1]
+                            current = parts[2]
+                            target = parts[3]
+                            
+                            # Пропускаем строки с пустыми значениями
+                            if not current and not target:
+                                continue
+                                
                             # Ищем, к какой сфере относится строка
                             for config in SPHERES_CONFIG:
                                 if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
-                                    metrics_data.append({
-                                        'sphere': config['key'],  # Здесь оставляем ключ для внутренней логики
-                                        'metric': parts[1],
-                                        'current': parts[2],
-                                        'target': parts[3]
-                                    })
+                                    current_sphere = config['key']
                                     break
+                            
+                            if current_sphere:
+                                # Нормализуем название метрики
+                                normalized_metric = normalize_metric_name(metric_name)
+                                
+                                # Создаем уникальный ключ для метрики
+                                metric_key = (current_sphere, normalized_metric)
+                                
+                                # Если метрика уже существует, обновляем только если новые значения не пустые
+                                # и текущая метрика имеет более полное название
+                                if metric_key not in unique_metrics or (
+                                    (current or target) and 
+                                    len(metric_name) > len(unique_metrics[metric_key]['metric'])
+                                ):
+                                    unique_metrics[metric_key] = {
+                                        'sphere': current_sphere,
+                                        'metric': metric_name,
+                                        'current': current,
+                                        'target': target
+                                    }
+                    
+                    # Преобразуем уникальные метрики в список
+                    metrics_data = list(unique_metrics.values())
                     all_pro_data[section_title] = metrics_data
                     logging.info(f"Для секции '{section_title}' извлечены метрики: {metrics_data}")
                 else:
@@ -647,29 +710,33 @@ def run_injector():
                 dashboard_content.append(f"> | {sphere['emoji']} | {achievement} |")
 
     # Мои метрики
-    if pro_data.get('Мои метрики') or standard_metrics:
+    if pro_data.get('Мои метрики'):
         dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📊 Мои метрики')
         dashboard_content.append("> | Сфера | Метрика | Текущее значение | Целевое значение |")
         dashboard_content.append("> |:---:|:---|:---:|:---:|")
         
-        # Получаем фактические данные из черновика
-        actual_metrics_list = pro_data.get('Мои метрики', [])
-        # Преобразуем их в словарь для быстрого доступа: {(сфера, название): {данные}}
-        actual_metrics_map = {(m['sphere'], m['metric']): m for m in actual_metrics_list}
-
-        # Итерируемся по стандартным метрикам из БД
+        # Получаем все метрики из черновика
+        metrics_data = pro_data.get('Мои метрики', [])
+        
+        # Создаем словарь для быстрого доступа к метрикам
+        metrics_by_sphere = {}
+        for metric in metrics_data:
+            sphere = metric['sphere']
+            if sphere not in metrics_by_sphere:
+                metrics_by_sphere[sphere] = []
+            metrics_by_sphere[sphere].append(metric)
+        
+        # Выводим метрики в порядке сфер из конфигурации
         for sphere_config in SPHERES_CONFIG:
-            sphere_key = sphere_config['key']
-            sphere_emoji = sphere_config['emoji']
+            sphere = sphere_config['key']
+            sphere_metrics = metrics_by_sphere.get(sphere, [])
             
-            # Проходим по всем стандартным метрикам для данной сферы
-            for metric_name in standard_metrics.get(sphere_key, []):
-                # Ищем фактические данные для этой стандартной метрики
-                metric_data = actual_metrics_map.get((sphere_key, metric_name))
-                if metric_data:
-                    current = metric_data.get('current', '-')
-                    target = metric_data.get('target', '-')
-                    dashboard_content.append(f"> | {sphere_emoji} | {metric_name} | {current} | {target} |")
+            # Сортируем метрики по названию для стабильного порядка
+            sphere_metrics.sort(key=lambda x: normalize_metric_name(x['metric']))
+            
+            for metric in sphere_metrics:
+                if metric['current'] and metric['target']:  # Показываем только метрики с заполненными значениями
+                    dashboard_content.append(f"> | {sphere_config['emoji']} | {metric['metric']} | {metric['current']} | {metric['target']} |")
 
     # AI Рекомендации
     if recommendations:
