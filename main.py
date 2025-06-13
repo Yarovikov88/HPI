@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 # --- Информация о приложении ---
-APP_VERSION = "0.4.0-dev"
+APP_VERSION = "0.4.0"
 
 # --- Настройка логирования ---
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))

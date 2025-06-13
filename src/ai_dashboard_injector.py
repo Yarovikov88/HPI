@@ -9,7 +9,7 @@ from datetime import datetime
 from ai_recommendations import HPIRecommendationEngine
 import random
 import sys
-from typing import Dict, List
+from typing import Dict, List, Optional
 import logging
 from trend import generate_trend_chart
 import json
@@ -143,31 +143,140 @@ def collect_reports_history() -> List[Dict]:
     logging.info(f"Собрано {len(history)} записей в истории.")
     return history
 
-def generate_dummy_recommendations(pro_data: Dict) -> Dict[str, str]:
+def normalize_sphere_name(name):
     """
-    Генерирует 'фальшивые' AI-рекомендации на основе PRO-данных.
-    Это временная заглушка до реализации полноценного AI-модуля.
+    Убираем эмодзи, пробелы и приводим к нижнему регистру.
     """
-    recommendations = {}
-    
-    # Пример простой логики: ищем ключевые слова в проблемах и целях
-    problems = pro_data.get('Мои проблемы', {})
-    goals = pro_data.get('Мои цели', {})
+    # Убираем эмодзи (они обычно занимают 2 байта)
+    name = ''.join(c for c in name if len(c.encode('utf-8')) == 1)
+    # Убираем пробелы и приводим к нижнему регистру
+    return name.strip().lower()
 
-    for sphere, problem in problems.items():
-        if "выгорание" in problem.lower() or "апатия" in problem.lower():
-            recommendations[sphere] = "Обнаружены признаки выгорания. Рассмотрите возможность взять короткий отпуск или снизить нагрузку."
-        elif "редко" in problem.lower():
-             recommendations[sphere] = f"Вы указали, что редко видитесь/созваниваетесь. Попробуйте запланировать регулярную встречу или звонок."
+class HPIRecommendationEngine:
+    def __init__(self):
+        self._emoji_to_sphere = {
+            "💖": "Отношения с любимыми",
+            "🏡": "Отношения с родными",
+            "🤝": "Друзья",
+            "💼": "Карьера",
+            "♂️": "Физическое здоровье",
+            "🧠": "Ментальное здоровье",
+            "🎨": "Хобби и увлечения",
+            "💰": "Благосостояние"
+        }
+        self._sphere_to_emoji = {v: k for k, v in self._emoji_to_sphere.items()}
 
-    for sphere, goal in goals.items():
-        if "курс" in goal.lower() or "обучение" in goal.lower():
-            recommendations[sphere] = f"Отличная цель! Для прохождения курса по '{goal}' создайте учебный план и выделите время в календаре."
-        elif "найти" in goal.lower() and "работу" in goal.lower():
-             recommendations[sphere] = "Для поиска новой работы обновите резюме и начните ежедневно просматривать вакансии на 1-2 площадках."
+    def _extract_sphere_values(self, report_content: str) -> Dict[str, float]:
+        """
+        Извлекает значения сфер из отчета.
+        Возвращает словарь {сфера: значение}.
+        """
+        sphere_values = {}
+        
+        # Ищем строки с эмодзи и значениями
+        pattern = r'([💖🏡🤝💼♂️🧠🎨💰])\s+([^:]+):\s+(\d+\.\d+)\s+[🟢🟡🔴]'
+        matches = re.finditer(pattern, report_content)
+        
+        for match in matches:
+            emoji = match.group(1)
+            sphere = match.group(2).strip()
+            value = float(match.group(3))
+            
+            # Преобразуем эмодзи в ключ сферы
+            sphere_key = self._emoji_to_sphere.get(emoji)
+            if sphere_key:
+                sphere_values[sphere_key] = value
+                logging.info(f"[AI DASHBOARD] Найдено значение для сферы {sphere_key}: {value}")
+        
+        if not sphere_values:
+            logging.warning("[AI DASHBOARD] Не удалось извлечь значения сфер из отчета")
+            
+        return sphere_values
 
-    logging.info(f"Сгенерированы dummy-рекомендации: {recommendations}")
-    return recommendations
+    def generate_recommendations(self, pro_data: Dict, report_content: str) -> Dict[str, str]:
+        """
+        Генерирует рекомендации на основе PRO-данных и значений сфер из отчета.
+        """
+        sphere_values = self._extract_sphere_values(report_content)
+        logging.info(f"[AI DASHBOARD] sphere_values (из отчёта): {sphere_values}")
+        
+        recommendations = {}
+        for sphere_config in SPHERES_CONFIG:
+            sphere = sphere_config['key']
+            emoji = sphere_config['emoji']
+            
+            # Получаем данные для сферы
+            problem = pro_data.get('Мои проблемы', {}).get(sphere, 'Нет данных')
+            goal = pro_data.get('Мои цели', {}).get(sphere, 'Нет данных')
+            blocker = pro_data.get('Мои блокеры', {}).get(sphere, 'Нет данных')
+            value = sphere_values.get(sphere, 0.0)
+            
+            # Генерируем рекомендацию
+            recommendation = self._generate_sphere_recommendation(sphere, problem, goal, blocker, value)
+            recommendations[sphere] = f"> | {emoji} | {recommendation} |"
+            logging.info(f"[AI DASHBOARD] Итоговая строка: {recommendations[sphere]}")
+        
+        return recommendations
+
+    def _generate_sphere_recommendation(self, sphere: str, problem: str, goal: str, blocker: str, value: float) -> str:
+        """
+        Генерирует рекомендацию для конкретной сферы на основе всех доступных данных.
+        """
+        if problem != 'Нет данных':
+            if 'редко' in problem.lower():
+                return f"Вы указали, что {problem.lower()}. Попробуйте запланировать регулярную встречу или звонок."
+            elif 'выгорание' in problem.lower():
+                return "Для борьбы с выгоранием важно найти баланс между работой и отдыхом. Начните с коротких перерывов каждые 2 часа."
+            elif 'апатия' in problem.lower() or 'фокус' in problem.lower():
+                return "Для улучшения концентрации попробуйте технику помодоро: 25 минут работы, 5 минут отдыха."
+            elif 'расход' in problem.lower():
+                return "Создайте таблицу учета расходов и ведите её ежедневно. Это поможет лучше контролировать траты."
+        
+        if goal != 'Нет данных':
+            if 'отпуск' in goal.lower():
+                return "Для планирования отпуска начните с составления бюджета и выбора примерных дат."
+            elif 'звонить' in goal.lower() or 'звонки' in goal.lower():
+                return "Внесите регулярные звонки в календарь и поставьте напоминания."
+            elif 'встреч' in goal.lower():
+                return "Создайте групповой чат или событие, чтобы согласовать удобное для всех время."
+            elif 'работу' in goal.lower():
+                return "Для поиска новой работы обновите резюме и начните ежедневно просматривать вакансии на 1-2 площадках."
+            elif 'бежать' in goal.lower() or 'км' in goal.lower():
+                return "Начните с небольших пробежек по 1-2 км, постепенно увеличивая дистанцию."
+            elif 'курс' in goal.lower() or 'медитац' in goal.lower():
+                return "Выделите в календаре конкретное время для занятий и создайте комфортное пространство."
+            elif 'мастер' in goal.lower() or 'класс' in goal.lower():
+                return "Исследуйте доступные мастер-классы онлайн и офлайн, составьте список интересных вариантов."
+            elif 'доход' in goal.lower() or 'отклад' in goal.lower():
+                return "Настройте автоматическое перечисление части зарплаты на сберегательный счет."
+        
+        if blocker != 'Нет данных':
+            if 'время' in blocker.lower():
+                return "Проведите аудит своего времени в течение недели, чтобы найти возможности для оптимизации."
+            elif 'устал' in blocker.lower():
+                return "Попробуйте перенести важные дела на утро, когда уровень энергии выше."
+            elif 'страх' in blocker.lower() or 'неувер' in blocker.lower():
+                return "Составьте список своих достижений и сильных сторон. Это поможет укрепить уверенность."
+            elif 'лень' in blocker.lower():
+                return "Используйте технику 'двух минут': начните с совсем небольшого действия."
+            elif 'прокрастинац' in blocker.lower():
+                return "Разбейте большую задачу на маленькие, легко выполнимые шаги."
+            elif 'инфляц' in blocker.lower():
+                return "Проанализируйте свои расходы и найдите возможности для оптимизации бюджета."
+        
+        # Базовые рекомендации по сферам
+        base_recommendations = {
+            "Отношения с любимыми": "Уделите время качественному общению. Запланируйте совместное мероприятие или романтический вечер.",
+            "Отношения с родными": "Поддерживайте регулярный контакт с семьей. Запланируйте еженедельные звонки или встречи.",
+            "Друзья": "Организуйте встречу с друзьями или онлайн-созвон для поддержания связи.",
+            "Карьера": "Проанализируйте свои профессиональные цели и составьте план развития на ближайшие месяцы.",
+            "Физическое здоровье": "Начните с простых привычек: утренняя зарядка, прогулки, правильное питание.",
+            "Ментальное здоровье": "Выделите время на отдых и восстановление. Практикуйте техники релаксации.",
+            "Хобби и увлечения": "Исследуйте новые интересы и найдите занятие, которое приносит удовольствие.",
+            "Благосостояние": "Создайте финансовый план и начните вести учет доходов и расходов."
+        }
+        
+        return base_recommendations.get(sphere, "Установите конкретные цели и отслеживайте прогресс.")
 
 def find_latest_draft() -> str | None:
     """Находит последний по дате изменения черновик в папке."""
@@ -197,6 +306,11 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
     pro_sections = ['Мои проблемы', 'Мои цели', 'Мои блокеры', 'Мои достижения', 'Мои метрики']
     all_pro_data = {}
 
+    # Создаем словарь для быстрого поиска эмодзи по названию сферы
+    emoji_map = {config['key']: config['emoji'] for config in SPHERES_CONFIG}
+    # Создаем обратный словарь для поиска ключа по эмодзи
+    emoji_to_key = {config['emoji']: config['key'] for config in SPHERES_CONFIG}
+
     for section_title in pro_sections:
         logging.debug(f"Поиск секции: '{section_title}'")
         lines = md_content.split('\n')
@@ -219,12 +333,12 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
                             for config in SPHERES_CONFIG:
                                 if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
                                     metrics_data.append({
-                                        'sphere': config['key'],
+                                        'sphere': config['key'],  # Здесь оставляем ключ для внутренней логики
                                         'metric': parts[1],
                                         'current': parts[2],
                                         'target': parts[3]
                                     })
-                                    # Не прерываем, чтобы найти все метрики для всех сфер
+                                    break
                     all_pro_data[section_title] = metrics_data
                     logging.info(f"Для секции '{section_title}' извлечены метрики: {metrics_data}")
                 else:
@@ -243,25 +357,152 @@ def parse_pro_data(md_content: str) -> Dict[str, Dict[str, str]]:
 
                             # Проверяем, новая ли это сфера
                             found_sphere = False
-                            for config in SPHERES_CONFIG:
-                                if config['key'] in sphere_candidate or config['emoji'] in sphere_candidate:
-                                    current_sphere_key = config['key']
+                            # Сначала проверяем эмодзи
+                            for emoji in emoji_to_key:
+                                if emoji in sphere_candidate:
+                                    current_sphere_key = emoji_to_key[emoji]
                                     section_data[current_sphere_key] = final_answer
                                     found_sphere = True
-                                    break # Нашли сферу, выходим из внутреннего цикла
+                                    break
+                            
+                            # Если эмодзи не найден, ищем по названию сферы
+                            if not found_sphere:
+                                normalized_candidate = normalize_sphere_name(sphere_candidate)
+                                for config in SPHERES_CONFIG:
+                                    if normalize_sphere_name(config['key']) in normalized_candidate:
+                                        current_sphere_key = config['key']
+                                        section_data[current_sphere_key] = final_answer
+                                        found_sphere = True
+                                        break
                             
                             # Если сфера не найдена в первой колонке, используем предыдущую
-                            # (для многострочных ответов в одной сфере)
                             if not found_sphere and current_sphere_key and section_data.get(current_sphere_key) != "Нет данных":
                                section_data[current_sphere_key] += f"\\n{final_answer}"
 
                     all_pro_data[section_title] = section_data
                     logging.info(f"Для секции '{section_title}' извлечены следующие данные: {section_data}")
                 
-                break # Переходим к следующей PRO-секции
+                break
     
     logging.info(f"Парсинг PRO-секций завершен.")
     return all_pro_data
+
+def get_latest_report() -> Optional[str]:
+    """
+    Находит путь к последнему финальному отчету.
+    """
+    reports_dir = os.path.join(PROJECT_ROOT, 'reports_final')
+    if not os.path.exists(reports_dir):
+        return None
+    
+    reports = [f for f in os.listdir(reports_dir) if f.endswith('_report.md')]
+    if not reports:
+        return None
+    
+    latest_report = max(reports)
+    return os.path.join(reports_dir, latest_report)
+
+def generate_dummy_recommendations(pro_data: Dict) -> Dict[str, str]:
+    """
+    Генерирует 'фальшивые' AI-рекомендации на основе PRO-данных.
+    Это временная заглушка до реализации полноценного AI-модуля.
+    """
+    recommendations = {}
+    
+    # Получаем данные из PRO-секций
+    problems = pro_data.get('Мои проблемы', {})
+    goals = pro_data.get('Мои цели', {})
+    blockers = pro_data.get('Мои блокеры', {})
+    metrics = {m['sphere']: m for m in pro_data.get('Мои метрики', [])}
+    
+    # Для каждой сферы из конфигурации
+    for sphere_config in SPHERES_CONFIG:
+        sphere = sphere_config['key']
+        problem = problems.get(sphere)
+        goal = goals.get(sphere)
+        blocker = blockers.get(sphere)
+        metric = metrics.get(sphere)
+        
+        # Если есть какие-то данные для сферы
+        if problem != 'Нет данных' or goal or blocker != 'Нет данных' or metric:
+            recommendation = ""
+            
+            # Анализируем проблему
+            if problem and problem != 'Нет данных':
+                if 'редко' in problem.lower():
+                    recommendation = f"Вы указали, что {problem.lower()}. Попробуйте запланировать регулярную встречу или звонок."
+                elif 'выгорание' in problem.lower():
+                    recommendation = "Для борьбы с выгоранием важно найти баланс между работой и отдыхом. Начните с коротких перерывов каждые 2 часа."
+                elif 'апатия' in problem.lower() or 'фокус' in problem.lower():
+                    recommendation = "Для улучшения концентрации попробуйте технику помодоро: 25 минут работы, 5 минут отдыха."
+                elif 'расход' in problem.lower():
+                    recommendation = "Создайте таблицу учета расходов и ведите её ежедневно. Это поможет лучше контролировать траты."
+            
+            # Анализируем цель
+            if not recommendation and goal:
+                if 'отпуск' in goal.lower():
+                    recommendation = "Для планирования отпуска начните с составления бюджета и выбора примерных дат."
+                elif 'звонить' in goal.lower() or 'звонки' in goal.lower():
+                    recommendation = "Внесите регулярные звонки в календарь и поставьте напоминания."
+                elif 'встреч' in goal.lower():
+                    recommendation = "Создайте групповой чат или событие, чтобы согласовать удобное для всех время."
+                elif 'работу' in goal.lower():
+                    recommendation = "Для поиска новой работы обновите резюме и начните ежедневно просматривать вакансии на 1-2 площадках."
+                elif 'бежать' in goal.lower() or 'км' in goal.lower():
+                    recommendation = "Начните с небольших пробежек по 1-2 км, постепенно увеличивая дистанцию."
+                elif 'курс' in goal.lower() or 'медитац' in goal.lower():
+                    recommendation = "Выделите в календаре конкретное время для занятий и создайте комфортное пространство."
+                elif 'мастер' in goal.lower() or 'класс' in goal.lower():
+                    recommendation = "Исследуйте доступные мастер-классы онлайн и офлайн, составьте список интересных вариантов."
+                elif 'доход' in goal.lower() or 'отклад' in goal.lower():
+                    recommendation = "Настройте автоматическое перечисление части зарплаты на сберегательный счет."
+            
+            # Анализируем блокер
+            if not recommendation and blocker and blocker != 'Нет данных':
+                if 'время' in blocker.lower():
+                    recommendation = "Проведите аудит своего времени в течение недели, чтобы найти возможности для оптимизации."
+                elif 'устал' in blocker.lower():
+                    recommendation = "Попробуйте перенести важные дела на утро, когда уровень энергии выше."
+                elif 'страх' in blocker.lower() or 'неувер' in blocker.lower():
+                    recommendation = "Составьте список своих достижений и сильных сторон. Это поможет укрепить уверенность."
+                elif 'лень' in blocker.lower():
+                    recommendation = "Используйте технику 'двух минут': начните с совсем небольшого действия."
+                elif 'прокрастинац' in blocker.lower():
+                    recommendation = "Разбейте большую задачу на маленькие, легко выполнимые шаги."
+                elif 'инфляц' in blocker.lower():
+                    recommendation = "Проанализируйте свои расходы и найдите возможности для оптимизации бюджета."
+            
+            # Анализируем метрики
+            if not recommendation and metric:
+                current = float(metric['current'])
+                target = float(metric['target'])
+                if current < target:
+                    if 'шагов' in metric['metric'].lower():
+                        recommendation = "Припаркуйте машину дальше от входа, выходите на одну остановку раньше, используйте лестницу вместо лифта."
+                    elif 'стресс' in metric['metric'].lower():
+                        recommendation = "Практикуйте техники дыхания и короткие медитации в течение дня."
+                    elif 'хобби' in metric['metric'].lower():
+                        recommendation = "Заблокируйте в календаре специальное время для хобби, относитесь к нему как к важной встрече."
+                    elif 'сбережен' in metric['metric'].lower():
+                        recommendation = "Создайте отдельный счет для сбережений и настройте автоматические переводы в день зарплаты."
+            
+            # Если не нашли специфичную рекомендацию, используем базовую
+            if not recommendation:
+                base_recommendations = {
+                    "Отношения с любимыми": "Уделите время качественному общению. Запланируйте совместное мероприятие или романтический вечер.",
+                    "Отношения с родными": "Поддерживайте регулярный контакт с семьей. Запланируйте еженедельные звонки или встречи.",
+                    "Друзья": "Организуйте встречу с друзьями или онлайн-созвон для поддержания связи.",
+                    "Карьера": "Проанализируйте свои профессиональные цели и составьте план развития на ближайшие месяцы.",
+                    "Физическое здоровье": "Начните с простых привычек: утренняя зарядка, прогулки, правильное питание.",
+                    "Ментальное здоровье": "Выделите время на отдых и восстановление. Практикуйте техники релаксации.",
+                    "Хобби и увлечения": "Исследуйте новые интересы и найдите занятие, которое приносит удовольствие.",
+                    "Благосостояние": "Создайте финансовый план и начните вести учет доходов и расходов."
+                }
+                recommendation = base_recommendations.get(sphere, "Установите конкретные цели и отслеживайте прогресс.")
+            
+            recommendations[sphere] = recommendation
+    
+    return recommendations
 
 def run_injector():
     """
@@ -338,8 +579,7 @@ def run_injector():
     # Заголовок
     hpi_score = reports_history[-1]['hpi'] if reports_history else 0
     hpi_emoji = get_score_emoji(hpi_score, is_hpi=True)
-    dashboard_content.append(f"# HPI Дашборд")
-    dashboard_content.append(f"🚀 **Ваш текущий Human Performance Index:** {hpi_score} {hpi_emoji}")
+    dashboard_content.append(f"## Human Performance Index: {hpi_score} {hpi_emoji}")
 
     # --- Динамика HPI (график + таблица) ---
     dinamika_content = []
@@ -364,54 +604,53 @@ def run_injector():
     dashboard_content.append("\n---\n")
     dashboard_content.append("## PRO-разделы")
 
-    # --- Генерация PRO-секций с другим стилем ---
-    pro_section_callout_type = "example" # Используем другой тип для визуального отличия
+    pro_section_callout_type = "example"  # Единый стиль для всех PRO-подразделов
 
     # Мои проблемы
     if pro_data.get('Мои проблемы'):
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝🔴 Мои проблемы')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🔴 Мои проблемы')
         dashboard_content.append("> | Сфера | Проблема |")
-        dashboard_content.append("> |:---|:---|")
+        dashboard_content.append("> |:---:|:---|")
         for sphere in SPHERES_CONFIG:
             problem = pro_data.get('Мои проблемы', {}).get(sphere['key'], 'Нет данных')
             if problem != 'Нет данных':
-                dashboard_content.append(f"> | {sphere['emoji']} {sphere['key']} | {problem} |")
+                dashboard_content.append(f"> | {sphere['emoji']} | {problem} |")
 
     # Мои цели
     if pro_data.get('Мои цели'):
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝🎯 Мои цели')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🎯 Мои цели')
         dashboard_content.append("> | Сфера | Цель |")
-        dashboard_content.append("> |:---|:---|")
+        dashboard_content.append("> |:---:|:---|")
         for sphere in SPHERES_CONFIG:
             goal = pro_data.get('Мои цели', {}).get(sphere['key'], 'Нет данных')
             if goal != 'Нет данных':
-                dashboard_content.append(f"> | {sphere['emoji']} {sphere['key']} | {goal} |")
+                dashboard_content.append(f"> | {sphere['emoji']} | {goal} |")
 
     # Мои блокеры
     if pro_data.get('Мои блокеры'):
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝🚧 Мои блокеры')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🚧 Мои блокеры')
         dashboard_content.append("> | Сфера | Блокер |")
-        dashboard_content.append("> |:---|:---|")
+        dashboard_content.append("> |:---:|:---|")
         for sphere in SPHERES_CONFIG:
             blocker = pro_data.get('Мои блокеры', {}).get(sphere['key'], 'Нет данных')
             if blocker != 'Нет данных':
-                dashboard_content.append(f"> | {sphere['emoji']} {sphere['key']} | {blocker} |")
-    
+                dashboard_content.append(f"> | {sphere['emoji']} | {blocker} |")
+
     # Мои достижения
     if pro_data.get('Мои достижения'):
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝🏆 Мои достижения')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🏆 Мои достижения')
         dashboard_content.append("> | Сфера | Достижение |")
-        dashboard_content.append("> |:---|:---|")
+        dashboard_content.append("> |:---:|:---|")
         for sphere in SPHERES_CONFIG:
             achievement = pro_data.get('Мои достижения', {}).get(sphere['key'], 'Нет данных')
             if achievement != 'Нет данных':
-                dashboard_content.append(f"> | {sphere['emoji']} {sphere['key']} | {achievement} |")
+                dashboard_content.append(f"> | {sphere['emoji']} | {achievement} |")
 
     # Мои метрики
     if pro_data.get('Мои метрики') or standard_metrics:
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📝📊 Мои метрики')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 📊 Мои метрики')
         dashboard_content.append("> | Сфера | Метрика | Текущее значение | Целевое значение |")
-        dashboard_content.append("> |:---|:---|:---:|:---:|")
+        dashboard_content.append("> |:---:|:---|:---:|:---:|")
         
         # Получаем фактические данные из черновика
         actual_metrics_list = pro_data.get('Мои метрики', [])
@@ -427,31 +666,32 @@ def run_injector():
             for metric_name in standard_metrics.get(sphere_key, []):
                 # Ищем фактические данные для этой стандартной метрики
                 metric_data = actual_metrics_map.get((sphere_key, metric_name))
-                
-                current = metric_data['current'] if metric_data else "-"
-                target = metric_data['target'] if metric_data else "-"
+                if metric_data:
+                    current = metric_data.get('current', '-')
+                    target = metric_data.get('target', '-')
+                    dashboard_content.append(f"> | {sphere_emoji} | {metric_name} | {current} | {target} |")
 
-                dashboard_content.append(f"> | {sphere_emoji} {sphere_key} | {metric_name} | {current} | {target} |")
-
-    # --- Рекомендации AI ---
+    # AI Рекомендации
     if recommendations:
-        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🤖 AI рекомендации')
+        dashboard_content.append(f'\n> [!{pro_section_callout_type}]- 🤖 AI Рекомендации')
         dashboard_content.append("> | Сфера | Рекомендация |")
-        dashboard_content.append("> |:---|:---|")
-        for sphere_key, rec in recommendations.items():
-            sphere_emoji = next((s['emoji'] for s in SPHERES_CONFIG if s['key'] == sphere_key), '')
-            dashboard_content.append(f"> | {sphere_emoji} {sphere_key} | {rec} |")
+        dashboard_content.append("> |:---:|:---|")
+        for sphere in SPHERES_CONFIG:
+            recommendation = recommendations.get(sphere['key'])
+            if recommendation:
+                dashboard_content.append(f"> | {sphere['emoji']} | {recommendation} |")
 
-    # Записываем контент в файл
+    # --- Сохранение дашборда ---
     dashboard_path = os.path.join(INTERFACES_DIR, 'dashboard.md')
     try:
-        with open(dashboard_path, 'w', encoding='utf-8-sig') as f:
-            f.write("\n".join(dashboard_content))
-        logging.info(f"Дашборд успешно сгенерирован и сохранен в: {dashboard_path}")
+        with open(dashboard_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(dashboard_content))
+        logging.info(f"Дашборд успешно сохранен в {dashboard_path}")
     except Exception as e:
-        logging.critical(f"Не удалось записать в файл дашборда: {e}", exc_info=True)
+        logging.error(f"Ошибка при сохранении дашборда: {e}", exc_info=True)
+        return
 
-    logging.info("--- ✅ AI Dashboard Injector завершил работу ---")
+    logging.info("--- ✅ AI Dashboard Injector успешно завершил работу ---")
 
 
 if __name__ == '__main__':
