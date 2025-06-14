@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="hpi",
-    version="0.5.0",
+    version="5.0.2",
     packages=find_packages(),
     install_requires=[
         "openai>=1.12.0",

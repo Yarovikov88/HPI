@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
 
 # C extensions
 *.so
@@ -118,4 +120,7 @@ logs/
 
 # New additions
 .env.*
-!.env.example 
+!.env.example
+
+# DS_Store
+.DS_Store 

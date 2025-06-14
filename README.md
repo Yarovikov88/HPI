@@ -2,10 +2,76 @@
 
 **Версия: 5.0.2**
 
-## Что нового в 5.0.2
-- Исправлена критическая ошибка генерации AI-рекомендаций (TypeError: 'NoneType' object is not iterable)
+## О проекте
+HPI — это система для анализа и повышения человеческого потенциала. Позволяет вести личную аналитику по сферам жизни, строить отчёты, получать AI-рекомендации и отслеживать прогресс.
+
+---
+
+## Быстрый старт
+
+1. **Установка зависимостей:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Настройка переменных окружения:**
+   - Для AI-рекомендаций нужен ключ OpenAI: `OPENAI_API_KEY`
+   - Можно использовать `.env` файл
+3. **Запуск:**
+   ```bash
+   python main.py
+   ```
+
+---
+
+## Структура проекта
+- `src/` — основной код (логика, AI, генерация, парсеры)
+- `interfaces/` — итоговые дашборды и шаблоны
+- `reports_draft/` — черновики отчётов
+- `reports_final/` — финальные отчёты и графики
+- `database/` — мастер-данные (например, spheres/questions.md)
+- `logs/` — логи работы системы
+- `docs/` — подробная документация (руководства, changelog, требования)
+- `scripts/` — вспомогательные скрипты
+
+---
+
+## Примеры использования
+- Получение AI-рекомендаций по сферам жизни
+- Автоматическое построение трендов и баланса
+- Генерация персональных дашбордов в Obsidian/Markdown
+
+---
+
+## Документация
+- [User Manual](docs/user_manual.md)
+- [AI Recommendations Guide](docs/ai_recommendations_guide.md)
+- [Changelog](docs/changelog.md)
+- [System Requirements](docs/system_requirements.md)
+- [Admin Manual](docs/admin_manual.md)
+
+---
+
+## Часто задаваемые вопросы (FAQ)
+- **Q:** Как добавить свою сферу?  
+  **A:** Добавьте её в `database/questions.md` и обновите мастер-список сфер.
+- **Q:** Почему не работают AI-рекомендации?  
+  **A:** Проверьте наличие переменной `OPENAI_API_KEY` и доступ к OpenAI API.
+- **Q:** Как обновить дашборд?  
+  **A:** Просто запустите `main.py` — дашборд обновится автоматически.
+
+---
+
+## Контакты и поддержка
+- [GitHub Issues](https://github.com/your-repo/issues)
+- Email: support@yourdomain.com
+
+---
+
+## Changelog (v5.0.2)
+- Исправлена критическая ошибка генерации AI-рекомендаций (`TypeError: 'NoneType' object is not iterable`)
 - Теперь AI-рекомендации корректно отображаются в дашборде, если OpenAI API доступен
 - Улучшена стабильность и обработка данных истории
+- Наведен порядок в структуре проекта и документации
 
 # ⚙️ Human Potential Index (HPI)
 
@@ -112,3 +178,17 @@
     -   `YYYY-MM-DD_recommendations.md` (в `reports_final`)
     -   `YYYY-MM-DD_recommendations.json` (в `database`)
     -   `YYYY-MM-DD_radar.png` (в `reports_final/images`)
+
+## Установка через setup.py
+
+- Для установки проекта как Python-пакета используйте:
+  ```bash
+  pip install .
+  ```
+- Файл `setup.py` содержит описание пакета, зависимостей и версии.
+- Версия в `setup.py` должна совпадать с версией в коде (`main.py`, дашборде и changelog).
+- Для публикации на PyPI используйте:
+  ```bash
+  python setup.py sdist bdist_wheel
+  twine upload dist/*
+  ```
