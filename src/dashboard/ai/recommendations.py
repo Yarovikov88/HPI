@@ -119,12 +119,13 @@ class AIRecommendationEngine:
         historical_data = []
         for report in history[-3:]:
             if sphere in report.scores:
+                metrics = report.metrics if report.metrics is not None else []
                 historical_data.append({
                     "date": report.date.strftime("%Y-%m-%d"),
                     "score": report.scores[sphere],
                     "metrics": [
                         {"name": m.name, "value": m.current_value}
-                        for m in report.metrics
+                        for m in metrics
                         if m.sphere == sphere
                     ]
                 })

@@ -426,6 +426,16 @@ class MarkdownFormatter:
             ai_recs = sections['ai_recommendations']
         elif hasattr(self, 'ai_recommendations'):
             ai_recs = self.ai_recommendations
+        master_order = [
+            'Отношения с любимыми',
+            'Отношения с родными',
+            'Друзья',
+            'Карьера',
+            'Физическое здоровье',
+            'Ментальное здоровье',
+            'Хобби и увлечения',
+            'Благосостояние'
+        ]
         if ai_recs is not None:
             # Если это словарь с ошибкой
             if isinstance(ai_recs, dict) and 'Ошибка' in ai_recs:
@@ -440,8 +450,9 @@ class MarkdownFormatter:
                 result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
                 result.append("> | Сфера | AI-рекомендация |")
                 result.append("> |:---:|:---|")
-                for sphere, rec in ai_recs.items():
+                for sphere in master_order:
                     emoji = normalizer.get_emoji(sphere)
+                    rec = ai_recs.get(sphere, "AI не смог сгенерировать рекомендацию.")
                     result.append(f"> | {emoji if emoji else ''} | {rec} |")
             # Если это строка (редкий случай)
             elif isinstance(ai_recs, str):
