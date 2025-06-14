@@ -28,6 +28,7 @@ class ProData:
     goals: Dict[str, List[str]]  # {сфера: [цель1, цель2, ...]}
     blockers: Dict[str, List[str]]  # {сфера: [блокер1, блокер2, ...]}
     achievements: Dict[str, List[str]]  # {сфера: [достижение1, достижение2, ...]}
+    general_notes: Dict[str, str]  # Новое поле для общих вопросов
 
 
 class ProDataParser:
@@ -45,7 +46,8 @@ class ProDataParser:
             '🎯 Мои цели',
             '🚧 Мои блокеры',
             '🏆 Мои достижения',
-            '📊 Мои метрики'
+            '📊 Мои метрики',
+            '📝 Общие вопросы'  # Новая секция
         ]
 
     def _find_section_content(self, content: str, section_title: str) -> Optional[str]:
@@ -171,6 +173,23 @@ class ProDataParser:
                     section_data[current_sphere].append(value)
         return section_data
 
+    def _parse_general_notes_section(self, content: str) -> Dict[str, str]:
+        """
+        Парсит секцию общих вопросов/заметок.
+        Args:
+            content: Содержимое секции
+        Returns:
+            Словарь {вопрос: ответ}
+        """
+        notes = {}
+        rows = self._parse_table_rows(content)
+        for row in rows:
+            if len(row) >= 2:
+                question = row[0]
+                answer = row[1]
+                notes[question] = answer
+        return notes
+
     def parse(self, content: str) -> ProData:
         """
         Парсит все PRO-секции из текста.
@@ -187,7 +206,8 @@ class ProDataParser:
             'blockers': {},
             'achievements': {},
             'metrics': [],
-            'scores': {}  # Добавляем scores
+            'scores': {},
+            'general_notes': {}  # Новое поле
         }
         
         # Парсим каждую секцию
@@ -216,6 +236,8 @@ class ProDataParser:
                     if values:  # Проверяем, что есть значения для расчета среднего
                         sections_data['scores'][sphere] = sum(values) / len(values)
                         self.logger.info(f"Вычислен score для сферы '{sphere}': {sections_data['scores'][sphere]}")
+            elif section_title == '📝 Общие вопросы':
+                sections_data['general_notes'] = self._parse_general_notes_section(section_content)
             else:
                 section_key = section_title.lower().split()[1]  # '🛑 Мои проблемы' -> 'problems'
                 section_data = self._parse_regular_section(section_content)
@@ -228,5 +250,6 @@ class ProDataParser:
             problems=sections_data['problems'],
             goals=sections_data['goals'],
             blockers=sections_data['blockers'],
-            achievements=sections_data['achievements']
+            achievements=sections_data['achievements'],
+            general_notes=sections_data['general_notes']
         ) 

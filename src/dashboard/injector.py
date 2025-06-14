@@ -203,12 +203,14 @@ class DashboardInjector:
                     for sphere in pro_data.scores.keys():
                         self.logger.info(f"[AI] Генерация AI-рекомендации для сферы: {sphere}")
                         rec = ai_engine.generate_recommendation(sphere, pro_data, history)
+                        self.logger.info(f"[AI] Тип rec для '{sphere}': {type(rec)}; repr: {repr(rec)}")
                         if rec is not None:
                             self.logger.info(f"[AI] Получена AI-рекомендация для '{sphere}': {getattr(rec, 'description', str(rec))}")
-                            ai_recs[sphere] = rec.description if hasattr(rec, 'description') else str(rec)
+                            ai_recs[sphere] = rec  # Сохраняем весь объект Recommendation
                         else:
                             self.logger.warning(f"[AI] Не удалось сгенерировать AI-рекомендацию для '{sphere}'")
-                            ai_recs[sphere] = "AI не смог сгенерировать рекомендацию."
+                            ai_recs[sphere] = None
+                    self.logger.info(f"[AI] Итоговый ai_recs: {repr(ai_recs)}")
                 else:
                     ai_error = "OPENAI_API_KEY не найден. AI-рекомендации недоступны."
             except Exception as e:

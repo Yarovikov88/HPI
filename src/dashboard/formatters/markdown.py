@@ -392,7 +392,7 @@ class MarkdownFormatter:
         ]
         has_recs = any(section.recommendation for k, section in sections.items() if k != 'ai_recommendations')
         if has_recs:
-            result.append("> [!example]- <span style='color:#b37feb'>💡 Базовые рекомендации</span>")
+            result.append("> [!example]- 💡 Базовые рекомендации")
             result.append("> | Сфера | Рекомендация |")
             result.append("> |:---:|:---|")
             for sphere_name in master_order:
@@ -401,23 +401,18 @@ class MarkdownFormatter:
                     continue
                 rec = section.recommendation
                 sphere_label = section.emoji if section.emoji else ''
-                if isinstance(rec, str):
-                    clean_rec = re.sub(r"^Базовая рекомендация для сферы [^:]+: ?", "", rec)
-                    result.append(f"> | {sphere_label} | {clean_rec} |")
-                elif isinstance(rec, list):
+                # Для базовых рекомендаций выводим только сферу и текст рекомендации
+                if isinstance(rec, list):
                     for r in rec:
-                        clean_rec = re.sub(r"^Базовая рекомендация для сферы [^:]+: ?", "", r)
-                        result.append(f"> | {sphere_label} | {clean_rec} |")
+                        result.append(f"> | {sphere_label} | {r} |")
                 elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                    result.append(f"> | {sphere_label} | **{rec.title}**<br>{rec.description} |")
-                    if hasattr(rec, 'action_steps') and rec.action_steps:
-                        result.append("> | | **Шаги:**<br>" + "<br>".join(rec.action_steps))
+                    result.append(f"> | {sphere_label} | {rec.title}: {rec.description} |")
                 else:
                     result.append(f"> | {sphere_label} | {str(rec)} |")
         else:
-            result.append("> [!example]- <span style='color:#b37feb'>💡 Базовые рекомендации</span>")
-            result.append("> | Сфера | Рекомендация |")
-            result.append("> |:---:|:---|")
+            result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации (полные)</span>")
+            result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
+            result.append("> |:---:|:---|:---|:---|:---|")
 
         result.append("\n")
         # AI рекомендации
@@ -448,12 +443,35 @@ class MarkdownFormatter:
             elif isinstance(ai_recs, dict):
                 normalizer = SphereNormalizer()
                 result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
-                result.append("> | Сфера | AI-рекомендация |")
-                result.append("> |:---:|:---|")
-                for sphere in master_order:
-                    emoji = normalizer.get_emoji(sphere)
-                    rec = ai_recs.get(sphere, "AI не смог сгенерировать рекомендацию.")
-                    result.append(f"> | {emoji if emoji else ''} | {rec} |")
+                result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
+                result.append("> |:---:|:---|:---|:---|:---|")
+                for sphere_name in master_order:
+                    emoji = normalizer.get_emoji(sphere_name)
+                    rec = ai_recs.get(sphere_name)
+                    if rec is None:
+                        result.append(f"> | {emoji if emoji else ''} | AI не смог сгенерировать рекомендацию. | | | |")
+                    elif hasattr(rec, 'title') and hasattr(rec, 'action_steps') and hasattr(rec, 'evidence'):
+                        # Формируем шаги одной строкой с <br>
+                        steps_parts = []
+                        for idx, step in enumerate(rec.action_steps, 1):
+                            impact = '⭐' * int(round(step.expected_impact * 5)) if hasattr(step, 'expected_impact') else ''
+                            deps = f"<br>Зависимости: {', '.join(step.dependencies)}" if hasattr(step, 'dependencies') and step.dependencies else ''
+                            steps_parts.append(f"{idx}. {step.description}<br>Ожидаемый эффект: {impact}<br>Оценка времени: {step.estimated_time}{deps}")
+                        steps_md = '<br>'.join(steps_parts)
+                        # Формируем обоснование одной строкой с <br>
+                        evidence_parts = []
+                        if hasattr(rec.evidence, 'data_points') and rec.evidence.data_points:
+                            evidence_parts.append("<b>Наблюдения:</b> " + '<br>'.join(rec.evidence.data_points))
+                        if hasattr(rec.evidence, 'correlations') and rec.evidence.correlations:
+                            evidence_parts.append("<b>Корреляции:</b> " + '<br>'.join(rec.evidence.correlations))
+                        if hasattr(rec.evidence, 'historical_success'):
+                            evidence_parts.append(f"<b>Исторический успех:</b> {round(rec.evidence.historical_success * 100)}%")
+                        evidence_md = '<br>'.join(evidence_parts)
+                        result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | {steps_md} | {evidence_md} |")
+                    elif isinstance(rec, str):
+                        result.append(f"> | {emoji if emoji else ''} | {rec} | | | |")
+                    else:
+                        result.append(f"> | {emoji if emoji else ''} | [Неизвестный формат рекомендации] | | | |")
             # Если это строка (редкий случай)
             elif isinstance(ai_recs, str):
                 result.append("> [!danger]- 🤖 AI рекомендации недоступны")

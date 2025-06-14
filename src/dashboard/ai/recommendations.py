@@ -33,6 +33,7 @@ class SphereContext:
     goals: List[str]
     blockers: List[str]
     historical_data: List[Dict]
+    general_notes: Dict[str, str]
 
 
 class AIRecommendationEngine:
@@ -139,7 +140,8 @@ class AIRecommendationEngine:
             problems=pro_data.problems.get(sphere, []),
             goals=pro_data.goals.get(sphere, []),
             blockers=pro_data.blockers.get(sphere, []),
-            historical_data=historical_data
+            historical_data=historical_data,
+            general_notes=pro_data.general_notes
         )
 
     def _format_prompt(
@@ -156,20 +158,7 @@ class AIRecommendationEngine:
             Строка с промптом
         """
         # Оптимизированный промпт для GPT-3.5
-        return f"""Создай рекомендацию для сферы "{context.name}" на основе данных:
-
-ТЕКУЩЕЕ СОСТОЯНИЕ:
-Оценка: {context.current_score:.1f} ({context.change_percent:+.1f}%)
-Метрики: {json.dumps(context.metrics, ensure_ascii=False)}
-
-ПРОБЛЕМЫ: {', '.join(context.problems) if context.problems else 'нет'}
-ЦЕЛИ: {', '.join(context.goals) if context.goals else 'нет'}
-БЛОКЕРЫ: {', '.join(context.blockers) if context.blockers else 'нет'}
-
-ИСТОРИЯ (последние записи):
-{json.dumps(context.historical_data, ensure_ascii=False)}
-
-Создай рекомендацию в формате JSON с учетом этих данных. Рекомендация должна быть конкретной и реалистичной."""
+        return f"""Создай рекомендацию для сферы \"{context.name}\" на основе данных:\n\nТЕКУЩЕЕ СОСТОЯНИЕ:\nОценка: {context.current_score:.1f} ({context.change_percent:+.1f}%)\nМетрики: {json.dumps(context.metrics, ensure_ascii=False)}\n\nПРОБЛЕМЫ: {', '.join(context.problems) if context.problems else 'нет'}\nЦЕЛИ: {', '.join(context.goals) if context.goals else 'нет'}\nБЛОКЕРЫ: {', '.join(context.blockers) if context.blockers else 'нет'}\n\nОБЩИЕ ОТВЕТЫ ПОЛЬЗОВАТЕЛЯ:\n{json.dumps(context.general_notes, ensure_ascii=False)}\n\nИСТОРИЯ (последние записи):\n{json.dumps(context.historical_data, ensure_ascii=False)}\n\nСоздай рекомендацию в формате JSON с учетом этих данных. Рекомендация должна быть конкретной и реалистичной."""
 
     def _parse_ai_response(
         self,
