@@ -303,30 +303,29 @@ class MarkdownFormatter:
         # Проблемы
         has_problems = any(section.problems for section in sections.values())
         if has_problems:
-            result.append("> [!data]- 🛑 Мои проблемы")
+            result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
             result.append("> | Сфера | Проблема |")
             result.append("> |:---:|:---|")
             for section in sections.values():
                 for problem in section.problems:
                     result.append(f"> | {section.emoji} | {problem} |")
         else:
-            result.append("> [!example]- 🛑 Мои проблемы")
+            result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
             result.append("> | Сфера | Проблема |")
             result.append("> |:---:|:---|")
-            # Можно добавить примерные строки, если нужно
 
         result.append("\n")
         # Цели
         has_goals = any(section.goals for section in sections.values())
         if has_goals:
-            result.append("> [!data]- 🎯 Мои цели")
+            result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
             result.append("> | Сфера | Цель |")
             result.append("> |:---:|:---|")
             for section in sections.values():
                 for goal in section.goals:
                     result.append(f"> | {section.emoji} | {goal} |")
         else:
-            result.append("> [!example]- 🎯 Мои цели")
+            result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
             result.append("> | Сфера | Цель |")
             result.append("> |:---:|:---|")
 
@@ -334,14 +333,14 @@ class MarkdownFormatter:
         # Блокеры
         has_blockers = any(section.blockers for section in sections.values())
         if has_blockers:
-            result.append("> [!data]- 🚧 Мои блокеры")
+            result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
             result.append("> | Сфера | Блокер |")
             result.append("> |:---:|:---|")
             for section in sections.values():
                 for blocker in section.blockers:
                     result.append(f"> | {section.emoji} | {blocker} |")
         else:
-            result.append("> [!example]- 🚧 Мои блокеры")
+            result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
             result.append("> | Сфера | Блокер |")
             result.append("> |:---:|:---|")
 
@@ -349,7 +348,7 @@ class MarkdownFormatter:
         # Метрики
         has_metrics = any(section.metrics for section in sections.values())
         if has_metrics:
-            result.append("> [!data]- 📊 Мои метрики")
+            result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
             result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
             result.append("> |:---:|:---|:---:|:---:|:---:|")
             for section in sections.values():
@@ -365,15 +364,15 @@ class MarkdownFormatter:
                         f"{target} | {change} |"
                     )
         else:
-            result.append("> [!example]- 📊 Мои метрики")
+            result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
             result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
             result.append("> |:---:|:---|:---:|:---:|:---:|")
 
         result.append("\n")
-        # Рекомендации
+        # Базовые рекомендации
         has_recs = any(section.recommendation for section in sections.values())
         if has_recs:
-            result.append("> [!data]- 💡 Мои рекомендации")
+            result.append("> [!example]- <span style='color:#b37feb'>💡 Базовые рекомендации</span>")
             result.append("> | Сфера | Рекомендация |")
             result.append("> |:---:|:---|")
             for section in sections.values():
@@ -391,8 +390,26 @@ class MarkdownFormatter:
                     else:
                         result.append(f"> | {section.emoji} | {str(rec)} |")
         else:
-            result.append("> [!example]- 💡 Мои рекомендации")
+            result.append("> [!example]- <span style='color:#b37feb'>💡 Базовые рекомендации</span>")
             result.append("> | Сфера | Рекомендация |")
+            result.append("> |:---:|:---|")
+
+        result.append("\n")
+        # AI рекомендации (заглушка, если нет)
+        ai_recs = None
+        if 'ai_recommendations' in sections:
+            ai_recs = sections['ai_recommendations']
+        elif hasattr(self, 'ai_recommendations'):
+            ai_recs = self.ai_recommendations
+        if ai_recs:
+            result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
+            result.append("> | Сфера | AI-рекомендация |")
+            result.append("> |:---:|:---|")
+            for sphere, rec in ai_recs.items():
+                result.append(f"> | {sphere} | {rec} |")
+        else:
+            result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
+            result.append("> | Сфера | AI-рекомендация |")
             result.append("> |:---:|:---|")
 
         return "\n".join(result) 
