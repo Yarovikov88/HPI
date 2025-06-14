@@ -180,11 +180,11 @@ class DashboardInjector:
             Путь к сохраненному файлу
         """
         self.logger.info("Начинаю обновление дашборда...")
-        
+        ai_error = None
+        ai_recs = {}
         try:
             # Загружаем данные
             pro_data, history = self._load_data()
-            
             # Преобразуем историю в формат для дашборда
             history_data = []
             for report in history:
@@ -193,24 +193,46 @@ class DashboardInjector:
                     'hpi': report.hpi,
                     'scores': report.scores
                 })
-            
             # Генерируем рекомендации
             recommendations = self._generate_recommendations(pro_data, history)
-            
+            # Попытка сгенерировать AI-рекомендации
+            try:
+                if os.getenv("OPENAI_API_KEY"):
+                    from .ai import AIRecommendationEngine
+                    ai_engine = AIRecommendationEngine()
+                    for sphere in pro_data.scores.keys():
+                        self.logger.info(f"[AI] Генерация AI-рекомендации для сферы: {sphere}")
+                        rec = ai_engine.generate_recommendation(sphere, pro_data, history)
+                        if rec is not None:
+                            self.logger.info(f"[AI] Получена AI-рекомендация для '{sphere}': {getattr(rec, 'description', str(rec))}")
+                            ai_recs[sphere] = rec.description if hasattr(rec, 'description') else str(rec)
+                        else:
+                            self.logger.warning(f"[AI] Не удалось сгенерировать AI-рекомендацию для '{sphere}'")
+                            ai_recs[sphere] = "AI не смог сгенерировать рекомендацию."
+                else:
+                    ai_error = "OPENAI_API_KEY не найден. AI-рекомендации недоступны."
+            except Exception as e:
+                ai_error = str(e)
+                self.logger.error(f"Ошибка генерации AI-рекомендаций: {e}", exc_info=True)
             # Генерируем секции для каждой сферы
             sections = self.section_generator.generate(
                 pro_data,
                 history,
                 recommendations
             )
-            
+            # Добавляем секцию AI-рекомендаций (или ошибку)
+            if ai_error:
+                sections['ai_recommendations'] = {'Ошибка': ai_error}
+            elif ai_recs:
+                sections['ai_recommendations'] = ai_recs
+            else:
+                sections['ai_recommendations'] = {'Ошибка': 'AI-рекомендации не были сгенерированы. Проверьте настройки или попробуйте позже.'}
             self.logger.info(f"Сгенерировано секций: {len(sections)}")
             if sections:
                 first_sphere = next(iter(sections))
                 self.logger.info(f"Пример секции для '{first_sphere}': {sections[first_sphere]}")
             for k, v in sections.items():
                 self.logger.info(f"Секция '{k}': {str(v)[:200]}")
-            
             # Форматируем дашборд
             dashboard_content = self.formatter.format_dashboard(
                 sections=sections,
@@ -219,7 +241,6 @@ class DashboardInjector:
                 version=self.version
             )
             self.logger.info(f"Первые 500 символов dashboard_content:\n{dashboard_content[:500]}")
-            
             if save_draft:
                 # Сохраняем как черновик
                 date_str = datetime.now().strftime('%Y-%m-%d')
@@ -232,14 +253,11 @@ class DashboardInjector:
                 file_path = MAIN_DASHBOARD_PATH
                 # Создаем директорию, если её нет
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            
             # Сохраняем файл
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(dashboard_content)
-                
             self.logger.info(f"Дашборд успешно сохранен: {file_path}")
             return file_path
-            
         except Exception as e:
             self.logger.error(f"Ошибка при обновлении дашборда: {e}")
             raise 

@@ -172,17 +172,18 @@ class SectionGenerator:
         for sphere in spheres:
             # Получаем нормализованное имя и эмодзи
             normalized = self.sphere_normalizer.normalize(sphere)
+            emoji = self.sphere_normalizer.get_emoji(normalized)
             
             # Получаем текущую оценку
             current_score = 0.0
             if pro_data.scores and sphere in pro_data.scores:
                 current_score = pro_data.scores[sphere]
-                
+            
             # Получаем предыдущую оценку
             previous_score = None
             if previous_report and sphere in previous_report.scores:
                 previous_score = previous_report.scores[sphere]
-                
+            
             # Вычисляем изменения
             change_percent = self._calculate_change_percent(
                 current_score,
@@ -199,11 +200,11 @@ class SectionGenerator:
                         previous_report
                     )
                     sphere_metrics.append(progress)
-                    
+            
             # Создаем секцию
             sections[sphere] = SphereSection(
                 name=normalized,
-                emoji=self.sphere_normalizer.get_emoji(sphere),
+                emoji=emoji,
                 current_score=current_score,
                 previous_score=previous_score,
                 change_percent=change_percent,

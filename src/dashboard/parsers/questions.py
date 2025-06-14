@@ -151,4 +151,32 @@ class QuestionsDatabaseParser:
         for sphere_metrics in self.parse():
             if not sphere or sphere_metrics.sphere_name == sphere:
                 metrics.extend([m.name for m in sphere_metrics.metrics])
-        return metrics 
+        return metrics
+
+    def parse_spheres_master_list(self) -> List[str]:
+        """
+        Парсит master-таблицу сфер из начала файла questions.md и возвращает список названий сфер.
+        """
+        if not os.path.exists(self.database_path):
+            self.logger.error(f"Файл базы данных вопросов не найден: {self.database_path}")
+            return []
+        try:
+            with open(self.database_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            self.logger.error(f"Ошибка чтения файла базы вопросов: {e}")
+            return []
+        # Ищем таблицу сфер
+        pattern = re.compile(r"\|\s*Короткое название\s*\|.*?\n(\|.*?\n)+", re.DOTALL)
+        match = pattern.search(content)
+        if not match:
+            self.logger.error("Не найдена master-таблица сфер в базе вопросов!")
+            return []
+        table = match.group(0)
+        lines = [l for l in table.splitlines() if l.strip().startswith('|') and not l.strip().startswith('|:')]
+        spheres = []
+        for line in lines[1:]:
+            parts = [p.strip() for p in line.strip('|').split('|')]
+            if len(parts) >= 3:
+                spheres.append(parts[1])  # Полное название
+        return spheres 

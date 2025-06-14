@@ -116,9 +116,10 @@ class ProDataParser:
                         current_sphere = sphere
                         break
                 if not current_sphere:
-                    # Если эмодзи нет, пробуем нормализовать по названию
                     current_sphere = self.sphere_normalizer.normalize(sphere_candidate)
+                # Всегда нормализуем!
                 if current_sphere:
+                    current_sphere = self.sphere_normalizer.normalize(current_sphere)
                     try:
                         current_float = float(current_value) if current_value else None
                         target_float = float(target_value) if target_value else None
@@ -161,9 +162,10 @@ class ProDataParser:
                         current_sphere = sphere
                         break
                 if not current_sphere:
-                    # Если эмодзи нет, пробуем нормализовать по названию
                     current_sphere = self.sphere_normalizer.normalize(sphere_candidate)
+                # Всегда нормализуем!
                 if current_sphere:
+                    current_sphere = self.sphere_normalizer.normalize(current_sphere)
                     if current_sphere not in section_data:
                         section_data[current_sphere] = []
                     section_data[current_sphere].append(value)

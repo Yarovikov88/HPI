@@ -71,6 +71,40 @@ def main():
     except Exception as e:
         logging.error(f"Ошибка при тестировании: {e}", exc_info=True)
 
+def test_sphere_normalization():
+    """
+    Проверяет, что все ключи сфер в данных пользователя соответствуют master-списку сфер из базы вопросов.
+    """
+    from src.dashboard.test_data import get_test_pro_data
+    from src.dashboard.normalizers import SphereNormalizer
+    from src.dashboard.parsers.questions import QuestionsDatabaseParser
+    import os
+
+    # Путь к базе вопросов
+    db_path = os.path.join(os.path.dirname(__file__), 'database', 'questions.md')
+    parser = QuestionsDatabaseParser(db_path)
+    master_spheres = set(parser.parse_spheres_master_list())
+    normalizer = SphereNormalizer()
+
+    pro_data = get_test_pro_data()
+
+    # Собираем все сферы из данных пользователя
+    all_spheres = set()
+    all_spheres.update(pro_data.scores.keys())
+    all_spheres.update(pro_data.problems.keys())
+    all_spheres.update(pro_data.goals.keys())
+    all_spheres.update(pro_data.blockers.keys())
+    all_spheres.update(pro_data.achievements.keys())
+    all_spheres.update([m.sphere for m in pro_data.metrics])
+
+    # Проверяем, что все сферы нормализованы и есть в master-списке
+    for sphere in all_spheres:
+        normalized = normalizer.normalize(sphere)
+        assert normalized in master_spheres, f"Сфера '{sphere}' (нормализовано: '{normalized}') отсутствует в master-списке: {master_spheres}"
+    print("[TEST PASSED] Все сферы в данных пользователя соответствуют master-списку сфер.")
+
 if __name__ == "__main__":
     logging.debug("Запуск скрипта")
-    main() 
+    main()
+    # Запуск теста на нормализацию сфер
+    test_sphere_normalization() 
