@@ -114,4 +114,8 @@ dmypy.json
 .pyre/
 
 # Logs
-logs/ 
+logs/
+
+# New additions
+.env.*
+!.env.example 

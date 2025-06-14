@@ -1,0 +1,230 @@
+"""
+Модуль для парсинга PRO-секций из черновиков отчетов HPI.
+"""
+import re
+import logging
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from ..normalizers import MetricNormalizer, SphereNormalizer
+
+
+@dataclass
+class ProMetric:
+    """Метрика из PRO-секции."""
+    sphere: str
+    name: str
+    current_value: Optional[float]
+    target_value: Optional[float]
+    description: str
+    normalized_name: str
+
+
+@dataclass
+class ProData:
+    """Данные из всех PRO-секций."""
+    scores: Dict[str, float]  # {сфера: оценка}
+    metrics: List[ProMetric]  # Список метрик
+    problems: Dict[str, List[str]]  # {сфера: [проблема1, проблема2, ...]}
+    goals: Dict[str, List[str]]  # {сфера: [цель1, цель2, ...]}
+    blockers: Dict[str, List[str]]  # {сфера: [блокер1, блокер2, ...]}
+    achievements: Dict[str, List[str]]  # {сфера: [достижение1, достижение2, ...]}
+
+
+class ProDataParser:
+    """Парсер PRO-секций из черновиков отчетов."""
+
+    def __init__(self):
+        """Инициализация парсера."""
+        self.sphere_normalizer = SphereNormalizer()
+        self.metric_normalizer = MetricNormalizer()
+        self.logger = logging.getLogger(__name__)
+
+        # Названия всех PRO-секций
+        self.pro_sections = [
+            '🛑 Мои проблемы',
+            '🎯 Мои цели',
+            '🚧 Мои блокеры',
+            '🏆 Мои достижения',
+            '📊 Мои метрики'
+        ]
+
+    def _find_section_content(self, content: str, section_title: str) -> Optional[str]:
+        """
+        Находит содержимое конкретной секции в тексте.
+        
+        Args:
+            content: Весь текст документа
+            section_title: Название искомой секции
+            
+        Returns:
+            Содержимое секции или None, если секция не найдена
+        """
+        # Ищем секцию с двумя или тремя решетками
+        pattern = rf"(?:##|###)\s*{re.escape(section_title)}(.*?)(?=(?:##|###)|$)"
+        match = re.search(pattern, content, re.DOTALL)
+        return match.group(1).strip() if match else None
+
+    def _parse_table_rows(self, table_content: str) -> List[List[str]]:
+        """
+        Парсит строки таблицы в список списков значений.
+        
+        Args:
+            table_content: Содержимое таблицы в формате Markdown
+            
+        Returns:
+            Список списков значений из таблицы
+        """
+        rows = []
+        if not table_content:
+            return rows
+            
+        # Разбиваем на строки и фильтруем пустые
+        lines = [line.strip() for line in table_content.splitlines() if line.strip()]
+        
+        for line in lines:
+            if line.startswith('|'):
+                # Разбиваем строку по | и убираем пустые значения
+                cells = [cell.strip() for cell in line.split('|') if cell.strip()]
+                if cells and not any('---' in cell for cell in cells):  # Пропускаем строку форматирования
+                    rows.append(cells)
+                    
+        return rows
+
+    def _parse_metrics_section(self, content: str) -> List[ProMetric]:
+        """
+        Парсит секцию метрик.
+        
+        Args:
+            content: Содержимое секции метрик
+            
+        Returns:
+            Список объектов ProMetric
+        """
+        metrics = []
+        rows = self._parse_table_rows(content)
+        for row in rows:
+            if len(row) >= 4:
+                sphere_candidate = row[0]
+                metric_name = row[1]
+                current_value = row[2]
+                target_value = row[3]
+                description = row[4] if len(row) > 4 else ""
+                # Определяем сферу по эмодзи или названию
+                current_sphere = None
+                for emoji, sphere in self.sphere_normalizer.get_all_emojis().items():
+                    if emoji in sphere_candidate:
+                        current_sphere = sphere
+                        break
+                if not current_sphere:
+                    # Если эмодзи нет, пробуем нормализовать по названию
+                    current_sphere = self.sphere_normalizer.normalize(sphere_candidate)
+                if current_sphere:
+                    try:
+                        current_float = float(current_value) if current_value else None
+                        target_float = float(target_value) if target_value else None
+                    except ValueError:
+                        self.logger.warning(f"Не удалось преобразовать значения метрики '{metric_name}' в числа")
+                        current_float = None
+                        target_float = None
+                    metrics.append(
+                        ProMetric(
+                            sphere=current_sphere,
+                            name=metric_name,
+                            current_value=current_float,
+                            target_value=target_float,
+                            description=description,
+                            normalized_name=self.metric_normalizer.normalize(metric_name)
+                        )
+                    )
+        return metrics
+
+    def _parse_regular_section(self, content: str) -> Dict[str, List[str]]:
+        """
+        Парсит обычную секцию (проблемы, цели, блокеры, достижения).
+        
+        Args:
+            content: Содержимое секции
+            
+        Returns:
+            Словарь {сфера: [значение1, значение2, ...]}
+        """
+        section_data = {}
+        rows = self._parse_table_rows(content)
+        for row in rows:
+            if len(row) >= 2:
+                sphere_candidate = row[0]
+                value = row[1]
+                # Определяем сферу
+                current_sphere = None
+                for emoji, sphere in self.sphere_normalizer.get_all_emojis().items():
+                    if emoji in sphere_candidate:
+                        current_sphere = sphere
+                        break
+                if not current_sphere:
+                    # Если эмодзи нет, пробуем нормализовать по названию
+                    current_sphere = self.sphere_normalizer.normalize(sphere_candidate)
+                if current_sphere:
+                    if current_sphere not in section_data:
+                        section_data[current_sphere] = []
+                    section_data[current_sphere].append(value)
+        return section_data
+
+    def parse(self, content: str) -> ProData:
+        """
+        Парсит все PRO-секции из текста.
+        
+        Args:
+            content: Текст черновика
+            
+        Returns:
+            Объект ProData с данными всех секций
+        """
+        sections_data = {
+            'problems': {},
+            'goals': {},
+            'blockers': {},
+            'achievements': {},
+            'metrics': [],
+            'scores': {}  # Добавляем scores
+        }
+        
+        # Парсим каждую секцию
+        for section_title in self.pro_sections:
+            section_content = self._find_section_content(content, section_title)
+            if not section_content:
+                self.logger.warning(f"Секция '{section_title}' не найдена в черновике")
+                continue
+                
+            self.logger.info(f"Найдена секция '{section_title}', размер контента: {len(section_content)} символов")
+                
+            if section_title == '📊 Мои метрики':
+                metrics = self._parse_metrics_section(section_content)
+                sections_data['metrics'] = metrics
+                self.logger.info(f"Распарсено {len(metrics)} метрик")
+                
+                # Вычисляем scores как среднее значение метрик для каждой сферы
+                sphere_metrics = {}
+                for metric in metrics:
+                    if metric.current_value is not None:  # Учитываем только метрики с значениями
+                        if metric.sphere not in sphere_metrics:
+                            sphere_metrics[metric.sphere] = []
+                        sphere_metrics[metric.sphere].append(metric.current_value)
+                
+                for sphere, values in sphere_metrics.items():
+                    if values:  # Проверяем, что есть значения для расчета среднего
+                        sections_data['scores'][sphere] = sum(values) / len(values)
+                        self.logger.info(f"Вычислен score для сферы '{sphere}': {sections_data['scores'][sphere]}")
+            else:
+                section_key = section_title.lower().split()[1]  # '🛑 Мои проблемы' -> 'problems'
+                section_data = self._parse_regular_section(section_content)
+                sections_data[section_key] = section_data
+                self.logger.info(f"Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер")
+        
+        return ProData(
+            scores=sections_data['scores'],
+            metrics=sections_data['metrics'],
+            problems=sections_data['problems'],
+            goals=sections_data['goals'],
+            blockers=sections_data['blockers'],
+            achievements=sections_data['achievements']
+        ) 

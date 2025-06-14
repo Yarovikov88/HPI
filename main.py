@@ -13,8 +13,8 @@ LOG_PATH = os.path.join(LOG_DIR, 'app.log')
 BACKEND_DIR = os.path.join(PROJECT_ROOT, 'src')
 
 # Добавляем папку с модулями в sys.path
-if BACKEND_DIR not in sys.path:
-    sys.path.append(BACKEND_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
 # Настраиваем логгер
 logger = logging.getLogger()
@@ -45,17 +45,24 @@ def main():
     logging.info("--- 🚀 Начало работы системы HPI (единый процесс) ---")
     
     try:
+        # Проверяем наличие API ключа
+        if not os.getenv("OPENAI_API_KEY"):
+            logging.warning("OPENAI_API_KEY не найден в переменных окружения. AI-рекомендации будут недоступны.")
+        
         # Импортируем модули прямо здесь, чтобы быть уверенными, что sys.path уже обновлен
-        from calculator import run_calculator
-        from ai_dashboard_injector import run_injector
+        from src.calculator import run_calculator
+        from src.dashboard.injector import DashboardInjector
         
         logging.info("Шаг 1: Запуск калькулятора для расчета метрик...")
         run_calculator()
         logging.info("Калькулятор успешно завершил работу.")
 
         logging.info("Шаг 2: Запуск инжектора для обновления PRO-дашборда...")
-        run_injector()
-        logging.info("Инжектор успешно завершил работу.")
+        injector = DashboardInjector(version=APP_VERSION)
+        
+        # Обновляем основной дашборд
+        dashboard_path = injector.inject(save_draft=False)
+        logging.info(f"Дашборд обновлен: {dashboard_path}")
 
     except ImportError as e:
         logging.error(f"Ошибка импорта. Убедитесь, что все скрипты находятся в папке 'src'. Ошибка: {e}")

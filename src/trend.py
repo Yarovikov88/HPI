@@ -39,16 +39,18 @@ def extract_hpi_from_report(file_path: str) -> tuple[datetime, float] | None:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        match = re.search(r'\|\s*\*\*Итоговый HPI\*\*\s*\|\s*\*\*(\d+\.\d+)\*\*\s*\|', content)
+        # Ищем в формате таблицы
+        match = re.search(r'\|\s*\*\*Итоговый HPI\*\*\s*\|\s*\*\*(\d+\.\d+)\*\*\s*\|\s*[🟡🔵🔴🟢]\s*\|', content)
         if match:
             hpi_value = float(match.group(1))
             logging.info(f"Найдено значение HPI {hpi_value} в отчете: {filename}")
             return report_date, hpi_value
-        else:
-            logging.warning(f"Значение HPI не найдено в отчете: {filename}")
-            return None
+        
+        logging.warning(f"Значение HPI не найдено в отчете: {filename}")
+        return None
+        
     except Exception as e:
-        logging.error(f"Ошибка при чтении или парсинге отчета {filename}: {e}", exc_info=True)
+        logging.error(f"Ошибка при чтении файла {filename}: {e}")
         return None
 
 def create_trend_chart(dates: List[datetime], values: List[float], output_path: str) -> bool:
@@ -108,8 +110,8 @@ def generate_trend_chart(history_data: List[Dict]) -> str | None:
             logging.warning("Недостаточно исторических данных для построения графика.")
             return None
 
-        # history_data уже отсортирован в ai_dashboard_injector
-        dates = [item['date'] for item in history_data]
+        # Преобразуем строки дат в datetime
+        dates = [datetime.strptime(item['date'], '%Y-%m-%d') for item in history_data]
         values = [item['hpi'] for item in history_data]
 
         # Определяем имя файла на основе последней даты

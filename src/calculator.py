@@ -11,7 +11,7 @@ import os
 import re
 import shutil
 from typing import Dict, List, Optional, Tuple
-from radar import create_radar_chart
+from src.radar import create_radar_chart
 from datetime import datetime
 import sys
 import traceback
