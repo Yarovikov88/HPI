@@ -10,6 +10,7 @@ import re
 from ..generators import SphereSection, MetricProgress, Recommendation
 from ...trend import generate_trend_chart
 from ..normalizers import SphereNormalizer
+from ..generators.sections import SphereSection
 
 
 class MarkdownFormatter:
@@ -263,6 +264,17 @@ class MarkdownFormatter:
         Returns:
             Строка с дашбордом в формате Markdown
         """
+        result = []
+        # Отладочный вывод структуры sections
+        # result.append("> [!note]- DEBUG: sections keys/types: " + ", ".join([f"{k}: {type(v)}" for k, v in sections.items()]))
+        
+        # Фильтруем только SphereSection для проверки наличия проблем и т.д.
+        sphere_sections = [s for s in sections.values() if isinstance(s, SphereSection)]
+        has_problems = any(s.problems for s in sphere_sections)
+        has_goals = any(s.goals for s in sphere_sections)
+        has_blockers = any(s.blockers for s in sphere_sections)
+        has_achievements = any(getattr(s, 'achievements', None) for s in sphere_sections)
+        
         # Получаем последний HPI и оценки
         latest_report = history[-1] if history else None
         latest_hpi = latest_report['hpi'] if latest_report else 0.0
@@ -278,7 +290,7 @@ class MarkdownFormatter:
             trend_path = "../reports_final/images/trend.png"  # Fallback путь
         
         # Добавляем заголовок
-        result = [f"# HPI Dashboard v{version}\n\n"]
+        result.append(f"# HPI Dashboard v{version}\n\n")
         
         # Добавляем основные секции
         result.extend([
@@ -325,68 +337,42 @@ class MarkdownFormatter:
         ]
 
         # Проблемы
-        has_problems = any(section.problems for k, section in sections.items() if k != 'ai_recommendations')
         result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
         result.append("> | Сфера | Проблема |")
         result.append("> |:---:|:---|")
-        for sphere_name in master_order:
-            section = sections.get(sphere_name)
-            if not section or not section.problems:
-                continue
+        for section in sphere_sections:
+            emoji = section.emoji
             for problem in section.problems:
-                result.append(f"> | {section.emoji} | {problem} |")
+                result.append(f"> | {emoji} | {problem} |")
         result.append("\n")
         # Цели
-        has_goals = any(section.goals for k, section in sections.items() if k != 'ai_recommendations')
         result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
         result.append("> | Сфера | Цель |")
         result.append("> |:---:|:---|")
-        for sphere_name in master_order:
-            section = sections.get(sphere_name)
-            if not section or not section.goals:
-                continue
+        for section in sphere_sections:
+            emoji = section.emoji
             for goal in section.goals:
-                result.append(f"> | {section.emoji} | {goal} |")
+                result.append(f"> | {emoji} | {goal} |")
         result.append("\n")
         # Блокеры
-        has_blockers = any(section.blockers for k, section in sections.items() if k != 'ai_recommendations')
         result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
         result.append("> | Сфера | Блокер |")
         result.append("> |:---:|:---|")
-        for sphere_name in master_order:
-            section = sections.get(sphere_name)
-            if not section or not section.blockers:
-                continue
+        for section in sphere_sections:
+            emoji = section.emoji
             for blocker in section.blockers:
-                result.append(f"> | {section.emoji} | {blocker} |")
+                result.append(f"> | {emoji} | {blocker} |")
         result.append("\n")
         # Метрики
-        has_metrics = any(section.metrics for k, section in sections.items() if k != 'ai_recommendations')
-        if has_metrics:
-            result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
-            result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
-            result.append("> |:---:|:---|:---:|:---:|:---:|")
-            for k, section in sections.items():
-                if k == 'ai_recommendations':
-                    continue
-                for metric in section.metrics:
-                    change = ""
-                    if metric.previous_value is not None and metric.current_value is not None:
-                        abs_diff = metric.current_value - metric.previous_value
-                        sign = "+" if abs_diff > 0 else ("" if abs_diff == 0 else "-")
-                        percent_sign = "+" if metric.change_percent > 0 else ("" if metric.change_percent == 0 else "-")
-                        change = f"{sign}{abs(abs_diff):.1f} ({percent_sign}{abs(metric.change_percent):.1f}%)"
-                    current = f"{metric.current_value:.1f}" if metric.current_value is not None else "—"
-                    target = f"{metric.target_value:.1f}" if metric.target_value is not None else "—"
-                    result.append(
-                        f"> | {section.emoji} | {metric.name} | {current} | "
-                        f"{target} | {change} |"
-                    )
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
-            result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
-            result.append("> |:---:|:---|:---:|:---:|:---:|")
-
+        result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
+        result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
+        result.append("> |:---:|:---|:---:|:---:|:---:|")
+        for section in sphere_sections:
+            emoji = section.emoji
+            for metric in section.metrics:
+                change = metric.current_value - (metric.previous_value or 0)
+                percent = metric.change_percent
+                result.append(f"> | {emoji} | {metric.name} | {metric.current_value} | {metric.target_value} | {change:+.1f} ({percent:+.1f}%) |")
         result.append("\n")
         # Базовые рекомендации
         master_order = [
@@ -451,44 +437,57 @@ class MarkdownFormatter:
             # Если это словарь с рекомендациями
             elif isinstance(ai_recs, dict):
                 normalizer = SphereNormalizer()
-                result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
-                result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
-                result.append("> |:---:|:---|:---|:---|:---|")
-                for sphere_name in master_order:
-                    emoji = normalizer.get_emoji(sphere_name)
-                    rec = ai_recs.get(sphere_name)
-                    if rec is None:
-                        result.append(f"> | {emoji if emoji else ''} | AI не смог сгенерировать рекомендацию. | | | |")
-                    elif isinstance(rec, list):
-                        for r in rec:
-                            if hasattr(r, 'title') and hasattr(r, 'description'):
-                                result.append(f"> | {emoji if emoji else ''} | {r.title} | {r.description} | | |")
-                            else:
-                                result.append(f"> | {emoji if emoji else ''} | {str(r)} | | | |")
-                    elif hasattr(rec, 'title') and hasattr(rec, 'action_steps') and hasattr(rec, 'evidence'):
-                        # Формируем шаги одной строкой с <br>
-                        steps_parts = []
-                        for idx, step in enumerate(rec.action_steps, 1):
-                            impact = '⭐' * int(round(step.expected_impact * 5)) if hasattr(step, 'expected_impact') else ''
-                            deps = f"<br>Зависимости: {', '.join(step.dependencies)}" if hasattr(step, 'dependencies') and step.dependencies else ''
-                            steps_parts.append(f"{idx}. {step.description}<br>Ожидаемый эффект: {impact}<br>Оценка времени: {step.estimated_time}{deps}")
-                        steps_md = '<br>'.join(steps_parts)
-                        # Формируем обоснование одной строкой с <br>
-                        evidence_parts = []
-                        if hasattr(rec.evidence, 'data_points') and rec.evidence.data_points:
-                            evidence_parts.append("<b>Наблюдения:</b> " + '<br>'.join(rec.evidence.data_points))
-                        if hasattr(rec.evidence, 'correlations') and rec.evidence.correlations:
-                            evidence_parts.append("<b>Корреляции:</b> " + '<br>'.join(rec.evidence.correlations))
-                        if hasattr(rec.evidence, 'historical_success'):
-                            evidence_parts.append(f"<b>Исторический успех:</b> {round(rec.evidence.historical_success * 100)}%")
-                        evidence_md = '<br>'.join(evidence_parts)
-                        result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | {steps_md} | {evidence_md} |")
-                    elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                        result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | | |")
-                    elif isinstance(rec, str):
-                        result.append(f"> | {emoji if emoji else ''} | {rec} | | | |")
-                    else:
-                        result.append(f"> | {emoji if emoji else ''} | [Неизвестный формат рекомендации] | | | |")
+                # Проверяем, есть ли хотя бы одна Recommendation
+                has_any = any(
+                    rec and (hasattr(rec, 'title') or hasattr(rec, 'description'))
+                    for rec in ai_recs.values()
+                )
+                if has_any:
+                    result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
+                    result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
+                    result.append("> |:---:|:---|:---|:---|:---|")
+                    for sphere_name in master_order:
+                        emoji = normalizer.get_emoji(sphere_name)
+                        rec = ai_recs.get(sphere_name)
+                        if rec is None:
+                            result.append(f"> | {emoji if emoji else ''} | AI не смог сгенерировать рекомендацию. | | | |")
+                        elif isinstance(rec, list):
+                            for r in rec:
+                                if hasattr(r, 'title') and hasattr(r, 'description'):
+                                    result.append(f"> | {emoji if emoji else ''} | {r.title} | {r.description} | | |")
+                                else:
+                                    result.append(f"> | {emoji if emoji else ''} | {str(r)} | | | |")
+                        elif hasattr(rec, 'title') and hasattr(rec, 'action_steps') and hasattr(rec, 'evidence'):
+                            steps_parts = []
+                            for idx, step in enumerate(rec.action_steps, 1):
+                                impact = '⭐' * int(round(step.expected_impact * 5)) if hasattr(step, 'expected_impact') else ''
+                                deps = f"<br>Зависимости: {', '.join(step.dependencies)}" if hasattr(step, 'dependencies') and step.dependencies else ''
+                                steps_parts.append(f"{idx}. {step.description}<br>Ожидаемый эффект: {impact}<br>Оценка времени: {step.estimated_time}{deps}")
+                            steps_md = '<br>'.join(steps_parts)
+                            evidence_parts = []
+                            if hasattr(rec.evidence, 'data_points') and rec.evidence.data_points:
+                                evidence_parts.append("<b>Наблюдения:</b> " + '<br>'.join(rec.evidence.data_points))
+                            if hasattr(rec.evidence, 'correlations') and rec.evidence.correlations:
+                                evidence_parts.append("<b>Корреляции:</b> " + '<br>'.join(rec.evidence.correlations))
+                            if hasattr(rec.evidence, 'historical_success'):
+                                evidence_parts.append(f"<b>Исторический успех:</b> {round(rec.evidence.historical_success * 100)}%")
+                            evidence_md = '<br>'.join(evidence_parts)
+                            result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | {steps_md} | {evidence_md} |")
+                        elif hasattr(rec, 'title') and hasattr(rec, 'description'):
+                            result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | | |")
+                        elif isinstance(rec, str):
+                            result.append(f"> | {emoji if emoji else ''} | {rec} | | | |")
+                        else:
+                            result.append(f"> | {emoji if emoji else ''} | [Неизвестный формат рекомендации] | | | |")
+                else:
+                    # Отладочный вывод структуры ai_recommendations
+                    result.append("> [!note]- DEBUG: ai_recommendations structure")
+                    for k, v in ai_recs.items():
+                        result.append(f"> {k}: {type(v)} | {repr(v)}")
+                    result.append("> [!danger]- 🤖 AI рекомендации недоступны")
+                    result.append("> Причина: AI-рекомендации не были сгенерированы. Проверьте настройки или попробуйте позже.")
+                    result.append("> ")
+                    result.append("> Проверьте настройки OpenAI API или попробуйте использовать VPN.")
             # Если это строка (редкий случай)
             elif isinstance(ai_recs, str):
                 result.append("> [!danger]- 🤖 AI рекомендации недоступны")
