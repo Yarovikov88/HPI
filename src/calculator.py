@@ -15,6 +15,8 @@ from src.radar import create_radar_chart
 from datetime import datetime
 import sys
 import traceback
+import json
+from src.dashboard.parsers.pro_data import ProDataParser
 
 # Constants
 MIN_ANSWER = 1
@@ -351,6 +353,20 @@ def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
         total_hpi = calculate_total_hpi(scores)
         hpi_emoji = get_score_emoji(total_hpi, is_hpi=True)
         content += f"| **Итоговый HPI** | **{total_hpi:.1f}** | {hpi_emoji} |\n"
+
+        # --- СЕРИАЛИЗАЦИЯ PRO-СЕКЦИЙ ---
+        # Парсим драфт для получения PRO-данных
+        pro_parser = ProDataParser()
+        pro_data = pro_parser.parse(content)
+        pro_json = {
+            "problems": pro_data.problems,
+            "goals": pro_data.goals,
+            "blockers": pro_data.blockers,
+            "achievements": pro_data.achievements,
+            "general_notes": pro_data.general_notes
+        }
+        content += "\n\n```json\n" + json.dumps(pro_json, ensure_ascii=False, indent=2) + "\n```\n"
+        # --- КОНЕЦ СЕРИАЛИЗАЦИИ ---
 
         # Сохраняем финальный отчет
         with open(final_report_path, 'w', encoding='utf-8') as f:

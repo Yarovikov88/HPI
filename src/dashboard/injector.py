@@ -139,32 +139,87 @@ class DashboardInjector:
         # Для каждой сферы генерируем рекомендации
         for sphere, score in pro_data.scores.items():
             sphere_recommendations = []
-            
-            # Если у AI движка нет нужного метода — всегда используем базовый генератор
-            if not hasattr(self.ai_engine, 'get_sphere_context'):
-                context = None  # или можно собрать минимальный контекст, если нужно
-                sphere_recommendations = self.recommendation_generator.generate_basic({
+            # Если у AI движка есть generate_recommendation, вызываем его для каждой сферы
+            if hasattr(self.ai_engine, 'generate_recommendation'):
+                try:
+                    rec = self.ai_engine.generate_recommendation(
+                        sphere=sphere,
+                        pro_data=pro_data,
+                        history=history
+                    )
+                    if rec:
+                        # Оборачиваем строку в Recommendation
+                        if isinstance(rec, str):
+                            rec = Recommendation(
+                                sphere=sphere,
+                                priority=1,
+                                title=rec,
+                                description="",
+                                action_steps=[],
+                                evidence=Evidence(data_points=[], correlations=[], historical_success=0.0),
+                                related_spheres=[]
+                            )
+                        sphere_recommendations = [rec]
+                    else:
+                        # generate_basic возвращает список строк, оборачиваем первую строку в Recommendation
+                        basic_recs = self.recommendation_generator.generate_basic({
+                            'sphere': sphere,
+                            'current_score': score,
+                            'pro_data': pro_data,
+                            'history': history
+                        })
+                        if isinstance(basic_recs, list) and basic_recs:
+                            sphere_recommendations = [Recommendation(
+                                sphere=sphere,
+                                priority=3,
+                                title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
+                                description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
+                                action_steps=[],
+                                evidence=None,
+                                related_spheres=[]
+                            )]
+                        else:
+                            sphere_recommendations = []
+                except Exception as e:
+                    self.logger.error(f"Ошибка при генерации AI-рекомендации для сферы {sphere}: {e}")
+                    basic_recs = self.recommendation_generator.generate_basic({
+                        'sphere': sphere,
+                        'current_score': score,
+                        'pro_data': pro_data,
+                        'history': history
+                    })
+                    if isinstance(basic_recs, list) and basic_recs:
+                        sphere_recommendations = [Recommendation(
+                            sphere=sphere,
+                            priority=3,
+                            title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
+                            description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
+                            action_steps=[],
+                            evidence=None,
+                            related_spheres=[]
+                        )]
+                    else:
+                        sphere_recommendations = []
+            else:
+                # Fallback: только базовые рекомендации
+                basic_recs = self.recommendation_generator.generate_basic({
                     'sphere': sphere,
                     'current_score': score,
                     'pro_data': pro_data,
                     'history': history
                 })
-            else:
-                try:
-                    context = self.ai_engine.get_sphere_context(
+                if isinstance(basic_recs, list) and basic_recs:
+                    sphere_recommendations = [Recommendation(
                         sphere=sphere,
-                        current_score=score,
-                        pro_data=pro_data,
-                        history=history
-                    )
-                    if os.getenv("OPENAI_API_KEY"):
-                        sphere_recommendations = self.ai_engine.generate_recommendations(context)
-                    else:
-                        sphere_recommendations = self.recommendation_generator.generate_basic(context)
-                except Exception as e:
-                    self.logger.error(f"Ошибка при генерации рекомендаций для сферы {sphere}: {e}")
-                    sphere_recommendations = self.recommendation_generator.generate_basic(context)
-                
+                        priority=3,
+                        title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
+                        description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
+                        action_steps=[],
+                        evidence=None,
+                        related_spheres=[]
+                    )]
+                else:
+                    sphere_recommendations = []
             recommendations[sphere] = sphere_recommendations
             
         return recommendations
@@ -183,18 +238,28 @@ class DashboardInjector:
         ai_error = None
         ai_recs = {}
         try:
-            # Загружаем данные
-            pro_data, history = self._load_data()
-            # Получаем путь к последнему черновику и дату из имени файла
-            draft_path = self._find_latest_draft()
-            draft_date = None
-            if draft_path:
-                draft_filename = os.path.basename(draft_path)
-                try:
-                    draft_date_str = draft_filename.split('_')[0]
-                    draft_date = datetime.strptime(draft_date_str, '%Y-%m-%d')
-                except Exception as e:
-                    self.logger.warning(f"Не удалось извлечь дату из имени черновика: {draft_filename} ({e})")
+            # Получаем исторические данные только из финальных отчетов
+            history = self.history_parser.get_history()
+            if len(history) < 1:
+                raise ValueError("Недостаточно финальных отчетов для генерации дашборда")
+            current_report = history[-1]
+            # Парсим последний финальный отчет в ProData для AI рекомендаций
+            with open(current_report.file_path, 'r', encoding='utf-8') as f:
+                current_content = f.read()
+            pro_data = self.pro_parser.parse(current_content)
+            # Генерируем секции только по двум последним финальным отчетам
+            sections = self.section_generator.generate(
+                history=history,
+                recommendations=self._generate_recommendations(pro_data, history)
+            )
+            # Добавляю секцию ai_recommendations для форматтера
+            ai_recs = self._generate_recommendations(pro_data, history)
+            if ai_recs:
+                # Кладём в секцию не список, а сам Recommendation (или None)
+                sections['ai_recommendations'] = {sphere: recs[0] if recs else None for sphere, recs in ai_recs.items()}
+            # DEBUG: выводим структуру sections в лог и в markdown
+            self.logger.info(f"SECTIONS DEBUG: {{k: type(v) for k, v in sections.items()}}: " + str({k: type(v) for k, v in sections.items()}))
+            sections['debug_sections'] = {k: str(type(v)) for k, v in sections.items()}
             # Преобразуем историю в формат для дашборда
             history_data = []
             for report in history:
@@ -203,73 +268,18 @@ class DashboardInjector:
                     'hpi': report.hpi,
                     'scores': report.scores
                 })
-            # Генерируем рекомендации
-            recommendations = self._generate_recommendations(pro_data, history)
-            # Попытка сгенерировать AI-рекомендации
-            try:
-                if os.getenv("OPENAI_API_KEY"):
-                    from .ai import AIRecommendationEngine
-                    ai_engine = AIRecommendationEngine()
-                    for sphere in pro_data.scores.keys():
-                        self.logger.info(f"[AI] Генерация AI-рекомендации для сферы: {sphere}")
-                        rec = ai_engine.generate_recommendation(sphere, pro_data, history)
-                        self.logger.info(f"[AI] Тип rec для '{sphere}': {type(rec)}; repr: {repr(rec)}")
-                        if rec is not None:
-                            self.logger.info(f"[AI] Получена AI-рекомендация для '{sphere}': {getattr(rec, 'description', str(rec))}")
-                            ai_recs[sphere] = rec  # Сохраняем весь объект Recommendation
-                        else:
-                            self.logger.warning(f"[AI] Не удалось сгенерировать AI-рекомендацию для '{sphere}'")
-                            ai_recs[sphere] = None
-                    self.logger.info(f"[AI] Итоговый ai_recs: {repr(ai_recs)}")
-                else:
-                    ai_error = "OPENAI_API_KEY не найден. AI-рекомендации недоступны."
-            except Exception as e:
-                ai_error = str(e)
-                self.logger.error(f"Ошибка генерации AI-рекомендаций: {e}", exc_info=True)
-            # Генерируем секции для каждой сферы
-            sections = self.section_generator.generate(
-                pro_data,
-                history,
-                recommendations
-            )
-            # Добавляем секцию AI-рекомендаций (или ошибку)
-            if ai_error:
-                sections['ai_recommendations'] = {'Ошибка': ai_error}
-            elif ai_recs:
-                sections['ai_recommendations'] = ai_recs
-            else:
-                sections['ai_recommendations'] = {'Ошибка': 'AI-рекомендации не были сгенерированы. Проверьте настройки или попробуйте позже.'}
-            self.logger.info(f"Сгенерировано секций: {len(sections)}")
-            if sections:
-                first_sphere = next(iter(sections))
-                self.logger.info(f"Пример секции для '{first_sphere}': {sections[first_sphere]}")
-            for k, v in sections.items():
-                self.logger.info(f"Секция '{k}': {str(v)[:200]}")
-            # Форматируем дашборд
+            # Формируем дашборд
             dashboard_content = self.formatter.format_dashboard(
                 sections=sections,
                 history=history_data,
-                date=draft_date if draft_date else datetime.now(),
+                date=history[-1].date,
                 version=self.version
             )
-            self.logger.info(f"Первые 500 символов dashboard_content:\n{dashboard_content[:500]}")
-            if save_draft:
-                # Сохраняем как черновик
-                date_str = draft_date.strftime('%Y-%m-%d') if draft_date else datetime.now().strftime('%Y-%m-%d')
-                filename = f"{date_str}_dashboard_draft.md"
-                save_dir = REPORTS_DRAFT_DIR
-                os.makedirs(save_dir, exist_ok=True)
-                file_path = os.path.join(save_dir, filename)
-            else:
-                # Обновляем основной дашборд
-                file_path = MAIN_DASHBOARD_PATH
-                # Создаем директорию, если её нет
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            # Сохраняем файл
-            with open(file_path, 'w', encoding='utf-8') as f:
+            # Сохраняем дашборд
+            with open(MAIN_DASHBOARD_PATH, 'w', encoding='utf-8') as f:
                 f.write(dashboard_content)
-            self.logger.info(f"Дашборд успешно сохранен: {file_path}")
-            return file_path
+            self.logger.info(f"Дашборд успешно сохранен: {MAIN_DASHBOARD_PATH}")
+            return MAIN_DASHBOARD_PATH
         except Exception as e:
             self.logger.error(f"Ошибка при обновлении дашборда: {e}")
             raise 

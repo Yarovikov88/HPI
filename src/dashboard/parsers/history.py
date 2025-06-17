@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 from ..normalizers import SphereNormalizer
 from .pro_data import ProMetric
+import json
 
 
 @dataclass
@@ -28,6 +29,11 @@ class HistoricalReport:
     scores: Dict[str, float]
     file_path: str
     metrics: Optional[List[ProMetric]] = None
+    problems: Optional[Dict[str, list]] = None
+    goals: Optional[Dict[str, list]] = None
+    blockers: Optional[Dict[str, list]] = None
+    achievements: Optional[Dict[str, list]] = None
+    general_notes: Optional[Dict[str, str]] = None
 
 
 class HistoryParser:
@@ -174,6 +180,21 @@ class HistoryParser:
                 parser = ProDataParser()
                 metrics = parser._parse_metrics_section(metric_section_match.group(1))
             # --- Конец нового кода ---
+
+            # --- Десериализация PRO-секций из JSON-блока ---
+            problems = goals = blockers = achievements = general_notes = None
+            json_block_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
+            if json_block_match:
+                try:
+                    pro_json = json.loads(json_block_match.group(1))
+                    problems = pro_json.get('problems')
+                    goals = pro_json.get('goals')
+                    blockers = pro_json.get('blockers')
+                    achievements = pro_json.get('achievements')
+                    general_notes = pro_json.get('general_notes')
+                except Exception as e:
+                    self.logger.warning(f"Ошибка при парсинге JSON-блока PRO-секций: {e}")
+            # --- Конец десериализации ---
             
             if not hpi or not scores:
                 self.logger.warning(f"Не удалось извлечь все данные из отчета: {file_path}")
@@ -184,7 +205,12 @@ class HistoryParser:
                 hpi=hpi,
                 scores=scores,
                 file_path=file_path,
-                metrics=metrics
+                metrics=metrics,
+                problems=problems,
+                goals=goals,
+                blockers=blockers,
+                achievements=achievements,
+                general_notes=general_notes
             )
         except Exception as e:
             self.logger.error(f"Ошибка при парсинге отчета {file_path}: {e}")
@@ -192,33 +218,19 @@ class HistoryParser:
 
     def get_history(self) -> List[HistoricalReport]:
         """
-        Получает историю из всех отчетов в директории, только по датам, для которых есть черновики.
-        
+        Получает историю из всех финальных отчетов в директории, без привязки к драфтам.
         Returns:
             Список объектов HistoricalReport
         """
         history = []
-        # Получаем список дат черновиков
-        draft_dates = set()
-        draft_dir = os.path.join(os.path.dirname(self.reports_dir), 'reports_draft')
-        if os.path.exists(draft_dir):
-            for filename in os.listdir(draft_dir):
-                if filename.endswith('_draft.md'):
-                    try:
-                        date_str = filename.split('_')[0]
-                        date = datetime.strptime(date_str, '%Y-%m-%d')
-                        draft_dates.add(date.date())
-                    except Exception:
-                        continue
         if not os.path.exists(self.reports_dir):
             self.logger.error(f"Директория с отчетами не найдена: {self.reports_dir}")
             return history
-        # Собираем все файлы отчетов только по датам черновиков
         for filename in os.listdir(self.reports_dir):
             if not filename.endswith('_report.md'):
                 continue
             date = self._extract_date_from_filename(filename)
-            if not date or date.date() not in draft_dates:
+            if not date:
                 continue
             file_path = os.path.join(self.reports_dir, filename)
             report = self.parse_report(file_path)

@@ -62,7 +62,7 @@ class SectionGenerator:
         Returns:
             Процент изменения
         """
-        if not previous:
+        if previous is None:
             return 0.0
         if previous == 0:
             return 100.0 if current > 0 else 0.0
@@ -106,12 +106,17 @@ class SectionGenerator:
         previous_value = None
         if previous_report and previous_report.metrics:
             for prev_metric in previous_report.metrics:
+                # Логируем попытку сопоставления
+                self.logger.info(f"[COMPARE] now: {metric.normalized_name} ({metric.sphere}) = {metric.current_value}, prev: {prev_metric.normalized_name} ({prev_metric.sphere}) = {prev_metric.current_value}")
                 if (
                     prev_metric.normalized_name == metric.normalized_name and
                     prev_metric.sphere == metric.sphere
                 ):
                     previous_value = prev_metric.current_value
+                    self.logger.info(f"[MATCH] Найдена предыдущая метрика: {prev_metric.normalized_name} ({prev_metric.sphere}) = {prev_metric.current_value}")
                     break
+            if not previous_value:
+                self.logger.warning(f"[NO MATCH] Для метрики {metric.normalized_name} ({metric.sphere}) не найдено соответствия в предыдущем отчете!")
         change_percent = self._calculate_change_percent(
             metric.current_value,
             previous_value
@@ -127,24 +132,28 @@ class SectionGenerator:
 
     def generate(
         self,
-        pro_data: ProData,
         history: List[HistoricalReport],
         recommendations: Dict[str, Recommendation]
     ) -> Dict[str, SphereSection]:
         """
         Генерирует секции для всех сфер.
-        
         Args:
-            pro_data: PRO-данные пользователя
-            history: История отчетов
+            history: История финальных отчетов (отсортирована по дате)
             recommendations: Рекомендации по сферам
-            
         Returns:
             Словарь {сфера: секция}
         """
         sections = {}
-        previous_report = history[-1] if history else None
-        
+        if not history:
+            self.logger.error("История финальных отчетов пуста!")
+            return sections
+        current_report = history[-1]
+        previous_report = history[-2] if len(history) > 1 else None
+        self.logger.info(f"[REPORT_COMPARE] Текущий отчет: {current_report.file_path}, дата: {current_report.date}")
+        if previous_report:
+            self.logger.info(f"[REPORT_COMPARE] Предыдущий отчет: {previous_report.file_path}, дата: {previous_report.date}")
+        else:
+            self.logger.warning("[REPORT_COMPARE] Предыдущий отчет не найден!")
         # Получаем master_order с нормализованными названиями сфер
         master_order = [
             self.sphere_normalizer.normalize('Отношения с любимыми'),
@@ -156,51 +165,34 @@ class SectionGenerator:
             self.sphere_normalizer.normalize('Хобби и увлечения'),
             self.sphere_normalizer.normalize('Благосостояние')
         ]
-
-        # DEBUG: выводим содержимое pro_data.problems/goals/blockers
-        self.logger.info('[DEBUG] pro_data.problems: %s', pro_data.problems)
-        self.logger.info('[DEBUG] pro_data.goals: %s', pro_data.goals)
-        self.logger.info('[DEBUG] pro_data.blockers: %s', pro_data.blockers)
+        # DEBUG: выводим содержимое проблем/целей/блокеров
+        self.logger.info('[DEBUG] current_report.problems: %s', getattr(current_report, 'problems', {}))
+        self.logger.info('[DEBUG] current_report.goals: %s', getattr(current_report, 'goals', {}))
+        self.logger.info('[DEBUG] current_report.blockers: %s', getattr(current_report, 'blockers', {}))
         if previous_report and previous_report.metrics:
             self.logger.info('[DEBUG] previous_report.metrics:')
             for m in previous_report.metrics:
                 self.logger.info(f"  - {m.normalized_name} | {m.sphere} | {m.current_value}")
-
-        # Для каждой текущей метрики логируем попытку поиска предыдущего значения
-        def find_prev_metric(cur_metric, cur_sphere):
-            if not previous_report or not previous_report.metrics:
-                return None
-            for m in previous_report.metrics:
-                self.logger.info(f"[DEBUG] Сравниваю: '{cur_metric.normalized_name}' ({cur_sphere}) <-> '{m.normalized_name}' ({m.sphere})")
-                if m.normalized_name == cur_metric.normalized_name and m.sphere == cur_sphere:
-                    self.logger.info(f"[DEBUG] Найдено совпадение для '{cur_metric.name}' в сфере '{cur_sphere}': {m.current_value}")
-                    return m.current_value
-            self.logger.info(f"[DEBUG] Не найдено совпадение для '{cur_metric.name}' в сфере '{cur_sphere}'")
-            return None
-
         # Генерируем секции для каждой сферы из master_order
         for sphere in master_order:
             normalized = self.sphere_normalizer.normalize(sphere)
             emoji = self.sphere_normalizer.get_emoji(normalized)
             current_score = 0.0
-            if pro_data.scores and normalized in pro_data.scores:
-                current_score = pro_data.scores[normalized]
+            if current_report.scores and normalized in current_report.scores:
+                current_score = current_report.scores[normalized]
             previous_score = None
             if previous_report and normalized in previous_report.scores:
                 previous_score = previous_report.scores[normalized]
             change_percent = self._calculate_change_percent(current_score, previous_score)
             # Метрики только по этой сфере
             sphere_metrics = []
-            for metric in pro_data.metrics:
+            for metric in current_report.metrics:
                 if metric.sphere == normalized:
-                    # DEBUG: что ищем
                     self.logger.info(f"[DEBUG] Сопоставление метрики: {metric.normalized_name} | {metric.sphere} | {metric.current_value}")
-                    prev_val = find_prev_metric(metric, normalized)
-                    self.logger.info(f"[DEBUG] Найдено предыдущее значение: {prev_val}")
-                    sphere_metrics.append(self._generate_metric_progress(metric, pro_data, previous_report))
-            problems = pro_data.problems.get(normalized, [])
-            goals = pro_data.goals.get(normalized, [])
-            blockers = pro_data.blockers.get(normalized, [])
+                    sphere_metrics.append(self._generate_metric_progress(metric, current_report, previous_report))
+            problems = getattr(current_report, 'problems', {}).get(normalized, [])
+            goals = getattr(current_report, 'goals', {}).get(normalized, [])
+            blockers = getattr(current_report, 'blockers', {}).get(normalized, [])
             sections[normalized] = SphereSection(
                 name=normalized,
                 emoji=emoji,
@@ -214,5 +206,4 @@ class SectionGenerator:
                 blockers=blockers,
                 recommendation=recommendations.get(sphere)
             )
-            
         return sections 

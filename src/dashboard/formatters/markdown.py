@@ -396,12 +396,21 @@ class MarkdownFormatter:
                     continue
                 rec = section.recommendation
                 sphere_label = section.emoji if section.emoji else ''
-                # Для базовых рекомендаций выводим только сферу и текст рекомендации
+                # Для базовых рекомендаций выводим красиво: title, description, шаги
                 if isinstance(rec, list):
                     for r in rec:
-                        result.append(f"> | {sphere_label} | {str(r)} |")
+                        if hasattr(r, 'title') and hasattr(r, 'description'):
+                            steps = ''
+                            if hasattr(r, 'action_steps') and r.action_steps:
+                                steps = ' Шаги: ' + '; '.join([s.description for s in r.action_steps])
+                            result.append(f"> | {sphere_label} | {r.title}: {r.description}{steps} |")
+                        else:
+                            result.append(f"> | {sphere_label} | {str(r)} |")
                 elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                    result.append(f"> | {sphere_label} | {rec.title}: {rec.description} |")
+                    steps = ''
+                    if hasattr(rec, 'action_steps') and rec.action_steps:
+                        steps = ' Шаги: ' + '; '.join([s.description for s in rec.action_steps])
+                    result.append(f"> | {sphere_label} | {rec.title}: {rec.description}{steps} |")
                 else:
                     result.append(f"> | {sphere_label} | {str(rec)} |")
         else:
