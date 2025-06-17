@@ -175,7 +175,7 @@ class DashboardInjector:
         
         Args:
             save_draft: Сохранять ли черновик дашборда
-            
+        
         Returns:
             Путь к сохраненному файлу
         """
@@ -185,6 +185,16 @@ class DashboardInjector:
         try:
             # Загружаем данные
             pro_data, history = self._load_data()
+            # Получаем путь к последнему черновику и дату из имени файла
+            draft_path = self._find_latest_draft()
+            draft_date = None
+            if draft_path:
+                draft_filename = os.path.basename(draft_path)
+                try:
+                    draft_date_str = draft_filename.split('_')[0]
+                    draft_date = datetime.strptime(draft_date_str, '%Y-%m-%d')
+                except Exception as e:
+                    self.logger.warning(f"Не удалось извлечь дату из имени черновика: {draft_filename} ({e})")
             # Преобразуем историю в формат для дашборда
             history_data = []
             for report in history:
@@ -239,13 +249,13 @@ class DashboardInjector:
             dashboard_content = self.formatter.format_dashboard(
                 sections=sections,
                 history=history_data,
-                date=datetime.now(),
+                date=draft_date if draft_date else datetime.now(),
                 version=self.version
             )
             self.logger.info(f"Первые 500 символов dashboard_content:\n{dashboard_content[:500]}")
             if save_draft:
                 # Сохраняем как черновик
-                date_str = datetime.now().strftime('%Y-%m-%d')
+                date_str = draft_date.strftime('%Y-%m-%d') if draft_date else datetime.now().strftime('%Y-%m-%d')
                 filename = f"{date_str}_dashboard_draft.md"
                 save_dir = REPORTS_DRAFT_DIR
                 os.makedirs(save_dir, exist_ok=True)

@@ -126,41 +126,36 @@ def calculate_total_hpi(sphere_scores: Dict[str, float]) -> float:
 def extract_answers_from_section(content: str, section_name: str) -> Optional[List[int]]:
     """Извлекает ответы из секции отчета."""
     try:
-        # Убираем ### из названия секции
         clean_section_name = section_name.replace("### ", "")
-        
-        # Ищем секцию по номеру и названию, допуская любые символы (включая emoji) между ними
         number = clean_section_name.split('.')[0]
         name = '.'.join(clean_section_name.split('.')[1:]).strip()
         section_pattern = rf"##\s*{number}\.\s*.*?\s*{re.escape(name)}.*?(\n\|[\s\S]*?)(?=\n##|\Z)"
 
-        print(f"Ищем по шаблону: {section_pattern}")
+        print(f"[DEBUG] Ищем по шаблону: {section_pattern}")
         section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
-        
         if not section_match:
-            print(f"Секция не найдена: {clean_section_name}")
-            return None
-            
-        section_content = section_match.group(1)
-        print(f"Найдено содержимое секции: {section_content[:100]}...")
-        
-        # Извлекаем все ответы из таблицы
+            print(f"[DEBUG] Секция не найдена: {section_name}")
+            return []
+        section_table = section_match.group(1)
+        print(f"[DEBUG] Найдено содержимое секции: {section_table}")
         answers = []
-        for line in section_content.split('\n'):
-            if '|' in line and not line.startswith('|--') and not line.startswith('| Вопрос'):  # Пропускаем заголовки и разделители
-                cells = [cell.strip() for cell in line.split('|') if cell.strip()]
-                print(f"Обработка строки: {cells}")
-                if len(cells) >= 3:  # Должно быть минимум 3 ячейки: вопрос, варианты, ответ
-                    answer = cells[-1]  # Последняя ячейка - ответ
-                    if answer.isdigit():
-                        answers.append(int(answer))
-        
-        print(f"Извлечены ответы: {answers}")
-        return answers if answers else None
-        
+        for line in section_table.splitlines():
+            line = line.strip()
+            if not line or line.startswith(":---") or ":---" in line:
+                continue  # пропускаем разделители и пустые строки
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if not cells or cells[0] == "Вопрос":
+                continue  # пропускаем строку-заголовок
+            if cells and cells[-1].isdigit():
+                answers.append(int(cells[-1]))
+            print(f"[DEBUG] Обработка строки: {line} -> {cells}")
+            if len(answers) == 6:
+                break  # только первые 6 ответов
+        print(f"[DEBUG] Итоговые 6 ответов для {section_name}: {answers}")
+        return answers
     except Exception as e:
-        print(f"Ошибка при извлечении ответов из секции {section_name}: {str(e)}")
-        return None
+        print(f"[DEBUG] Ошибка при парсинге секции {section_name}: {e}")
+        return []
 
 def process_hpi_report(file_path: str) -> Dict[str, float]:
     """Обработка файла отчета и расчет всех показателей."""
@@ -288,8 +283,13 @@ def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
         with open(draft_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Получаем текущую дату
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        # Получаем дату из имени черновика
+        draft_filename = os.path.basename(draft_path)
+        draft_date_match = re.match(r"(\d{4}-\d{2}-\d{2})", draft_filename)
+        if draft_date_match:
+            current_date = draft_date_match.group(1)
+        else:
+            current_date = datetime.now().strftime("%Y-%m-%d")
         
         # Создаем имя для финального отчета
         final_report_name = f"{current_date}_report.md"

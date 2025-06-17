@@ -190,14 +190,23 @@ class MarkdownFormatter:
         # Добавляем рекомендацию
         if section.recommendation:
             result.append("### Рекомендация")
-            result.append(f"**{section.recommendation.title}**")
-            result.append(f"\n{section.recommendation.description}\n")
-            
-            # Добавляем шаги действий
-            result.append(self._format_action_steps(section.recommendation.action_steps))
-            
-            # Добавляем доказательную базу
-            result.append(self._format_evidence(section.recommendation.evidence))
+            rec = section.recommendation
+            if isinstance(rec, list):
+                for r in rec:
+                    result.append(f"- {str(r)}")
+            elif isinstance(rec, str):
+                result.append(f"- {rec}")
+            elif hasattr(rec, 'title') and hasattr(rec, 'description'):
+                result.append(f"**{rec.title}**")
+                result.append(f"\n{rec.description}\n")
+                # Добавляем шаги действий
+                if hasattr(rec, 'action_steps'):
+                    result.append(self._format_action_steps(rec.action_steps))
+                # Добавляем доказательную базу
+                if hasattr(rec, 'evidence'):
+                    result.append(self._format_evidence(rec.evidence))
+            else:
+                result.append(f"- {str(rec)}")
             
         return "\n".join(result)
 
@@ -302,56 +311,54 @@ class MarkdownFormatter:
         result.append("\n---\n")
         result.append("## PRO-разделы\n")
 
+        # Используем нормализованные имена сфер для master_order
+        normalizer = SphereNormalizer()
+        master_order = [
+            normalizer.normalize('Отношения с любимыми'),
+            normalizer.normalize('Отношения с родными'),
+            normalizer.normalize('Друзья'),
+            normalizer.normalize('Карьера'),
+            normalizer.normalize('Физическое здоровье'),
+            normalizer.normalize('Ментальное здоровье'),
+            normalizer.normalize('Хобби и увлечения'),
+            normalizer.normalize('Благосостояние')
+        ]
+
         # Проблемы
         has_problems = any(section.problems for k, section in sections.items() if k != 'ai_recommendations')
-        if has_problems:
-            result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
-            result.append("> | Сфера | Проблема |")
-            result.append("> |:---:|:---|")
-            for k, section in sections.items():
-                if k == 'ai_recommendations':
-                    continue
-                for problem in section.problems:
-                    result.append(f"> | {section.emoji} | {problem} |")
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
-            result.append("> | Сфера | Проблема |")
-            result.append("> |:---:|:---|")
-
+        result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
+        result.append("> | Сфера | Проблема |")
+        result.append("> |:---:|:---|")
+        for sphere_name in master_order:
+            section = sections.get(sphere_name)
+            if not section or not section.problems:
+                continue
+            for problem in section.problems:
+                result.append(f"> | {section.emoji} | {problem} |")
         result.append("\n")
         # Цели
         has_goals = any(section.goals for k, section in sections.items() if k != 'ai_recommendations')
-        if has_goals:
-            result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
-            result.append("> | Сфера | Цель |")
-            result.append("> |:---:|:---|")
-            for k, section in sections.items():
-                if k == 'ai_recommendations':
-                    continue
-                for goal in section.goals:
-                    result.append(f"> | {section.emoji} | {goal} |")
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
-            result.append("> | Сфера | Цель |")
-            result.append("> |:---:|:---|")
-
+        result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
+        result.append("> | Сфера | Цель |")
+        result.append("> |:---:|:---|")
+        for sphere_name in master_order:
+            section = sections.get(sphere_name)
+            if not section or not section.goals:
+                continue
+            for goal in section.goals:
+                result.append(f"> | {section.emoji} | {goal} |")
         result.append("\n")
         # Блокеры
         has_blockers = any(section.blockers for k, section in sections.items() if k != 'ai_recommendations')
-        if has_blockers:
-            result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
-            result.append("> | Сфера | Блокер |")
-            result.append("> |:---:|:---|")
-            for k, section in sections.items():
-                if k == 'ai_recommendations':
-                    continue
-                for blocker in section.blockers:
-                    result.append(f"> | {section.emoji} | {blocker} |")
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
-            result.append("> | Сфера | Блокер |")
-            result.append("> |:---:|:---|")
-
+        result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
+        result.append("> | Сфера | Блокер |")
+        result.append("> |:---:|:---|")
+        for sphere_name in master_order:
+            section = sections.get(sphere_name)
+            if not section or not section.blockers:
+                continue
+            for blocker in section.blockers:
+                result.append(f"> | {section.emoji} | {blocker} |")
         result.append("\n")
         # Метрики
         has_metrics = any(section.metrics for k, section in sections.items() if k != 'ai_recommendations')
@@ -365,8 +372,10 @@ class MarkdownFormatter:
                 for metric in section.metrics:
                     change = ""
                     if metric.previous_value is not None and metric.current_value is not None:
-                        sign = "+" if metric.change_percent > 0 else ""
-                        change = f"{sign}{metric.change_percent:.1f}%"
+                        abs_diff = metric.current_value - metric.previous_value
+                        sign = "+" if abs_diff > 0 else ("" if abs_diff == 0 else "-")
+                        percent_sign = "+" if metric.change_percent > 0 else ("" if metric.change_percent == 0 else "-")
+                        change = f"{sign}{abs(abs_diff):.1f} ({percent_sign}{abs(metric.change_percent):.1f}%)"
                     current = f"{metric.current_value:.1f}" if metric.current_value is not None else "—"
                     target = f"{metric.target_value:.1f}" if metric.target_value is not None else "—"
                     result.append(
@@ -404,7 +413,7 @@ class MarkdownFormatter:
                 # Для базовых рекомендаций выводим только сферу и текст рекомендации
                 if isinstance(rec, list):
                     for r in rec:
-                        result.append(f"> | {sphere_label} | {r} |")
+                        result.append(f"> | {sphere_label} | {str(r)} |")
                 elif hasattr(rec, 'title') and hasattr(rec, 'description'):
                     result.append(f"> | {sphere_label} | {rec.title}: {rec.description} |")
                 else:
@@ -450,6 +459,12 @@ class MarkdownFormatter:
                     rec = ai_recs.get(sphere_name)
                     if rec is None:
                         result.append(f"> | {emoji if emoji else ''} | AI не смог сгенерировать рекомендацию. | | | |")
+                    elif isinstance(rec, list):
+                        for r in rec:
+                            if hasattr(r, 'title') and hasattr(r, 'description'):
+                                result.append(f"> | {emoji if emoji else ''} | {r.title} | {r.description} | | |")
+                            else:
+                                result.append(f"> | {emoji if emoji else ''} | {str(r)} | | | |")
                     elif hasattr(rec, 'title') and hasattr(rec, 'action_steps') and hasattr(rec, 'evidence'):
                         # Формируем шаги одной строкой с <br>
                         steps_parts = []
@@ -468,6 +483,8 @@ class MarkdownFormatter:
                             evidence_parts.append(f"<b>Исторический успех:</b> {round(rec.evidence.historical_success * 100)}%")
                         evidence_md = '<br>'.join(evidence_parts)
                         result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | {steps_md} | {evidence_md} |")
+                    elif hasattr(rec, 'title') and hasattr(rec, 'description'):
+                        result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | | |")
                     elif isinstance(rec, str):
                         result.append(f"> | {emoji if emoji else ''} | {rec} | | | |")
                     else:

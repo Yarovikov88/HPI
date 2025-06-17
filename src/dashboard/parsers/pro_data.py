@@ -147,7 +147,7 @@ class ProDataParser:
         
         Args:
             content: Содержимое секции
-            
+        
         Returns:
             Словарь {сфера: [значение1, значение2, ...]}
         """
@@ -167,10 +167,10 @@ class ProDataParser:
                     current_sphere = self.sphere_normalizer.normalize(sphere_candidate)
                 # Всегда нормализуем!
                 if current_sphere:
-                    current_sphere = self.sphere_normalizer.normalize(current_sphere)
-                    if current_sphere not in section_data:
-                        section_data[current_sphere] = []
-                    section_data[current_sphere].append(value)
+                    normalized_sphere = self.sphere_normalizer.normalize(current_sphere)
+                    if normalized_sphere not in section_data:
+                        section_data[normalized_sphere] = []
+                    section_data[normalized_sphere].append(value)
         return section_data
 
     def _parse_general_notes_section(self, content: str) -> Dict[str, str]:
@@ -196,7 +196,7 @@ class ProDataParser:
         
         Args:
             content: Текст черновика
-            
+        
         Returns:
             Объект ProData с данными всех секций
         """
@@ -209,41 +209,46 @@ class ProDataParser:
             'scores': {},
             'general_notes': {}  # Новое поле
         }
-        
+        print("[DEBUG] --- Начало парсинга PRO-секций ---")
+        # Явное сопоставление секций с ключами
+        section_map = {
+            '🛑 Мои проблемы': 'problems',
+            '🎯 Мои цели': 'goals',
+            '🚧 Мои блокеры': 'blockers',
+            '🏆 Мои достижения': 'achievements'
+        }
         # Парсим каждую секцию
         for section_title in self.pro_sections:
             section_content = self._find_section_content(content, section_title)
             if not section_content:
-                self.logger.warning(f"Секция '{section_title}' не найдена в черновике")
+                print(f"[DEBUG] Секция '{section_title}' не найдена в черновике")
                 continue
-                
-            self.logger.info(f"Найдена секция '{section_title}', размер контента: {len(section_content)} символов")
-                
+            print(f"[DEBUG] Найдена секция '{section_title}', размер контента: {len(section_content)} символов")
             if section_title == '📊 Мои метрики':
                 metrics = self._parse_metrics_section(section_content)
+                print(f"[DEBUG] Распарсено {len(metrics)} метрик: {metrics}")
                 sections_data['metrics'] = metrics
-                self.logger.info(f"Распарсено {len(metrics)} метрик")
-                
                 # Вычисляем scores как среднее значение метрик для каждой сферы
                 sphere_metrics = {}
                 for metric in metrics:
-                    if metric.current_value is not None:  # Учитываем только метрики с значениями
+                    if metric.current_value is not None:
                         if metric.sphere not in sphere_metrics:
                             sphere_metrics[metric.sphere] = []
                         sphere_metrics[metric.sphere].append(metric.current_value)
-                
                 for sphere, values in sphere_metrics.items():
-                    if values:  # Проверяем, что есть значения для расчета среднего
+                    if values:
                         sections_data['scores'][sphere] = sum(values) / len(values)
-                        self.logger.info(f"Вычислен score для сферы '{sphere}': {sections_data['scores'][sphere]}")
+                        print(f"[DEBUG] Вычислен score для сферы '{sphere}': {sections_data['scores'][sphere]}")
             elif section_title == '📝 Общие вопросы':
                 sections_data['general_notes'] = self._parse_general_notes_section(section_content)
-            else:
-                section_key = section_title.lower().split()[1]  # '🛑 Мои проблемы' -> 'problems'
+                print(f"[DEBUG] Распарсены общие вопросы: {sections_data['general_notes']}")
+            elif section_title in section_map:
+                section_key = section_map[section_title]
                 section_data = self._parse_regular_section(section_content)
+                print(f"[DEBUG] Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер: {section_data}")
                 sections_data[section_key] = section_data
-                self.logger.info(f"Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер")
-        
+        print(f"[DEBUG] Итоговые данные после парсинга: {sections_data}")
+        print("[DEBUG] --- Конец парсинга PRO-секций ---")
         return ProData(
             scores=sections_data['scores'],
             metrics=sections_data['metrics'],

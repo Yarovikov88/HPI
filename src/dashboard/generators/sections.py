@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
-from ..parsers import ProData, HistoricalReport
+from ..parsers import ProData, HistoricalReport, ProMetric
 from ..normalizers import MetricNormalizer, SphereNormalizer
 from .recommendations import Recommendation
 
@@ -89,50 +89,38 @@ class SectionGenerator:
 
     def _generate_metric_progress(
         self,
-        metric_name: str,
+        metric: ProMetric,
         current_data: ProData,
         previous_report: Optional[HistoricalReport]
     ) -> MetricProgress:
         """
         Генерирует прогресс по метрике.
-        
         Args:
-            metric_name: Название метрики
+            metric: Объект ProMetric из текущих данных
             current_data: Текущие PRO-данные
             previous_report: Предыдущий отчет
-            
         Returns:
             Объект MetricProgress
         """
-        # Получаем текущие значения
-        current_metric = next(
-            (m for m in current_data.metrics if m.name == metric_name),
-            None
-        )
-        if not current_metric:
-            raise ValueError(f"Метрика {metric_name} не найдена в текущих данных")
-            
-        # Получаем предыдущие значения
+        # Получаем предыдущие значения по совпадению normalized_name и сферы
         previous_value = None
         if previous_report and previous_report.metrics:
-            prev_metric = next(
-                (m for m in previous_report.metrics if m.name == metric_name),
-                None
-            )
-            if prev_metric:
-                previous_value = prev_metric.value
-                
-        # Вычисляем изменения
+            for prev_metric in previous_report.metrics:
+                if (
+                    prev_metric.normalized_name == metric.normalized_name and
+                    prev_metric.sphere == metric.sphere
+                ):
+                    previous_value = prev_metric.current_value
+                    break
         change_percent = self._calculate_change_percent(
-            current_metric.current_value,
+            metric.current_value,
             previous_value
         )
-        
         return MetricProgress(
-            name=metric_name,
-            current_value=current_metric.current_value,
+            name=metric.name,
+            current_value=metric.current_value,
             previous_value=previous_value,
-            target_value=current_metric.target_value,
+            target_value=metric.target_value,
             change_percent=change_percent,
             status=self._determine_status(change_percent)
         )
@@ -157,52 +145,63 @@ class SectionGenerator:
         sections = {}
         previous_report = history[-1] if history else None
         
-        # Получаем все уникальные сферы
-        spheres = set()
-        for metric in pro_data.metrics:
-            spheres.add(metric.sphere)
-        for sphere in pro_data.problems:
-            spheres.add(sphere)
-        for sphere in pro_data.goals:
-            spheres.add(sphere)
-        for sphere in pro_data.blockers:
-            spheres.add(sphere)
-        
-        # Генерируем секции для каждой сферы
-        for sphere in spheres:
-            # Получаем нормализованное имя и эмодзи
+        # Получаем master_order с нормализованными названиями сфер
+        master_order = [
+            self.sphere_normalizer.normalize('Отношения с любимыми'),
+            self.sphere_normalizer.normalize('Отношения с родными'),
+            self.sphere_normalizer.normalize('Друзья'),
+            self.sphere_normalizer.normalize('Карьера'),
+            self.sphere_normalizer.normalize('Физическое здоровье'),
+            self.sphere_normalizer.normalize('Ментальное здоровье'),
+            self.sphere_normalizer.normalize('Хобби и увлечения'),
+            self.sphere_normalizer.normalize('Благосостояние')
+        ]
+
+        # DEBUG: выводим содержимое pro_data.problems/goals/blockers
+        self.logger.info('[DEBUG] pro_data.problems: %s', pro_data.problems)
+        self.logger.info('[DEBUG] pro_data.goals: %s', pro_data.goals)
+        self.logger.info('[DEBUG] pro_data.blockers: %s', pro_data.blockers)
+        if previous_report and previous_report.metrics:
+            self.logger.info('[DEBUG] previous_report.metrics:')
+            for m in previous_report.metrics:
+                self.logger.info(f"  - {m.normalized_name} | {m.sphere} | {m.current_value}")
+
+        # Для каждой текущей метрики логируем попытку поиска предыдущего значения
+        def find_prev_metric(cur_metric, cur_sphere):
+            if not previous_report or not previous_report.metrics:
+                return None
+            for m in previous_report.metrics:
+                self.logger.info(f"[DEBUG] Сравниваю: '{cur_metric.normalized_name}' ({cur_sphere}) <-> '{m.normalized_name}' ({m.sphere})")
+                if m.normalized_name == cur_metric.normalized_name and m.sphere == cur_sphere:
+                    self.logger.info(f"[DEBUG] Найдено совпадение для '{cur_metric.name}' в сфере '{cur_sphere}': {m.current_value}")
+                    return m.current_value
+            self.logger.info(f"[DEBUG] Не найдено совпадение для '{cur_metric.name}' в сфере '{cur_sphere}'")
+            return None
+
+        # Генерируем секции для каждой сферы из master_order
+        for sphere in master_order:
             normalized = self.sphere_normalizer.normalize(sphere)
             emoji = self.sphere_normalizer.get_emoji(normalized)
-            
-            # Получаем текущую оценку
             current_score = 0.0
-            if pro_data.scores and sphere in pro_data.scores:
-                current_score = pro_data.scores[sphere]
-            
-            # Получаем предыдущую оценку
+            if pro_data.scores and normalized in pro_data.scores:
+                current_score = pro_data.scores[normalized]
             previous_score = None
-            if previous_report and sphere in previous_report.scores:
-                previous_score = previous_report.scores[sphere]
-            
-            # Вычисляем изменения
-            change_percent = self._calculate_change_percent(
-                current_score,
-                previous_score
-            )
-            
-            # Получаем метрики сферы
+            if previous_report and normalized in previous_report.scores:
+                previous_score = previous_report.scores[normalized]
+            change_percent = self._calculate_change_percent(current_score, previous_score)
+            # Метрики только по этой сфере
             sphere_metrics = []
             for metric in pro_data.metrics:
-                if metric.sphere == sphere:
-                    progress = self._generate_metric_progress(
-                        metric.name,
-                        pro_data,
-                        previous_report
-                    )
-                    sphere_metrics.append(progress)
-            
-            # Создаем секцию
-            sections[sphere] = SphereSection(
+                if metric.sphere == normalized:
+                    # DEBUG: что ищем
+                    self.logger.info(f"[DEBUG] Сопоставление метрики: {metric.normalized_name} | {metric.sphere} | {metric.current_value}")
+                    prev_val = find_prev_metric(metric, normalized)
+                    self.logger.info(f"[DEBUG] Найдено предыдущее значение: {prev_val}")
+                    sphere_metrics.append(self._generate_metric_progress(metric, pro_data, previous_report))
+            problems = pro_data.problems.get(normalized, [])
+            goals = pro_data.goals.get(normalized, [])
+            blockers = pro_data.blockers.get(normalized, [])
+            sections[normalized] = SphereSection(
                 name=normalized,
                 emoji=emoji,
                 current_score=current_score,
@@ -210,9 +209,9 @@ class SectionGenerator:
                 change_percent=change_percent,
                 status=self._determine_status(change_percent),
                 metrics=sphere_metrics,
-                problems=pro_data.problems.get(sphere, []),
-                goals=pro_data.goals.get(sphere, []),
-                blockers=pro_data.blockers.get(sphere, []),
+                problems=problems,
+                goals=goals,
+                blockers=blockers,
                 recommendation=recommendations.get(sphere)
             )
             

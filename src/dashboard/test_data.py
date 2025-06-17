@@ -47,7 +47,8 @@ def get_test_pro_data() -> ProData:
         achievements={
             "Карьера": ["Завершил важный проект"],
             "Физическое здоровье": ["Начал ходить в спортзал"]
-        }
+        },
+        general_notes={}
     )
 
 def get_test_history() -> List[HistoricalReport]:
