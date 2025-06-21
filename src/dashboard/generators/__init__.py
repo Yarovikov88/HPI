@@ -7,21 +7,16 @@ from .recommendations import (
     ActionStep,
     Evidence,
     Recommendation,
-    RecommendationGenerator
+    RecommendationGenerator,
 )
-
-from .sections import (
-    MetricProgress,
-    SphereSection,
-    SectionGenerator
-)
+from .sections import MetricProgress, SectionGenerator, SphereSection
 
 __all__ = [
-    'ActionStep',
-    'Evidence',
-    'Recommendation',
-    'RecommendationGenerator',
-    'MetricProgress',
-    'SphereSection',
-    'SectionGenerator'
-] 
+    "ActionStep",
+    "Evidence",
+    "Recommendation",
+    "RecommendationGenerator",
+    "MetricProgress",
+    "SphereSection",
+    "SectionGenerator",
+]

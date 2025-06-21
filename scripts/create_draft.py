@@ -1,9 +1,9 @@
+import json
 import os
+import re
 import sys
 from datetime import datetime
-import json
-import re
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Определение корня проекта
 # __file__ -> scripts/create_draft.py
@@ -11,7 +11,7 @@ from typing import Dict, List, Any
 # os.path.dirname(...) -> hpi/
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRAFT_FOLDER = os.path.join(PROJECT_ROOT, "reports_draft")
-DB_PATH = os.path.join(PROJECT_ROOT, 'database', 'questions.md')
+DB_PATH = os.path.join(PROJECT_ROOT, "database", "questions.md")
 
 # Конфигурация сфер для сохранения правильного порядка и названий
 SPHERES_CONFIG = [
@@ -22,99 +22,127 @@ SPHERES_CONFIG = [
     {"key": "Физическое здоровье", "emoji": "♂️"},
     {"key": "Ментальное здоровье", "emoji": "🧠"},
     {"key": "Хобби и увлечения", "emoji": "🎨"},
-    {"key": "Благосостояние", "emoji": "💰"}
+    {"key": "Благосостояние", "emoji": "💰"},
 ]
+
 
 def parse_question_database() -> Dict[str, Dict[str, List[Any]]]:
     """
     Парсит questions.md и извлекает полную структуру вопросов и метрик.
     """
     if not os.path.exists(DB_PATH):
-        print(f"🔴 Ошибка: Файл базы данных вопросов не найден: {DB_PATH}", file=sys.stderr)
+        print(
+            f"🔴 Ошибка: Файл базы данных вопросов не найден: {DB_PATH}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
-    with open(DB_PATH, 'r', encoding='utf-8') as f:
+    with open(DB_PATH, "r", encoding="utf-8") as f:
         content = f.read()
 
-    all_data = {sphere['key']: {'basic': [], 'metrics': []} for sphere in SPHERES_CONFIG}
-    
+    all_data: Dict[str, Dict[str, List[Any]]] = {
+        sphere["key"]: {"basic": [], "metrics": []} for sphere in SPHERES_CONFIG
+    }
+
     # Обновленный паттерн, который ищет emoji и название в конфигурации, а не пытается парсить их
     for sphere_config in SPHERES_CONFIG:
-        sphere_key = sphere_config['key']
-        sphere_emoji = sphere_config['emoji']
-        
+        sphere_key = sphere_config["key"]
+        sphere_emoji = sphere_config["emoji"]
+
         # Создаем паттерн для конкретной сферы
-        pattern = re.compile(rf"##\s*{re.escape(sphere_emoji)}\s*{re.escape(sphere_key)}\n```json\n([\s\S]+?)\n```", re.DOTALL)
+        pattern = re.compile(
+            rf"##\s*{re.escape(sphere_emoji)}\s*{re.escape(sphere_key)}\n```json\n([\s\S]+?)\n```",
+            re.DOTALL,
+        )
         match = pattern.search(content)
-        
+
         if not match:
-            print(f"🟡 Предупреждение: не найден JSON-блок для сферы '{sphere_key}'", file=sys.stderr)
+            print(
+                f"🟡 Предупреждение: не найден JSON-блок для сферы '{sphere_key}'",
+                file=sys.stderr,
+            )
             continue
-        
+
         try:
             items = json.loads(match.group(1))
             for item in items:
                 if item.get("type") == "basic":
-                    all_data[sphere_key]['basic'].append(item)
+                    all_data[sphere_key]["basic"].append(item)
                 elif item.get("category") == "metrics" and "metrics" in item:
-                    all_data[sphere_key]['metrics'].extend(item["metrics"])
+                    all_data[sphere_key]["metrics"].extend(item["metrics"])
         except json.JSONDecodeError:
-            print(f"🔴 Ошибка декодирования JSON для сферы '{sphere_key}'", file=sys.stderr)
+            print(
+                f"🔴 Ошибка декодирования JSON для сферы '{sphere_key}'",
+                file=sys.stderr,
+            )
             continue
-            
+
     return all_data
+
 
 def generate_draft_content(db_data: Dict[str, Dict[str, List[Any]]]) -> str:
     """
     Генерирует полное содержимое файла черновика на основе данных из БД.
     """
-    date_str = datetime.now().strftime('%Y-%m-%d')
-    
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
     # --- Собираем HPI секции (вопросы 1-8) ---
     hpi_sections = []
     for i, sphere_config in enumerate(SPHERES_CONFIG, 1):
-        sphere_key = sphere_config['key']
-        sphere_emoji = sphere_config['emoji']
+        sphere_key = sphere_config["key"]
+        sphere_emoji = sphere_config["emoji"]
         sphere_title = f"## {i}. {sphere_emoji} {sphere_key}"
-        
+
         table_header = "| Вопрос | Варианты | Ответ |\n|:---|:---|:---:|"
-        
-        questions = db_data.get(sphere_key, {}).get('basic', [])
-        
+
+        questions = db_data.get(sphere_key, {}).get("basic", [])
+
         table_rows = []
         for q in questions:
-            options_list = q.get('options', [])
+            options_list = q.get("options", [])
             # Форматируем варианты в одну строку: "1. Вариант; 2. Вариант; ..."
-            formatted_options = "; ".join([f"{i+1}. {opt}" for i, opt in enumerate(options_list)])
-            table_rows.append(f"| {q.get('text', 'Нет текста')} | {formatted_options} | |")
-        
+            formatted_options = "; ".join(
+                [f"{i+1}. {opt}" for i, opt in enumerate(options_list)]
+            )
+            table_rows.append(
+                f"| {q.get('text', 'Нет текста')} | {formatted_options} | |"
+            )
+
         hpi_sections.append(f"{sphere_title}\n{table_header}\n" + "\n".join(table_rows))
-        
+
     # --- Собираем PRO секции ---
     pro_sections_map = {
-        'Мои проблемы': '🛑',
-        'Мои цели': '🎯',
-        'Мои блокеры': '🚧',
-        'Мои достижения': '🏆'
+        "Мои проблемы": "🛑",
+        "Мои цели": "🎯",
+        "Мои блокеры": "🚧",
+        "Мои достижения": "🏆",
     }
     pro_sections = []
     for title, emoji in pro_sections_map.items():
         section_title = f"### {emoji} {title}"
         table_header = "| Сфера жизни | Ваши ответы |\n|:---|:---|"
         table_rows = [f"| {s['emoji']} {s['key']} | |" for s in SPHERES_CONFIG]
-        pro_sections.append(f"{section_title}\n{table_header}\n" + "\n".join(table_rows))
+        pro_sections.append(
+            f"{section_title}\n{table_header}\n" + "\n".join(table_rows)
+        )
 
     # --- Собираем секцию "Мои метрики" ---
-    metrics_header = "| Сфера жизни | Метрика | Текущее | Целевое |\n|:---|:---|:---:|:---:|"
+    metrics_header = (
+        "| Сфера жизни | Метрика | Текущее | Целевое |\n|:---|:---|:---:|:---:|"
+    )
     metrics_rows = []
     for sphere_config in SPHERES_CONFIG:
-        sphere_key = sphere_config['key']
-        sphere_emoji = sphere_config['emoji']
-        metrics = db_data.get(sphere_key, {}).get('metrics', [])
+        sphere_key = sphere_config["key"]
+        sphere_emoji = sphere_config["emoji"]
+        metrics = db_data.get(sphere_key, {}).get("metrics", [])
         for metric in metrics:
-            metrics_rows.append(f"| {sphere_emoji} {sphere_key} | {metric.get('name', 'Нет названия')} | | |")
-    metrics_section = f"### 📊 Мои метрики\n{metrics_header}\n" + "\n".join(metrics_rows)
-    
+            metrics_rows.append(
+                f"| {sphere_emoji} {sphere_key} | {metric.get('name', 'Нет названия')} | | |"
+            )
+    metrics_section = f"### 📊 Мои метрики\n{metrics_header}\n" + "\n".join(
+        metrics_rows
+    )
+
     # --- Собираем всё вместе ---
     final_content = f"""# HPI Отчет
 
@@ -136,6 +164,7 @@ def generate_draft_content(db_data: Dict[str, Dict[str, List[Any]]]) -> str:
 """
     return final_content.strip()
 
+
 def create_draft_report():
     """
     Создает файл черновика HPI на сегодняшнюю дату на основе questions.md.
@@ -155,19 +184,20 @@ def create_draft_report():
         db_data = parse_question_database()
         print("📝  Генерация нового черновика...")
         draft_content = generate_draft_content(db_data)
-        
-        with open(draft_filepath, 'w', encoding='utf-8') as f:
+
+        with open(draft_filepath, "w", encoding="utf-8") as f:
             f.write(draft_content)
-            
+
         print(f"✅ Успешно создан черновик: {draft_filepath}")
     except Exception as e:
         print(f"🔴 Ошибка при создании черновика: {e}", file=sys.stderr)
 
+
 if __name__ == "__main__":
     # Принудительно устанавливаем кодировку UTF-8 для вывода
-    if sys.stdout.encoding != 'utf-8':
+    if sys.stdout.encoding != "utf-8" and hasattr(sys.stdout, "reconfigure"):
         try:
-            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stdout.reconfigure(encoding="utf-8")
         except TypeError:
             pass
-    create_draft_report() 
+    create_draft_report()

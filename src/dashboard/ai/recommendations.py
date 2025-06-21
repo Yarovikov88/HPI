@@ -1,19 +1,18 @@
 """
 Модуль для генерации AI-рекомендаций с использованием OpenAI GPT-3.5 Turbo.
 """
-import os
+
 import json
 import logging
-from typing import Dict, List, Optional
+import os
 from dataclasses import dataclass
-from datetime import datetime
-import dataclasses
+from typing import Any, Dict, List, Optional
 
-from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAI
 
-from ..parsers import ProData, HistoricalReport
-from ..generators import Recommendation, ActionStep, Evidence
+from ..generators import ActionStep, Evidence, Recommendation
+from ..parsers import HistoricalReport, ProData
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -25,15 +24,16 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 @dataclass
 class SphereContext:
     """Контекст сферы для генерации рекомендаций."""
+
     name: str
     current_score: float
     previous_score: Optional[float]
     change_percent: float
-    metrics: List[Dict]
+    metrics: List[Dict[str, Any]]
     problems: List[str]
     goals: List[str]
     blockers: List[str]
-    historical_data: List[Dict]
+    historical_data: List[Dict[str, Any]]
     general_notes: Dict[str, str]
 
 
@@ -44,94 +44,99 @@ class AIRecommendationEngine:
         """Инициализация движка."""
         self.logger = logging.getLogger(__name__)
         self.model = "gpt-3.5-turbo"  # Используем GPT-3.5 Turbo
-        
+
         # Оптимизированный системный промпт для GPT-3.5
-        self.system_prompt = """Ты - эксперт по развитию человеческого потенциала в системе HPI (Human Potential Index).
-Твоя задача - анализировать данные о сферах жизни человека и давать конкретные рекомендации для улучшения.
-
-Правила для рекомендаций:
-1. Конкретность: Каждый шаг должен быть четким и выполнимым
-2. Измеримость: Должна быть возможность отследить прогресс
-3. Реалистичность: Шаги должны быть выполнимы в указанные сроки
-4. Основа на данных: Используй предоставленные метрики и историю
-
-Структура рекомендации (строго в формате JSON):
-{
-    "title": "Краткое название (до 5 слов)",
-    "description": "Одно предложение, описывающее суть",
-    "action_steps": [
-        {
-            "description": "Конкретное действие",
-            "expected_impact": 0.8,  // Число от 0 до 1
-            "estimated_time": "2 недели",  // Реалистичная оценка
-            "dependencies": []  // Список необходимых условий
-        }
-    ],
-    "evidence": {
-        "data_points": ["Факт 1", "Факт 2"],  // 2-3 ключевых наблюдения
-        "correlations": ["Связь 1", "Связь 2"],  // 1-2 важные связи
-        "historical_success": 0.85  // Число от 0 до 1
-    }
-}
-
-ВАЖНО: Отвечай ТОЛЬКО в формате JSON. Не добавляй пояснений или дополнительного текста."""
+        self.system_prompt = (
+            "Ты - эксперт по развитию человеческого потенциала в системе HPI "
+            "(Human Potential Index).\n"
+            "Твоя задача - анализировать данные о сферах жизни человека и "
+            "давать конкретные рекомендации для улучшения.\n\n"
+            "Правила для рекомендаций:\n"
+            "1. Конкретность: Каждый шаг должен быть четким и выполнимым\n"
+            "2. Измеримость: Должна быть возможность отследить прогресс\n"
+            "3. Реалистичность: Шаги должны быть выполнимы в указанные сроки\n"
+            "4. Основа на данных: Используй предоставленные метрики и историю\n\n"
+            "Структура рекомендации (строго в формате JSON):\n"
+            "{\n"
+            '    "title": "Краткое название (до 5 слов)",\n'
+            '    "description": "Одно предложение, описывающее суть",\n'
+            '    "action_steps": [\n'
+            "        {\n"
+            '            "description": "Конкретное действие",\n'
+            '            "expected_impact": 0.8,  // Число от 0 до 1\n'
+            '            "estimated_time": "2 недели",  // Реалистичная оценка\n'
+            '            "dependencies": []  // Список необходимых условий\n'
+            "        }\n"
+            "    ],\n"
+            '    "evidence": {\n'
+            '        "data_points": ["Факт 1", "Факт 2"],  // 2-3 ключевых наблюдения\n'
+            '        "correlations": ["Связь 1", "Связь 2"],  // 1-2 важные связи\n'
+            '        "historical_success": 0.85  // Число от 0 до 1\n'
+            "    }\n"
+            "}\n\n"
+            "ВАЖНО: Отвечай ТОЛЬКО в формате JSON. "
+            "Не добавляй пояснений или дополнительного текста."
+        )
 
     def _prepare_sphere_context(
-        self,
-        sphere: str,
-        pro_data: ProData,
-        history: List[HistoricalReport]
+        self, sphere: str, pro_data: ProData, history: List[HistoricalReport]
     ) -> SphereContext:
         """
         Подготавливает контекст сферы для AI.
-        
+
         Args:
             sphere: Название сферы
             pro_data: PRO-данные
             history: История отчетов
-            
+
         Returns:
             Объект контекста сферы
         """
         # Получаем текущую оценку
         current_score = pro_data.scores.get(sphere, 0.0)
-        
+
         # Получаем предыдущую оценку
         previous_score = None
         if history:
             previous_score = history[-1].scores.get(sphere)
-            
+
         # Вычисляем изменение
         change_percent = 0.0
         if previous_score and previous_score != 0:
-            change_percent = ((current_score - previous_score) / abs(previous_score)) * 100
-            
+            change_percent = (
+                (current_score - previous_score) / abs(previous_score)
+            ) * 100
+
         # Собираем метрики
-        metrics = []
+        metrics: List[Dict[str, Any]] = []
         for metric in pro_data.metrics:
             if metric.sphere == sphere:
-                metrics.append({
-                    "name": metric.name,
-                    "current": metric.current_value,
-                    "target": metric.target_value,
-                    "description": metric.description
-                })
-                
+                metrics.append(
+                    {
+                        "name": metric.name,
+                        "current": metric.current_value,
+                        "target": metric.target_value,
+                        "description": metric.description,
+                    }
+                )
+
         # Собираем историю (только последние 3 записи для экономии токенов)
-        historical_data = []
+        historical_data: List[Dict[str, Any]] = []
         for report in history[-3:]:
             if sphere in report.scores:
-                metrics = report.metrics if report.metrics is not None else []
-                historical_data.append({
-                    "date": report.date.strftime("%Y-%m-%d"),
-                    "score": report.scores[sphere],
-                    "metrics": [
-                        {"name": m.name, "value": m.current_value}
-                        for m in metrics
-                        if m.sphere == sphere
-                    ]
-                })
-                
+                metrics_list = report.metrics if report.metrics is not None else []
+                historical_data.append(
+                    {
+                        "date": report.date.strftime("%Y-%m-%d"),
+                        "score": report.scores[sphere],
+                        "metrics": [
+                            {"name": m.name, "value": m.current_value}
+                            for m in metrics_list
+                            if m.sphere == sphere
+                        ],
+                    }
+                )
+
         return SphereContext(
             name=sphere,
             current_score=current_score,
@@ -142,35 +147,49 @@ class AIRecommendationEngine:
             goals=pro_data.goals.get(sphere, []),
             blockers=pro_data.blockers.get(sphere, []),
             historical_data=historical_data,
-            general_notes=pro_data.general_notes
+            general_notes=pro_data.general_notes,
         )
 
-    def _format_prompt(
-        self,
-        context: SphereContext
-    ) -> str:
+    def _format_prompt(self, context: SphereContext) -> str:
         """
         Форматирует промпт для модели.
-        
+
         Args:
             context: Контекст сферы
-            
+
         Returns:
             Строка с промптом
         """
-        metrics_json = json.dumps([dataclasses.asdict(m) for m in context.metrics], ensure_ascii=False)
-        return f"""Создай рекомендацию для сферы \"{context.name}\" на основе данных:\n\nТЕКУЩЕЕ СОСТОЯНИЕ:\nОценка: {context.current_score:.1f} ({context.change_percent:+.1f}%)\nМетрики: {metrics_json}\n\nПРОБЛЕМЫ: {', '.join(context.problems) if context.problems else 'нет'}\nЦЕЛИ: {', '.join(context.goals) if context.goals else 'нет'}\nБЛОКЕРЫ: {', '.join(context.blockers) if context.blockers else 'нет'}\n\nОБЩИЕ ОТВЕТЫ ПОЛЬЗОВАТЕЛЯ:\n{json.dumps(context.general_notes, ensure_ascii=False)}\n\nИСТОРИЯ (последние записи):\n{json.dumps(context.historical_data, ensure_ascii=False)}\n\nСоздай рекомендацию в формате JSON с учетом этих данных. Рекомендация должна быть конкретной и реалистичной."""
+        metrics_json = json.dumps(context.metrics, ensure_ascii=False)
+        prompt_parts = [
+            f'Создай рекомендацию для сферы "{context.name}" на основе данных:',
+            "",
+            "ТЕКУЩЕЕ СОСТОЯНИЕ:",
+            f"Оценка: {context.current_score:.1f} ({context.change_percent:+.1f}%)",
+            f"Метрики: {metrics_json}",
+            "",
+            f"ПРОБЛЕМЫ: {', '.join(context.problems) if context.problems else 'нет'}",
+            f"ЦЕЛИ: {', '.join(context.goals) if context.goals else 'нет'}",
+            f"БЛОКЕРЫ: {', '.join(context.blockers) if context.blockers else 'нет'}",
+            "",
+            "ОБЩИЕ ОТВЕТЫ ПОЛЬЗОВАТЕЛЯ:",
+            f"{json.dumps(context.general_notes, ensure_ascii=False)}",
+            "",
+            "ИСТОРИЯ (последние записи):",
+            f"{json.dumps(context.historical_data, ensure_ascii=False)}",
+            "",
+            "Создай рекомендацию в формате JSON с учетом этих данных.",
+            "Рекомендация должна быть конкретной и реалистичной.",
+        ]
+        return "\n".join(prompt_parts)
 
-    def _parse_ai_response(
-        self,
-        response: str
-    ) -> Dict:
+    def _parse_ai_response(self, response: str) -> Dict[str, Any]:
         """
         Парсит ответ модели в структуру рекомендации.
-        
+
         Args:
             response: JSON-ответ от модели
-            
+
         Returns:
             Словарь с данными рекомендации
         """
@@ -180,74 +199,70 @@ class AIRecommendationEngine:
             end = response.rfind("}") + 1
             if start == -1 or end == 0:
                 raise ValueError("JSON не найден в ответе")
-                
+
             json_str = response[start:end]
             return json.loads(json_str)
-            
+
         except Exception as e:
-            self.logger.error(f"Ошибка парсинга ответа AI: {e}")
-            self.logger.debug(f"Ответ AI: {response}")
-            return None
+            self.logger.error(f"Ошибка при парсинге ответа AI: {e}")
+            return {}
 
     def generate_recommendation(
-        self,
-        sphere: str,
-        pro_data: ProData,
-        history: List[HistoricalReport]
+        self, sphere: str, pro_data: ProData, history: List[HistoricalReport]
     ) -> Optional[Recommendation]:
         """
         Генерирует AI-рекомендацию для сферы.
-        
+
         Args:
             sphere: Название сферы
             pro_data: PRO-данные
             history: История отчетов
-            
+
         Returns:
             Объект рекомендации или None в случае ошибки
         """
         try:
             # Подготавливаем контекст
             context = self._prepare_sphere_context(sphere, pro_data, history)
-            
+
             # Генерируем промпт
             prompt = self._format_prompt(context)
-            
+
             # Делаем запрос к API
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=0.7,
                 max_tokens=800,  # Уменьшаем для экономии
                 presence_penalty=0.3,  # Поощряем разнообразие
-                frequency_penalty=0.3   # Избегаем повторений
+                frequency_penalty=0.3,  # Избегаем повторений
             )
-            
+
             # Парсим ответ
             result = self._parse_ai_response(response.choices[0].message.content)
             if not result:
                 return None
-                
+
             # Создаем объект рекомендации
             action_steps = [
                 ActionStep(
                     description=step["description"],
                     expected_impact=step["expected_impact"],
                     estimated_time=step["estimated_time"],
-                    dependencies=step.get("dependencies", [])
+                    dependencies=step.get("dependencies", []),
                 )
                 for step in result["action_steps"]
             ]
-            
+
             evidence = Evidence(
                 data_points=result["evidence"]["data_points"],
                 correlations=result["evidence"]["correlations"],
-                historical_success=result["evidence"]["historical_success"]
+                historical_success=result["evidence"]["historical_success"],
             )
-            
+
             return Recommendation(
                 sphere=sphere,
                 priority=3,  # Средний приоритет по умолчанию
@@ -255,9 +270,21 @@ class AIRecommendationEngine:
                 description=result["description"],
                 action_steps=action_steps,
                 evidence=evidence,
-                related_spheres=[]  # Пока не используем
+                related_spheres=[],  # Пока не используем
             )
-            
+
         except Exception as e:
             self.logger.error(f"Ошибка генерации рекомендации: {e}", exc_info=True)
-            return None 
+            return None
+
+    def _asdict_nested(self, data):
+        if isinstance(data, (list, tuple)):
+            return [self._asdict_nested(i) for i in data]
+        if hasattr(data, "__dict__"):
+            return self._asdict_nested(vars(data))
+        return data
+
+    def _get_system_prompt(self) -> str:
+        return """
+        # ... (сюда можно добавить текст промпта или оставить пустым)
+        """

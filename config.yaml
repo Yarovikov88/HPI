@@ -1,0 +1,45 @@
+# HPI Project Configuration
+
+app_version: 0.6.2
+
+logging:
+  log_dir: logs
+  log_file: app.log
+  log_format: '[%(asctime)s] [%(levelname)s] %(message)s'
+  log_datefmt: '%Y-%m-%d %H:%M:%S'
+
+paths:
+  src: src
+  database: database/questions.md
+  reports_final: reports_final
+  reports_draft: reports_draft
+  dashboard: interfaces/dashboard.md
+  images: reports_final/images
+
+trend_chart:
+  style: dark_background
+  color: '#FF1493'
+  facecolor: '#1E2D2F'
+  y_min: 0
+  y_max: 100
+  dpi: 100
+  figsize: [10, 5]
+  output_pattern: '{date}_trend.png'
+
+spheres:
+  - key: "Отношения с любимыми"
+    emoji: "💖"
+  - key: "Отношения с родными"
+    emoji: "🏡"
+  - key: "Друзья"
+    emoji: "🤝"
+  - key: "Карьера"
+    emoji: "💼"
+  - key: "Физическое здоровье"
+    emoji: "♂️"
+  - key: "Ментальное здоровье"
+    emoji: "🧠"
+  - key: "Хобби и увлечения"
+    emoji: "🎨"
+  - key: "Благосостояние"
+    emoji: "💰" 

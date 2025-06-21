@@ -1,16 +1,14 @@
 """
 Модуль для форматирования отчетов HPI в Markdown.
 """
-import os
-import logging
-from typing import Dict, List, Optional
-from datetime import datetime
-import re
 
-from ..generators import SphereSection, MetricProgress, Recommendation
-from ...trend import generate_trend_chart
-from ..normalizers import SphereNormalizer
-from ..generators.sections import SphereSection
+import json
+import logging
+import os
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
+from ..generators import ActionStep, Evidence, MetricProgress, SphereSection
 
 
 class MarkdownFormatter:
@@ -20,18 +18,14 @@ class MarkdownFormatter:
         """Инициализация форматтера."""
         self.logger = logging.getLogger(__name__)
 
-    def _format_header(
-        self,
-        date: datetime,
-        version: str
-    ) -> str:
+    def _format_header(self, date: datetime, version: str) -> str:
         """
         Форматирует заголовок отчета.
-        
+
         Args:
             date: Дата отчета
             version: Версия системы
-            
+
         Returns:
             Строка с заголовком в формате Markdown
         """
@@ -41,51 +35,46 @@ class MarkdownFormatter:
 ---
 """
 
-    def _format_metric_progress(
-        self,
-        metric: MetricProgress
-    ) -> str:
+    def _format_metric_progress(self, metric: MetricProgress) -> str:
         """
         Форматирует прогресс по метрике.
-        
+
         Args:
             metric: Объект с данными о прогрессе метрики
-            
+
         Returns:
             Строка с метрикой в формате Markdown
         """
         # Определяем эмодзи для статуса
-        status_emoji = {
-            "improved": "📈",
-            "declined": "📉",
-            "stable": "📊"
-        }.get(metric.status, "📊")
-        
+        status_emoji: str = {"improved": "📈", "declined": "📉", "stable": "📊"}.get(
+            metric.status, "📊"
+        )
+
         # Форматируем изменение
-        change_str = ""
+        change_str: str = ""
         if metric.previous_value is not None:
             sign = "+" if metric.change_percent > 0 else ""
             change_str = f" ({sign}{metric.change_percent:.1f}%)"
-            
-        return f"""- {status_emoji} **{metric.name}**: {metric.current_value:.1f} → {metric.target_value:.1f}{change_str}"""
 
-    def _format_action_steps(
-        self,
-        steps: List
-    ) -> str:
+        return (
+            f"- {status_emoji} **{metric.name}**: "
+            f"{metric.current_value:.1f} → {metric.target_value:.1f}{change_str}"
+        )
+
+    def _format_action_steps(self, steps: List[ActionStep]) -> str:
         """
         Форматирует шаги действий из рекомендации.
-        
+
         Args:
             steps: Список шагов действий
-            
+
         Returns:
             Строка с шагами в формате Markdown
         """
         if not steps:
             return ""
-            
-        result = ["### Шаги к улучшению\n"]
+
+        result: List[str] = ["### Шаги к улучшению\n"]
         for i, step in enumerate(steps, 1):
             impact = "⭐" * round(step.expected_impact * 5)
             result.append(f"{i}. {step.description}")
@@ -95,99 +84,93 @@ class MarkdownFormatter:
                 deps = ", ".join(step.dependencies)
                 result.append(f"   - Требуется: {deps}")
             result.append("")
-            
+
         return "\n".join(result)
 
-    def _format_evidence(
-        self,
-        evidence
-    ) -> str:
+    def _format_evidence(self, evidence: Evidence) -> str:
         """
         Форматирует доказательную базу рекомендации.
-        
+
         Args:
             evidence: Объект с доказательной базой
-            
+
         Returns:
             Строка с доказательствами в формате Markdown
         """
         if not evidence:
             return ""
-            
-        result = ["### Обоснование\n"]
-        
+
+        result: List[str] = ["### Обоснование\n"]
+
         # Добавляем основные наблюдения
         if evidence.data_points:
             result.append("**Наблюдения:**")
             for point in evidence.data_points:
                 result.append(f"- {point}")
             result.append("")
-            
+
         # Добавляем корреляции
         if evidence.correlations:
             result.append("**Корреляции:**")
             for corr in evidence.correlations:
                 result.append(f"- {corr}")
             result.append("")
-            
+
         # Добавляем исторический успех
         if evidence.historical_success:
             success_percent = evidence.historical_success * 100
             result.append(f"**Исторический успех:** {success_percent:.1f}%\n")
-            
+
         return "\n".join(result)
 
-    def _format_sphere_section(
-        self,
-        section: SphereSection
-    ) -> str:
+    def _format_sphere_section(self, section: SphereSection) -> str:
         """
         Форматирует секцию для сферы.
-        
+
         Args:
             section: Объект с данными секции
-            
+
         Returns:
             Строка с секцией в формате Markdown
         """
         # Форматируем заголовок с эмодзи и оценкой
-        result = [f"## {section.emoji} {section.name}"]
-        
+        result: List[str] = [f"## {section.emoji} {section.name}"]
+
         # Добавляем текущую оценку и изменение
         score_line = f"**Текущая оценка:** {section.current_score:.1f}"
         if section.previous_score is not None:
             sign = "+" if section.change_percent > 0 else ""
             score_line += f" ({sign}{section.change_percent:.1f}%)"
         result.append(score_line + "\n")
-        
+
         # Добавляем метрики
         if section.metrics:
             result.append("### Метрики")
             for metric in section.metrics:
                 result.append(self._format_metric_progress(metric))
             result.append("")
-            
+
         # Добавляем проблемы
         if section.problems:
             result.append("### Проблемы")
             for problem in section.problems:
                 result.append(f"- {problem}")
             result.append("")
-            
+
         # Добавляем цели
         if section.goals:
             result.append("### Цели")
             for goal in section.goals:
                 result.append(f"- {goal}")
             result.append("")
-            
+
         # Добавляем блокеры
         if section.blockers:
             result.append("### Блокеры")
             for blocker in section.blockers:
                 result.append(f"- {blocker}")
             result.append("")
-            
+
         # Добавляем рекомендацию
         if section.recommendation:
             result.append("### Рекомендация")
@@ -197,324 +180,173 @@ class MarkdownFormatter:
                     result.append(f"- {str(r)}")
             elif isinstance(rec, str):
                 result.append(f"- {rec}")
-            elif hasattr(rec, 'title') and hasattr(rec, 'description'):
+            elif hasattr(rec, "title") and hasattr(rec, "description"):
                 result.append(f"**{rec.title}**")
                 result.append(f"\n{rec.description}\n")
                 # Добавляем шаги действий
-                if hasattr(rec, 'action_steps'):
+                if hasattr(rec, "action_steps"):
                     result.append(self._format_action_steps(rec.action_steps))
                 # Добавляем доказательную базу
-                if hasattr(rec, 'evidence'):
+                if hasattr(rec, "evidence"):
                     result.append(self._format_evidence(rec.evidence))
             else:
                 result.append(f"- {str(rec)}")
-            
+
         return "\n".join(result)
+
+    def _format_metrics_json(self, sections: Dict[str, SphereSection]) -> str:
+        """
+        Форматирует метрики и сравнение в JSON-блок.
+
+        Args:
+            sections: Словарь с секциями по сферам
+
+        Returns:
+            Строка с JSON-блоком метрик
+        """
+        metrics_data: Dict[str, Dict] = {"metrics": {}, "comparison": {}}
+
+        for sphere_name, section in sections.items():
+            # Добавляем метрики
+            if section.metrics:
+                metrics_data["metrics"][sphere_name] = []
+                for metric in section.metrics:
+                    metric_data = {
+                        "name": metric.name,
+                        "current_value": metric.current_value,
+                        "target_value": metric.target_value,
+                        "previous_value": metric.previous_value,
+                        "change_percent": metric.change_percent,
+                        "status": metric.status,
+                    }
+                    metrics_data["metrics"][sphere_name].append(metric_data)
+
+            # Добавляем сравнение
+            metrics_data["comparison"][sphere_name] = {
+                "current_score": section.current_score,
+                "previous_score": section.previous_score,
+                "change_percent": section.change_percent,
+            }
+
+        return (
+            f"\n```json\n"
+            f"{json.dumps(metrics_data, indent=2, ensure_ascii=False)}\n"
+            f"```\n"
+        )
 
     def format_report(
         self,
         sections: Dict[str, SphereSection],
+        history: List[Dict],
         date: datetime,
-        version: str
+        version: str,
     ) -> str:
         """
-        Форматирует полный отчет.
-        
+        Основной метод для форматирования всего отчета.
+
         Args:
-            sections: Словарь с секциями отчета
+            sections: Словарь с секциями по сферам
+            history: История изменений HPI
             date: Дата отчета
             version: Версия системы
-            
+
         Returns:
             Строка с полным отчетом в формате Markdown
         """
-        # Начинаем с заголовка
-        result = [self._format_header(date, version)]
-        
-        # Удаляем оглавление (Содержание)
-        # result.append("## Содержание\n")
-        # for section in sections.values():
-        #     result.append(f"- [{section.emoji} {section.name}](#{section.name.lower().replace(' ', '-')})")
-        # result.append("\n---\n")
-        result.append("\n---\n")
-        
-        # Добавляем секции
+        # Форматируем заголовок
+        report: str = self._format_header(date, version)
+
+        # Добавляем HPI и диаграммы
+        report += self._format_hpi_section(history)
+
+        # Добавляем все остальные секции
         for section in sections.values():
-            result.append(self._format_sphere_section(section))
-            result.append("\n---\n")
-            
-        return "\n".join(result)
+            report += self._format_sphere_section(section)
+            report += "\n---\n"
 
-    def format_dashboard(
-        self,
-        sections: Dict[str, SphereSection],
-        history: List[Dict],
-        date: datetime,
-        version: str
-    ) -> str:
+        # Добавляем JSON-блок с метриками
+        report += self._format_metrics_json(sections)
+
+        return report
+
+    def _get_latest_diagrams(self, path: str) -> Tuple[Optional[str], Optional[str]]:
         """
-        Форматирует дашборд в специальном формате.
-        
-        Args:
-            sections: Словарь с секциями дашборда
-            history: История изменений HPI
-            date: Дата обновления
-            version: Версия системы
-            
-        Returns:
-            Строка с дашбордом в формате Markdown
+        Находит последние файлы диаграмм (радар и тренд) в указанной директории.
         """
-        result = []
-        # Отладочный вывод структуры sections
-        # result.append("> [!note]- DEBUG: sections keys/types: " + ", ".join([f"{k}: {type(v)}" for k, v in sections.items()]))
-        
-        # Фильтруем только SphereSection для проверки наличия проблем и т.д.
-        sphere_sections = [s for s in sections.values() if isinstance(s, SphereSection)]
-        has_problems = any(s.problems for s in sphere_sections)
-        has_goals = any(s.goals for s in sphere_sections)
-        has_blockers = any(s.blockers for s in sphere_sections)
-        has_achievements = any(getattr(s, 'achievements', None) for s in sphere_sections)
-        
-        # Получаем последний HPI и оценки
-        latest_report = history[-1] if history else None
-        latest_hpi = latest_report['hpi'] if latest_report else 0.0
-        latest_scores = latest_report['scores'] if latest_report else {}
-        
-        # Определяем статус
-        status = "🟢" if latest_hpi >= 70 else "🟡" if latest_hpi >= 50 else "🔴"
-        
-        # Генерируем график тренда
-        trend_path = generate_trend_chart(history)
-        if not trend_path:
-            self.logger.error("Не удалось сгенерировать график тренда")
-            trend_path = "../reports_final/images/trend.png"  # Fallback путь
-        
-        # Добавляем заголовок
-        result.append(f"# HPI Dashboard v{version}\n\n")
-        
-        # Добавляем основные секции
-        result.extend([
-            f"## Human Performance Index: {latest_hpi:.1f} {status}\n",
-            "> [!note]- 📈 Динамика HPI",
-            f"> ![Динамика HPI]({trend_path})",
-            ">\n",
-            "> [!note]- ⚖️ Баланс по сферам",
-            "> ![Баланс по сферам](../reports_final/images/2025-06-14_radar.png)",
-            ">",
-            "> | Дата | 💖 | 🏡 | 🤝 | 💼 | ♂️ | 🧠 | 🎨 | 💰 |",
-            "> |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|"
-        ])
-        
-        # Добавляем историю в обратном порядке (новые даты сверху)
+        files = os.listdir(path)
+        # Фильтруем файлы, чтобы найти только нужные изображения
+        radar_files = [f for f in files if f.endswith("_radar.png")]
+        trend_files = [f for f in files if f.endswith("_trend.png")]
+
+        # Сортируем по дате в названии файла (YYYY-MM-DD)
+        latest_radar = sorted(radar_files, reverse=True)[0] if radar_files else None
+        latest_trend = sorted(trend_files, reverse=True)[0] if trend_files else None
+
+        # Возвращаем относительные пути для Markdown
+        radar_path = os.path.join(path, latest_radar) if latest_radar else None
+        trend_path = os.path.join(path, latest_trend) if latest_trend else None
+
+        # Заменяем бэкслэши на слэши для корректной работы в Markdown
+        if radar_path:
+            radar_path = radar_path.replace("\\\\", "/")
+        if trend_path:
+            trend_path = trend_path.replace("\\\\", "/")
+
+        return trend_path, radar_path
+
+    def _format_hpi_section(self, history: List[Dict]) -> str:
+        """
+        Форматирует секцию с общим HPI, диаграммами и таблицей баланса.
+        """
+        if not history:
+            return ""
+
+        # Получаем последний HPI
+        latest = history[-1]
+        latest_hpi = latest["hpi"]
+        status_emoji = (
+            "🟢"
+            if latest_hpi >= 85
+            else "🔵" if latest_hpi >= 70 else "🟡" if latest_hpi >= 55 else "🔴"
+        )
+
+        result: List[str] = [
+            f"## Human Performance Index: {latest_hpi:.1f} {status_emoji}\n"
+        ]
+
+        # Получаем пути к диаграммам
+        trend_path, radar_path = self._get_latest_diagrams("reports_final/images")
+
+        # Добавляем тренд
+        result.append("> [!note]- 📈 Динамика HPI")
+        if trend_path:
+            result.append(f"> ![{trend_path}]({trend_path})")
+        result.append(">\n")
+
+        # Добавляем радар и таблицу баланса
+        result.append("> [!note]- ⚖️ Баланс по сферам")
+        if radar_path:
+            result.append(f"> ![{radar_path}]({radar_path})")
+        result.append(">")
+        result.append("> | Дата | 💖 | 🏡 | 🤝 | 💼 | ♂️ | 🧠 | 🎨 | 💰 |")
+        result.append("> |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|")
+
+        # Выводим строки таблицы в обратном порядке
         for report in reversed(history):
-            scores = report['scores']
-            result.append(
-                f"> | {report['date']} | " +
-                f"{scores.get('Отношения с любимыми', 0.0):.1f} | " +
-                f"{scores.get('Отношения с родными', 0.0):.1f} | " +
-                f"{scores.get('Друзья', 0.0):.1f} | " +
-                f"{scores.get('Карьера', 0.0):.1f} | " +
-                f"{scores.get('Физическое здоровье', 0.0):.1f} | " +
-                f"{scores.get('Ментальное здоровье', 0.0):.1f} | " +
-                f"{scores.get('Хобби и увлечения', 0.0):.1f} | " +
-                f"{scores.get('Благосостояние', 0.0):.1f} |"
-            )
-        
+            date_str = report["date"].strftime("%Y-%m-%d")
+            scores = [
+                report["scores"].get("Отношения с любимыми", 0.0),
+                report["scores"].get("Отношения с родными", 0.0),
+                report["scores"].get("Друзья", 0.0),
+                report["scores"].get("Карьера", 0.0),
+                report["scores"].get("Физическое здоровье", 0.0),
+                report["scores"].get("Ментальное здоровье", 0.0),
+                report["scores"].get("Хобби и увлечения", 0.0),
+                report["scores"].get("Благосостояние", 0.0),
+            ]
+            scores_str = " | ".join([f"{s:.1f}" for s in scores])
+            result.append(f"> | {date_str} | {scores_str} |")
+
         result.append("\n---\n")
-        result.append("## PRO-разделы\n")
 
-        # Используем нормализованные имена сфер для master_order
-        normalizer = SphereNormalizer()
-        master_order = [
-            normalizer.normalize('Отношения с любимыми'),
-            normalizer.normalize('Отношения с родными'),
-            normalizer.normalize('Друзья'),
-            normalizer.normalize('Карьера'),
-            normalizer.normalize('Физическое здоровье'),
-            normalizer.normalize('Ментальное здоровье'),
-            normalizer.normalize('Хобби и увлечения'),
-            normalizer.normalize('Благосостояние')
-        ]
-
-        # Проблемы
-        result.append("> [!example]- <span style='color:#b37feb'>🛑 Мои проблемы</span>")
-        result.append("> | Сфера | Проблема |")
-        result.append("> |:---:|:---|")
-        for section in sphere_sections:
-            emoji = section.emoji
-            for problem in section.problems:
-                result.append(f"> | {emoji} | {problem} |")
-        result.append("\n")
-        # Цели
-        result.append("> [!example]- <span style='color:#b37feb'>🎯 Мои цели</span>")
-        result.append("> | Сфера | Цель |")
-        result.append("> |:---:|:---|")
-        for section in sphere_sections:
-            emoji = section.emoji
-            for goal in section.goals:
-                result.append(f"> | {emoji} | {goal} |")
-        result.append("\n")
-        # Блокеры
-        result.append("> [!example]- <span style='color:#b37feb'>🚧 Мои блокеры</span>")
-        result.append("> | Сфера | Блокер |")
-        result.append("> |:---:|:---|")
-        for section in sphere_sections:
-            emoji = section.emoji
-            for blocker in section.blockers:
-                result.append(f"> | {emoji} | {blocker} |")
-        result.append("\n")
-        # Метрики
-        result.append("> [!example]- <span style='color:#b37feb'>📊 Мои метрики</span>")
-        result.append("> | Сфера | Метрика | Значение | Цель | Изменение |")
-        result.append("> |:---:|:---|:---:|:---:|:---:|")
-        for section in sphere_sections:
-            emoji = section.emoji
-            for metric in section.metrics:
-                change = metric.current_value - (metric.previous_value or 0)
-                percent = metric.change_percent
-                result.append(f"> | {emoji} | {metric.name} | {metric.current_value} | {metric.target_value} | {change:+.1f} ({percent:+.1f}%) |")
-        result.append("\n")
-        # Базовые рекомендации
-        master_order = [
-            'Отношения с любимыми',
-            'Отношения с родными',
-            'Друзья',
-            'Карьера',
-            'Физическое здоровье',
-            'Ментальное здоровье',
-            'Хобби и увлечения',
-            'Благосостояние'
-        ]
-        has_recs = any(section.recommendation for k, section in sections.items() if k != 'ai_recommendations')
-        if has_recs:
-            result.append("> [!example]- 💡 Базовые рекомендации")
-            result.append("> | Сфера | Рекомендация |")
-            result.append("> |:---:|:---|")
-            for sphere_name in master_order:
-                section = sections.get(sphere_name)
-                if not section or not section.recommendation:
-                    continue
-                rec = section.recommendation
-                sphere_label = section.emoji if section.emoji else ''
-                # Для базовых рекомендаций выводим красиво: title, description, шаги
-                if isinstance(rec, list):
-                    for r in rec:
-                        if hasattr(r, 'title') and hasattr(r, 'description'):
-                            steps = ''
-                            if hasattr(r, 'action_steps') and r.action_steps:
-                                steps = ' Шаги: ' + '; '.join([s.description for s in r.action_steps])
-                            result.append(f"> | {sphere_label} | {r.title}: {r.description}{steps} |")
-                        else:
-                            result.append(f"> | {sphere_label} | {str(r)} |")
-                elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                    steps = ''
-                    if hasattr(rec, 'action_steps') and rec.action_steps:
-                        steps = ' Шаги: ' + '; '.join([s.description for s in rec.action_steps])
-                    result.append(f"> | {sphere_label} | {rec.title}: {rec.description}{steps} |")
-                else:
-                    result.append(f"> | {sphere_label} | {str(rec)} |")
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации (полные)</span>")
-            result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
-            result.append("> |:---:|:---|:---|:---|:---|")
-
-        result.append("\n")
-        # AI рекомендации
-        ai_recs = None
-        if 'ai_recommendations' in sections:
-            ai_recs = sections['ai_recommendations']
-        elif hasattr(self, 'ai_recommendations'):
-            ai_recs = self.ai_recommendations
-        master_order = [
-            'Отношения с любимыми',
-            'Отношения с родными',
-            'Друзья',
-            'Карьера',
-            'Физическое здоровье',
-            'Ментальное здоровье',
-            'Хобби и увлечения',
-            'Благосостояние'
-        ]
-        if ai_recs is not None:
-            # Если это словарь с ошибкой
-            if isinstance(ai_recs, dict) and 'Ошибка' in ai_recs:
-                err = ai_recs['Ошибка']
-                result.append("> [!danger]- 🤖 AI рекомендации недоступны")
-                result.append(f"> Причина: {err}")
-                result.append("> ")
-                result.append("> Проверьте настройки OpenAI API или попробуйте использовать VPN.")
-            # Если это словарь с рекомендациями
-            elif isinstance(ai_recs, dict):
-                normalizer = SphereNormalizer()
-                # Проверяем, есть ли хотя бы одна Recommendation
-                has_any = any(
-                    rec and (hasattr(rec, 'title') or hasattr(rec, 'description'))
-                    for rec in ai_recs.values()
-                )
-                if has_any:
-                    result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
-                    result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
-                    result.append("> |:---:|:---|:---|:---|:---|")
-                    for sphere_name in master_order:
-                        emoji = normalizer.get_emoji(sphere_name)
-                        rec = ai_recs.get(sphere_name)
-                        if rec is None:
-                            result.append(f"> | {emoji if emoji else ''} | AI не смог сгенерировать рекомендацию. | | | |")
-                        elif isinstance(rec, list):
-                            for r in rec:
-                                if hasattr(r, 'title') and hasattr(r, 'description'):
-                                    result.append(f"> | {emoji if emoji else ''} | {r.title} | {r.description} | | |")
-                                else:
-                                    result.append(f"> | {emoji if emoji else ''} | {str(r)} | | | |")
-                        elif hasattr(rec, 'title') and hasattr(rec, 'action_steps') and hasattr(rec, 'evidence'):
-                            steps_parts = []
-                            for idx, step in enumerate(rec.action_steps, 1):
-                                impact = '⭐' * int(round(step.expected_impact * 5)) if hasattr(step, 'expected_impact') else ''
-                                deps = f"<br>Зависимости: {', '.join(step.dependencies)}" if hasattr(step, 'dependencies') and step.dependencies else ''
-                                steps_parts.append(f"{idx}. {step.description}<br>Ожидаемый эффект: {impact}<br>Оценка времени: {step.estimated_time}{deps}")
-                            steps_md = '<br>'.join(steps_parts)
-                            evidence_parts = []
-                            if hasattr(rec.evidence, 'data_points') and rec.evidence.data_points:
-                                evidence_parts.append("<b>Наблюдения:</b> " + '<br>'.join(rec.evidence.data_points))
-                            if hasattr(rec.evidence, 'correlations') and rec.evidence.correlations:
-                                evidence_parts.append("<b>Корреляции:</b> " + '<br>'.join(rec.evidence.correlations))
-                            if hasattr(rec.evidence, 'historical_success'):
-                                evidence_parts.append(f"<b>Исторический успех:</b> {round(rec.evidence.historical_success * 100)}%")
-                            evidence_md = '<br>'.join(evidence_parts)
-                            result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | {steps_md} | {evidence_md} |")
-                        elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                            result.append(f"> | {emoji if emoji else ''} | {rec.title} | {rec.description} | | |")
-                        elif isinstance(rec, str):
-                            result.append(f"> | {emoji if emoji else ''} | {rec} | | | |")
-                        else:
-                            result.append(f"> | {emoji if emoji else ''} | [Неизвестный формат рекомендации] | | | |")
-                else:
-                    # Отладочный вывод структуры ai_recommendations
-                    result.append("> [!note]- DEBUG: ai_recommendations structure")
-                    for k, v in ai_recs.items():
-                        result.append(f"> {k}: {type(v)} | {repr(v)}")
-                    result.append("> [!danger]- 🤖 AI рекомендации недоступны")
-                    result.append("> Причина: AI-рекомендации не были сгенерированы. Проверьте настройки или попробуйте позже.")
-                    result.append("> ")
-                    result.append("> Проверьте настройки OpenAI API или попробуйте использовать VPN.")
-            # Если это строка (редкий случай)
-            elif isinstance(ai_recs, str):
-                result.append("> [!danger]- 🤖 AI рекомендации недоступны")
-                result.append(f"> Причина: {ai_recs}")
-            # Если это список (редкий случай)
-            elif isinstance(ai_recs, list):
-                result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
-                result.append("> | AI-рекомендация |")
-                result.append("> |:---|")
-                for rec in ai_recs:
-                    result.append(f"> | {rec} |")
-            else:
-                result.append("> [!danger]- 🤖 AI рекомендации недоступны")
-                result.append("> Причина: неизвестная ошибка")
-        else:
-            result.append("> [!danger]- 🤖 AI рекомендации недоступны")
-            result.append("> Причина: AI-рекомендации не были сгенерированы. Проверьте настройки или попробуйте позже.")
-            result.append("> ")
-            result.append("> Проверьте настройки OpenAI API или попробуйте использовать VPN.")
-
-        return "\n".join(result) 
+        return "\n".join(result)

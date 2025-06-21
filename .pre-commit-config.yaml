@@ -1,0 +1,47 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+        files: ^hpi/|^scripts/|^tests/|^main\.py$
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        language_version: python3
+        args: [--profile=black]
+        files: ^hpi/|^scripts/|^tests/|^main\.py$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear]
+        files: ^hpi/|^scripts/|^tests/|^main\.py$
+        args:
+          - --max-line-length=88
+          - --extend-ignore=E203,E501
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        files: ^hpi/|^scripts/|^tests/|^main\.py$
+        args: ["--ignore-missing-imports", "--python-version=3.13"]
+        additional_dependencies: [types-PyYAML]
+
+  - repo: local
+    hooks:
+      - id: changelog-check
+        name: Check CHANGELOG.md updated
+        entry: powershell -Command "if (-not (git diff --cached --name-only | Select-String -Pattern 'CHANGELOG.md')) { Write-Host '[ERROR] CHANGELOG.md не обновлён!'; exit 1 }"
+        language: system
+        types: [text]
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
+        description: Проверяет, что CHANGELOG.md был изменён при коммите (если нет — ошибка) 

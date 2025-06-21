@@ -7,4 +7,4 @@
 
 from .recommendations import AIRecommendationEngine
 
-__all__ = ['AIRecommendationEngine'] 
+__all__ = ["AIRecommendationEngine"]

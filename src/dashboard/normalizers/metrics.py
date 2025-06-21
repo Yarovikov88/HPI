@@ -1,8 +1,16 @@
 """
 Модуль для нормализации названий метрик.
 """
+
 import re
-from typing import Dict
+from typing import Dict, TypedDict
+
+
+class TranslitMap(TypedDict):
+    """Тип для карты транслитерации."""
+
+    ru: str
+    en: str
 
 
 class MetricNormalizer:
@@ -10,7 +18,7 @@ class MetricNormalizer:
 
     def __init__(self):
         """Инициализация нормализатора."""
-        self._metric_aliases = {
+        self._metric_aliases: Dict[str, str] = {
             "профессиональное_развитие": "professional_development",
             "проектная_активность": "project_activity",
             "физическая_активность": "physical_activity",
@@ -20,10 +28,11 @@ class MetricNormalizer:
             "семейные_отношения": "family_relationship",
             "общение_с_друзьями": "friends_communication",
             "творческая_активность": "creative_activity",
-            "финансовая_стабильность": "financial_stability"
+            "финансовая_стабильность": "financial_stability",
         }
 
-        self._metric_aliases.update({
+        # Добавляем дополнительные алиасы
+        additional_aliases: Dict[str, str] = {
             # Отношения с любимыми
             "совместные_ужины_в_неделю": "часов_вместе_в_неделю",
             "часы_вместе_в_неделю": "часов_вместе_в_неделю",
@@ -35,7 +44,7 @@ class MetricNormalizer:
             "звонки_родителям_в_неделю": "звонков_родителям_в_неделю",
             "звонков_родителям_в_неделю": "звонков_родителям_в_неделю",
             "семейных_встреч_в_месяц": "семейных_встреч_в_месяц",
-            "длительность_общения_в_неделю_часов": "длительность_общения_в_неделю",
+            "длительность_общения_в_неделю_часов": ("длительность_общения_в_неделю"),
             "длительность_общения_в_неделю": "длительность_общения_в_неделю",
             # Друзья
             "встречи_с_друзьями_в_месяц": "встреч_с_друзьями_в_месяц",
@@ -71,73 +80,84 @@ class MetricNormalizer:
             "пассивный_доход_в_месяц": "пассивный_доход_в_месяц",
             "финансовая_стабильность_1_10": "финансовая_стабильность",
             "финансовая_стабильность": "финансовая_стабильность",
-        })
+        }
+
+        self._metric_aliases.update(additional_aliases)
+
+        # Карта транслитерации
+        self._translit_map: Dict[str, TranslitMap] = {
+            "а": {"ru": "а", "en": "a"},
+            "б": {"ru": "б", "en": "b"},
+            "в": {"ru": "в", "en": "v"},
+            "г": {"ru": "г", "en": "g"},
+            "д": {"ru": "д", "en": "d"},
+            "е": {"ru": "е", "en": "e"},
+            "ё": {"ru": "ё", "en": "e"},
+            "ж": {"ru": "ж", "en": "zh"},
+            "з": {"ru": "з", "en": "z"},
+            "и": {"ru": "и", "en": "i"},
+            "й": {"ru": "й", "en": "y"},
+            "к": {"ru": "к", "en": "k"},
+            "л": {"ru": "л", "en": "l"},
+            "м": {"ru": "м", "en": "m"},
+            "н": {"ru": "н", "en": "n"},
+            "о": {"ru": "о", "en": "o"},
+            "п": {"ru": "п", "en": "p"},
+            "р": {"ru": "р", "en": "r"},
+            "с": {"ru": "с", "en": "s"},
+            "т": {"ru": "т", "en": "t"},
+            "у": {"ru": "у", "en": "u"},
+            "ф": {"ru": "ф", "en": "f"},
+            "х": {"ru": "х", "en": "h"},
+            "ц": {"ru": "ц", "en": "ts"},
+            "ч": {"ru": "ч", "en": "ch"},
+            "ш": {"ru": "ш", "en": "sh"},
+            "щ": {"ru": "щ", "en": "sch"},
+            "ъ": {"ru": "ъ", "en": ""},
+            "ы": {"ru": "ы", "en": "y"},
+            "ь": {"ru": "ь", "en": ""},
+            "э": {"ru": "э", "en": "e"},
+            "ю": {"ru": "ю", "en": "yu"},
+            "я": {"ru": "я", "en": "ya"},
+        }
 
     def normalize(self, name: str) -> str:
         """
         Нормализует название метрики.
-        
+
         Args:
             name: Название метрики
-            
+
         Returns:
             Нормализованное название
         """
         if not name:
             return ""
-            
+
         # Приводим к нижнему регистру и заменяем пробелы на подчеркивания
-        normalized = name.lower().strip()
-        normalized = re.sub(r'\s+', '_', normalized)
-        
+        normalized: str = name.lower().strip()
+        normalized = re.sub(r"\s+", "_", normalized)
+
         # Транслитерация русских букв (если есть)
-        normalized = normalized.replace('а', 'a')
-        normalized = normalized.replace('б', 'b')
-        normalized = normalized.replace('в', 'v')
-        normalized = normalized.replace('г', 'g')
-        normalized = normalized.replace('д', 'd')
-        normalized = normalized.replace('е', 'e')
-        normalized = normalized.replace('ё', 'e')
-        normalized = normalized.replace('ж', 'zh')
-        normalized = normalized.replace('з', 'z')
-        normalized = normalized.replace('и', 'i')
-        normalized = normalized.replace('й', 'y')
-        normalized = normalized.replace('к', 'k')
-        normalized = normalized.replace('л', 'l')
-        normalized = normalized.replace('м', 'm')
-        normalized = normalized.replace('н', 'n')
-        normalized = normalized.replace('о', 'o')
-        normalized = normalized.replace('п', 'p')
-        normalized = normalized.replace('р', 'r')
-        normalized = normalized.replace('с', 's')
-        normalized = normalized.replace('т', 't')
-        normalized = normalized.replace('у', 'u')
-        normalized = normalized.replace('ф', 'f')
-        normalized = normalized.replace('х', 'h')
-        normalized = normalized.replace('ц', 'ts')
-        normalized = normalized.replace('ч', 'ch')
-        normalized = normalized.replace('ш', 'sh')
-        normalized = normalized.replace('щ', 'sch')
-        normalized = normalized.replace('ъ', '')
-        normalized = normalized.replace('ы', 'y')
-        normalized = normalized.replace('ь', '')
-        normalized = normalized.replace('э', 'e')
-        normalized = normalized.replace('ю', 'yu')
-        normalized = normalized.replace('я', 'ya')
-        
+        translit_table = str.maketrans(
+            "".join(item["ru"] for item in self._translit_map.values()),
+            "".join(item["en"] for item in self._translit_map.values()),
+        )
+        normalized = normalized.translate(translit_table)
+
         # Проверяем алиасы
         if normalized in self._metric_aliases:
             return self._metric_aliases[normalized]
-            
+
         # Убираем все символы, кроме букв, цифр и подчеркиваний
-        normalized = re.sub(r'[^a-z0-9_]', '', normalized)
-        
+        normalized = re.sub(r"[^a-z0-9_]", "", normalized)
+
         return normalized
 
     def add_replacement(self, old: str, new: str) -> None:
         """
         Добавляет новое правило замены в нормализатор.
-        
+
         Args:
             old: Что заменять
             new: На что заменять
@@ -147,7 +167,7 @@ class MetricNormalizer:
     def remove_replacement(self, old: str) -> None:
         """
         Удаляет правило замены из нормализатора.
-        
+
         Args:
             old: Какое правило удалить
         """
@@ -156,8 +176,8 @@ class MetricNormalizer:
     def get_replacements(self) -> Dict[str, str]:
         """
         Возвращает текущий словарь замен.
-        
+
         Returns:
             Копия словаря текущих правил замены
         """
-        return dict(self._metric_aliases) 
+        return dict(self._metric_aliases)

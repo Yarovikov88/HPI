@@ -3,18 +3,18 @@
 Предоставляет инструменты для извлечения данных из различных источников.
 """
 
-from .questions import QuestionsDatabaseParser, MetricDefinition, SphereMetrics
-from .pro_data import ProDataParser, ProMetric, ProData
-from .history import HistoryParser, HistoricalReport, HistoricalScore
+from .history import HistoricalReport, HistoricalScore, HistoryParser
+from .pro_data import ProData, ProDataParser, ProMetric
+from .questions import MetricDefinition, QuestionsDatabaseParser, SphereMetrics
 
 __all__ = [
-    'QuestionsDatabaseParser',
-    'MetricDefinition',
-    'SphereMetrics',
-    'ProDataParser',
-    'ProMetric',
-    'ProData',
-    'HistoryParser',
-    'HistoricalReport',
-    'HistoricalScore'
-] 
+    "QuestionsDatabaseParser",
+    "MetricDefinition",
+    "SphereMetrics",
+    "ProDataParser",
+    "ProMetric",
+    "ProData",
+    "HistoryParser",
+    "HistoricalReport",
+    "HistoricalScore",
+]
