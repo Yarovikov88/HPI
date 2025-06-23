@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 # --- Информация о приложении ---
-APP_VERSION = "0.6.1-dev"
+APP_VERSION = "0.7.0"
 
 # --- Настройка логирования ---
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -48,7 +48,15 @@ def main():
         # Проверяем наличие API ключа
         if not os.getenv("OPENAI_API_KEY"):
             logging.warning("OPENAI_API_KEY не найден в переменных окружения. AI-рекомендации будут недоступны.")
-        
+
+        # Импортируем функцию проверки OpenAI
+        from src.dashboard.ai.test_openai import check_openai_available
+        openai_error = check_openai_available()
+        if openai_error:
+            logging.warning(f"OpenAI API недоступен: {openai_error}")
+        else:
+            logging.info("OpenAI API доступен и работает корректно.")
+
         # Импортируем модули прямо здесь, чтобы быть уверенными, что sys.path уже обновлен
         from src.calculator import run_calculator
         from src.dashboard.injector import DashboardInjector
@@ -60,8 +68,8 @@ def main():
         logging.info("Шаг 2: Запуск инжектора для обновления PRO-дашборда...")
         injector = DashboardInjector(version=APP_VERSION)
         
-        # Обновляем основной дашборд
-        dashboard_path = injector.inject(save_draft=False)
+        # Обновляем основной дашборд, передаём openai_error
+        dashboard_path = injector.inject(save_draft=False, openai_error=openai_error)
         logging.info(f"Дашборд обновлен: {dashboard_path}")
 
     except ImportError as e:

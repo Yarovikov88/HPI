@@ -135,11 +135,10 @@ class DashboardInjector:
             Словарь {сфера: список рекомендаций}
         """
         recommendations = {}
-        
+        self._ai_error = None  # Сохраняем первую ошибку AI
         # Для каждой сферы генерируем рекомендации
         for sphere, score in pro_data.scores.items():
             sphere_recommendations = []
-            # Если у AI движка есть generate_recommendation, вызываем его для каждой сферы
             if hasattr(self.ai_engine, 'generate_recommendation'):
                 try:
                     rec = self.ai_engine.generate_recommendation(
@@ -148,7 +147,6 @@ class DashboardInjector:
                         history=history
                     )
                     if rec:
-                        # Оборачиваем строку в Recommendation
                         if isinstance(rec, str):
                             rec = Recommendation(
                                 sphere=sphere,
@@ -156,12 +154,11 @@ class DashboardInjector:
                                 title=rec,
                                 description="",
                                 action_steps=[],
-                                evidence=Evidence(data_points=[], correlations=[], historical_success=0.0),
+                                evidence=None,
                                 related_spheres=[]
                             )
                         sphere_recommendations = [rec]
                     else:
-                        # generate_basic возвращает список строк, оборачиваем первую строку в Recommendation
                         basic_recs = self.recommendation_generator.generate_basic({
                             'sphere': sphere,
                             'current_score': score,
@@ -182,6 +179,8 @@ class DashboardInjector:
                             sphere_recommendations = []
                 except Exception as e:
                     self.logger.error(f"Ошибка при генерации AI-рекомендации для сферы {sphere}: {e}")
+                    if self._ai_error is None:
+                        self._ai_error = str(e)
                     basic_recs = self.recommendation_generator.generate_basic({
                         'sphere': sphere,
                         'current_score': score,
@@ -201,7 +200,6 @@ class DashboardInjector:
                     else:
                         sphere_recommendations = []
             else:
-                # Fallback: только базовые рекомендации
                 basic_recs = self.recommendation_generator.generate_basic({
                     'sphere': sphere,
                     'current_score': score,
@@ -221,16 +219,15 @@ class DashboardInjector:
                 else:
                     sphere_recommendations = []
             recommendations[sphere] = sphere_recommendations
-            
         return recommendations
 
-    def inject(self, save_draft: bool = False) -> str:
+    def inject(self, save_draft: bool = False, openai_error: str = None) -> str:
         """
         Обновляет дашборд, добавляя новые данные и рекомендации.
         
         Args:
             save_draft: Сохранять ли черновик дашборда
-        
+            openai_error: Текст ошибки OpenAI (если есть)
         Returns:
             Путь к сохраненному файлу
         """
@@ -247,13 +244,14 @@ class DashboardInjector:
             with open(current_report.file_path, 'r', encoding='utf-8') as f:
                 current_content = f.read()
             pro_data = self.pro_parser.parse(current_content)
+            # Генерируем AI-рекомендации только один раз
+            ai_recs = self._generate_recommendations(pro_data, history)
             # Генерируем секции только по двум последним финальным отчетам
             sections = self.section_generator.generate(
                 history=history,
-                recommendations=self._generate_recommendations(pro_data, history)
+                recommendations=ai_recs
             )
             # Добавляю секцию ai_recommendations для форматтера
-            ai_recs = self._generate_recommendations(pro_data, history)
             if ai_recs:
                 # Кладём в секцию не список, а сам Recommendation (или None)
                 sections['ai_recommendations'] = {sphere: recs[0] if recs else None for sphere, recs in ai_recs.items()}
@@ -273,7 +271,8 @@ class DashboardInjector:
                 sections=sections,
                 history=history_data,
                 date=history[-1].date,
-                version=self.version
+                version=self.version,
+                openai_error=openai_error or self._ai_error
             )
             # Сохраняем дашборд
             with open(MAIN_DASHBOARD_PATH, 'w', encoding='utf-8') as f:
