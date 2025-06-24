@@ -35,6 +35,7 @@ class SphereSection:
     problems: List[str]
     goals: List[str]
     blockers: List[str]
+    achievements: List[str]
     recommendation: Optional[Recommendation]
 
 
@@ -154,17 +155,10 @@ class SectionGenerator:
             self.logger.info(f"[REPORT_COMPARE] Предыдущий отчет: {previous_report.file_path}, дата: {previous_report.date}")
         else:
             self.logger.warning("[REPORT_COMPARE] Предыдущий отчет не найден!")
-        # Получаем master_order с нормализованными названиями сфер
-        master_order = [
-            self.sphere_normalizer.normalize('Отношения с любимыми'),
-            self.sphere_normalizer.normalize('Отношения с родными'),
-            self.sphere_normalizer.normalize('Друзья'),
-            self.sphere_normalizer.normalize('Карьера'),
-            self.sphere_normalizer.normalize('Физическое здоровье'),
-            self.sphere_normalizer.normalize('Ментальное здоровье'),
-            self.sphere_normalizer.normalize('Хобби и увлечения'),
-            self.sphere_normalizer.normalize('Благосостояние')
-        ]
+        
+        # Получаем master_order из нормализатора, который берет его из SPHERE_CONFIG
+        master_order = self.sphere_normalizer.get_all_normalized_names()
+
         # DEBUG: выводим содержимое проблем/целей/блокеров
         self.logger.info('[DEBUG] current_report.problems: %s', getattr(current_report, 'problems', {}))
         self.logger.info('[DEBUG] current_report.goals: %s', getattr(current_report, 'goals', {}))
@@ -174,27 +168,31 @@ class SectionGenerator:
             for m in previous_report.metrics:
                 self.logger.info(f"  - {m.normalized_name} | {m.sphere} | {m.current_value}")
         # Генерируем секции для каждой сферы из master_order
-        for sphere in master_order:
-            normalized = self.sphere_normalizer.normalize(sphere)
-            emoji = self.sphere_normalizer.get_emoji(normalized)
-            current_score = 0.0
-            if current_report.scores and normalized in current_report.scores:
-                current_score = current_report.scores[normalized]
-            previous_score = None
-            if previous_report and normalized in previous_report.scores:
-                previous_score = previous_report.scores[normalized]
+        for sphere_name in master_order:
+            # `sphere_name` уже нормализован, т.к. приходит из `master_order`
+            emoji = self.sphere_normalizer.get_emoji(sphere_name)
+            
+            current_score = current_report.scores.get(sphere_name, 0.0)
+            previous_score = previous_report.scores.get(sphere_name) if previous_report else None
+
             change_percent = self._calculate_change_percent(current_score, previous_score)
+            
             # Метрики только по этой сфере
             sphere_metrics = []
-            for metric in current_report.metrics:
-                if metric.sphere == normalized:
-                    self.logger.info(f"[DEBUG] Сопоставление метрики: {metric.normalized_name} | {metric.sphere} | {metric.current_value}")
-                    sphere_metrics.append(self._generate_metric_progress(metric, current_report, previous_report))
-            problems = getattr(current_report, 'problems', {}).get(normalized, [])
-            goals = getattr(current_report, 'goals', {}).get(normalized, [])
-            blockers = getattr(current_report, 'blockers', {}).get(normalized, [])
-            sections[normalized] = SphereSection(
-                name=normalized,
+            if current_report.metrics:
+                for metric in current_report.metrics:
+                    normalized_metric_sphere = self.sphere_normalizer.normalize(metric.sphere)
+                    if normalized_metric_sphere == sphere_name:
+                        sphere_metrics.append(self._generate_metric_progress(metric, current_report, previous_report))
+
+            # Безопасно извлекаем все данные по нормализованному имени сферы
+            problems = (current_report.problems or {}).get(sphere_name, [])
+            goals = (current_report.goals or {}).get(sphere_name, [])
+            blockers = (current_report.blockers or {}).get(sphere_name, [])
+            achievements = (current_report.achievements or {}).get(sphere_name, [])
+
+            sections[sphere_name] = SphereSection(
+                name=self.sphere_normalizer.get_original_name(sphere_name),
                 emoji=emoji,
                 current_score=current_score,
                 previous_score=previous_score,
@@ -204,6 +202,7 @@ class SectionGenerator:
                 problems=problems,
                 goals=goals,
                 blockers=blockers,
-                recommendation=recommendations.get(sphere)
+                achievements=achievements,
+                recommendation=recommendations.get(sphere_name)
             )
         return sections 

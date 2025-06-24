@@ -1,6 +1,8 @@
 """
 Генерация линейного графика изменений HPI
 """
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime
@@ -9,6 +11,7 @@ import os
 import sys
 import logging
 from typing import List, Dict
+import pandas as pd
 
 # Определяем корень проекта
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

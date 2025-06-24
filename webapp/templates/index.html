@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HPI PRO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HPI PRO</h1>
+            <p>Детальный разбор по сферам жизни.</p>
+        </header>
+
+        {% if error_message %}
+            <div class="error-banner">
+                <h3>Ошибка при загрузке данных</h3>
+                <p>{{ error_message }}</p>
+            </div>
+        {% else %}
+        <main>
+            <div class="spheres-grid">
+                {% for sphere in data.spheres %}
+                <div class="sphere-column">
+                    <div class="sphere-card">
+                        <div class="sphere-header">
+                            <h2>{{ sphere.icon }} {{ sphere.title }}</h2>
+                        </div>
+                        <div class="sphere-metrics">
+                            <div class="metric">
+                                <span class="value">{{ '%.1f'|format(sphere.current_score) if sphere.current_score is not none else '—' }}</span>
+                                <span class="label">Текущий</span>
+                            </div>
+                            <div class="metric-diff">
+                                {% if sphere.score_diff is not none and sphere.score_diff != 0 %}
+                                    <span class="value {{ 'positive' if sphere.score_diff > 0 else 'negative' }}">{{ '%+.1f'|format(sphere.score_diff * 100) }}%</span>
+                                {% endif %}
+                            </div>
+                            <div class="metric">
+                                <span class="value">{{ '%.1f'|format(sphere.previous_score) if sphere.previous_score is not none else '—' }}</span>
+                                <span class="label">Пред.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for section in data.sections if section.sphere_id == sphere.id %}
+                        <div class="info-card">
+                            <h3>{{ section.icon }} {{ section.title }}</h3>
+                            {% if section['items'] %}
+                                <ul>
+                                    {% for item in section['items'] %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Нет данных</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="charts">
+                <div class="chart-container">
+                    <h3>Радар</h3>
+                    <img src="{{ url_for('static', filename='images/radar_latest.png') }}" alt="Radar Chart">
+                </div>
+                <div class="chart-container">
+                    <h3>Динамика</h3>
+                    <img src="{{ url_for('static', filename='images/trend_latest.png') }}" alt="Trend Chart">
+                </div>
+            </div>
+        </main>
+        {% endif %}
+    </div>
+</body>
+</html> 

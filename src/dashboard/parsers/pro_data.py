@@ -61,9 +61,11 @@ class ProDataParser:
         Returns:
             Содержимое секции или None, если секция не найдена
         """
-        # Ищем секцию с двумя или тремя решетками
-        pattern = rf"(?:##|###)\s*{re.escape(section_title)}(.*?)(?=(?:##|###)|$)"
-        match = re.search(pattern, content, re.DOTALL)
+        # Удаляем эмодзи и лишние пробелы из заголовка для поиска
+        clean_title = re.sub(r'^\s*[\U0001F000-\U0001FAFF\s]+', '', section_title).strip()
+        # Ищем секцию с двумя или тремя решетками, игнорируя эмодзи в документе
+        pattern = rf"(?:##|###)\s*[\U0001F000-\U0001FAFF\s]*{re.escape(clean_title)}(.*?)(?=(?:##|###)|$)"
+        match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
         return match.group(1).strip() if match else None
 
     def _parse_table_rows(self, table_content: str) -> List[List[str]]:
@@ -104,7 +106,8 @@ class ProDataParser:
         """
         metrics = []
         rows = self._parse_table_rows(content)
-        for row in rows:
+        # Пропускаем заголовок таблицы, начиная с 1-й строки
+        for row in rows[1:]:
             if len(row) >= 4:
                 sphere_candidate = row[0]
                 metric_name = row[1]
@@ -153,7 +156,8 @@ class ProDataParser:
         """
         section_data = {}
         rows = self._parse_table_rows(content)
-        for row in rows:
+        # Пропускаем заголовок таблицы, начиная с 1-й строки
+        for row in rows[1:]:
             if len(row) >= 2:
                 sphere_candidate = row[0]
                 value = row[1]
@@ -183,7 +187,8 @@ class ProDataParser:
         """
         notes = {}
         rows = self._parse_table_rows(content)
-        for row in rows:
+        # Пропускаем заголовок таблицы, начиная с 1-й строки
+        for row in rows[1:]:
             if len(row) >= 2:
                 question = row[0]
                 answer = row[1]
@@ -221,31 +226,20 @@ class ProDataParser:
         for section_title in self.pro_sections:
             section_content = self._find_section_content(content, section_title)
             if not section_content:
-                print(f"[DEBUG] Секция '{section_title}' не найдена в черновике")
+                self.logger.debug(f"Секция '{section_title}' не найдена в черновике")
                 continue
-            print(f"[DEBUG] Найдена секция '{section_title}', размер контента: {len(section_content)} символов")
+            self.logger.debug(f"Найдена секция '{section_title}', размер контента: {len(section_content)} символов")
             if section_title == '📊 Мои метрики':
                 metrics = self._parse_metrics_section(section_content)
-                print(f"[DEBUG] Распарсено {len(metrics)} метрик: {metrics}")
+                self.logger.debug(f"Распарсено {len(metrics)} метрик: {metrics}")
                 sections_data['metrics'] = metrics
-                # Вычисляем scores как среднее значение метрик для каждой сферы
-                sphere_metrics = {}
-                for metric in metrics:
-                    if metric.current_value is not None:
-                        if metric.sphere not in sphere_metrics:
-                            sphere_metrics[metric.sphere] = []
-                        sphere_metrics[metric.sphere].append(metric.current_value)
-                for sphere, values in sphere_metrics.items():
-                    if values:
-                        sections_data['scores'][sphere] = sum(values) / len(values)
-                        print(f"[DEBUG] Вычислен score для сферы '{sphere}': {sections_data['scores'][sphere]}")
             elif section_title == '📝 Общие вопросы':
                 sections_data['general_notes'] = self._parse_general_notes_section(section_content)
-                print(f"[DEBUG] Распарсены общие вопросы: {sections_data['general_notes']}")
+                self.logger.debug(f"Распарсены общие вопросы: {sections_data['general_notes']}")
             elif section_title in section_map:
                 section_key = section_map[section_title]
                 section_data = self._parse_regular_section(section_content)
-                print(f"[DEBUG] Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер: {section_data}")
+                self.logger.debug(f"Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер: {section_data}")
                 sections_data[section_key] = section_data
         print(f"[DEBUG] Итоговые данные после парсинга: {sections_data}")
         print("[DEBUG] --- Конец парсинга PRO-секций ---")

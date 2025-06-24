@@ -221,6 +221,53 @@ class DashboardInjector:
             recommendations[sphere] = sphere_recommendations
         return recommendations
 
+    def get_dashboard_data(self) -> Dict:
+        """
+        Собирает все данные, необходимые для отображения в веб-дашборде.
+        
+        Returns:
+            Словарь с ключами 'spheres' и 'sections'.
+        """
+        try:
+            # ИСПРАВЛЕНИЕ: Получаем историю напрямую из финальных отчетов,
+            # а не через _load_data, который зависит от черновиков.
+            history = self.history_parser.get_history()
+
+            if not history or len(history) < 2:
+                self.logger.error("Для генерации дашборда необходимо как минимум два финальных отчета.")
+                return {'spheres': [], 'sections': []}
+
+            # Используем генератор секций для получения структурированных данных
+            # AI рекомендации здесь не нужны, передаем пустой словарь
+            sections_data = self.section_generator.generate(history, {})
+            
+            spheres = []
+            sections = []
+
+            for sphere_id, sphere_data in sections_data.items():
+                spheres.append({
+                    'id': sphere_id,
+                    'title': sphere_data.name,
+                    'icon': sphere_data.emoji,
+                    'current_score': sphere_data.current_score,
+                    'previous_score': sphere_data.previous_score,
+                    'score_diff': sphere_data.change_percent / 100 if sphere_data.previous_score is not None else 0,
+                })
+                
+                # Добавляем каждую под-секцию
+                if sphere_data.achievements:
+                    sections.append({'sphere_id': sphere_id, 'title': 'Достижения', 'icon': '🏆', 'items': sphere_data.achievements})
+                if sphere_data.problems:
+                    sections.append({'sphere_id': sphere_id, 'title': 'Проблемы', 'icon': '🛑', 'items': sphere_data.problems})
+                if sphere_data.goals:
+                    sections.append({'sphere_id': sphere_id, 'title': 'Цели', 'icon': '🎯', 'items': sphere_data.goals})
+
+            return {'spheres': spheres, 'sections': sections}
+
+        except Exception as e:
+            self.logger.error(f"Ошибка при сборе данных для дашборда: {e}", exc_info=True)
+            return {'spheres': [], 'sections': []}
+
     def inject(self, save_draft: bool = False, openai_error: str = None) -> str:
         """
         Обновляет дашборд, добавляя новые данные и рекомендации.

@@ -1,104 +1,57 @@
 """
-Модуль для нормализации названий сфер.
+Модуль для нормализации названий сфер на основе единого конфига.
 """
-from typing import Dict, Optional
+from typing import Dict, Optional, List
+from src.config import SPHERE_CONFIG
 
 
 class SphereNormalizer:
-    """Нормализатор названий сфер."""
+    """
+    Нормализатор названий сфер. Использует SPHERE_CONFIG как единственный источник правды.
+    """
 
     def __init__(self):
         """Инициализация нормализатора."""
-        self._sphere_emojis = {
-            "💖": "Отношения с любимыми",
-            "🏡": "Отношения с родными",
-            "🤝": "Друзья",
-            "💼": "Карьера",
-            "♂️": "Физическое здоровье",
-            "🧠": "Ментальное здоровье",
-            "🎨": "Хобби и увлечения",
-            "💰": "Благосостояние"
-        }
-        
-        self._normalized_spheres = {
-            "love": "Отношения с любимыми",
-            "family": "Отношения с родными",
-            "friends": "Друзья",
-            "career": "Карьера",
-            "physical": "Физическое здоровье",
-            "mental": "Ментальное здоровье",
-            "hobby": "Хобби и увлечения",
-            "wealth": "Благосостояние"
-        }
+        self._name_to_normalized: Dict[str, str] = {}
+        self._normalized_to_name: Dict[str, str] = {}
+        self._normalized_to_emoji: Dict[str, str] = {}
+        self._emoji_to_normalized: Dict[str, str] = {}
 
-    def get_all_emojis(self) -> Dict[str, str]:
-        """
-        Возвращает словарь всех эмодзи и их сфер.
-        
-        Returns:
-            Словарь {эмодзи: название_сферы}
-        """
-        return self._sphere_emojis
+        for config in SPHERE_CONFIG:
+            name = config["name"]
+            normalized = config["normalized"]
+            emoji = config["emoji"]
 
-    def get_emoji(self, sphere: str) -> str:
-        """
-        Возвращает эмодзи для сферы.
-        
-        Args:
-            sphere: Название сферы
-            
-        Returns:
-            Эмодзи сферы или пустую строку
-        """
-        for emoji, name in self._sphere_emojis.items():
-            if name == sphere:
-                return emoji
-        return ""
+            self._name_to_normalized[name] = normalized
+            self._normalized_to_name[normalized] = name
+            self._normalized_to_emoji[normalized] = emoji
+            self._emoji_to_normalized[emoji] = normalized
 
-    def get_sphere_by_emoji(self, emoji: str) -> Optional[str]:
-        """
-        Возвращает название сферы по эмодзи.
-        
-        Args:
-            emoji: Эмодзи сферы
-            
-        Returns:
-            Название сферы или None, если не найдено
-        """
-        return self._sphere_emojis.get(emoji)
+    def get_all_normalized_names(self) -> List[str]:
+        """Возвращает список всех нормализованных имен в правильном порядке."""
+        return [config["normalized"] for config in SPHERE_CONFIG]
 
-    def get_emoji_by_sphere(self, sphere: str) -> Optional[str]:
-        """
-        Возвращает эмодзи для заданной сферы.
-        
-        Args:
-            sphere: Название сферы
-            
-        Returns:
-            Эмодзи сферы или None, если не найдено
-        """
-        for emoji, name in self._sphere_emojis.items():
-            if name == sphere:
-                return emoji
-        return None
+    def get_original_name(self, normalized_name: str) -> str:
+        """Возвращает оригинальное название сферы по нормализованному."""
+        return self._normalized_to_name.get(normalized_name, normalized_name)
 
-    def normalize(self, sphere: str) -> str:
+    def get_emoji(self, normalized_name: str) -> str:
+        """Возвращает эмодзи для сферы по нормализованному названию."""
+        return self._normalized_to_emoji.get(normalized_name, "")
+
+    def normalize(self, sphere_identifier: str) -> Optional[str]:
         """
-        Нормализует название сферы.
+        Нормализует название сферы по любому идентификатору (оригинальное имя, эмодзи, нормализованное имя).
+        """
+        # Уже нормализовано?
+        if sphere_identifier in self._normalized_to_name:
+            return sphere_identifier
+        # Это оригинальное название?
+        if sphere_identifier in self._name_to_normalized:
+            return self._name_to_normalized[sphere_identifier]
+        # Это эмодзи?
+        if sphere_identifier in self._emoji_to_normalized:
+            return self._emoji_to_normalized[sphere_identifier]
         
-        Args:
-            sphere: Название сферы
-            
-        Returns:
-            Нормализованное название сферы
-        """
-        # Проверяем прямое совпадение
-        if sphere in self._normalized_spheres.values():
-            return sphere
-            
-        # Проверяем по ключу
-        if sphere in self._normalized_spheres:
-            return self._normalized_spheres[sphere]
-            
-        # Возвращаем исходное значение, если не удалось нормализовать
-        return sphere 
+        # Если ничего не подошло, возвращаем None, чтобы обозначить ошибку
+        return None 

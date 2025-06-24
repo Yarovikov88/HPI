@@ -5,25 +5,13 @@ import json
 import re
 from typing import Dict, List, Any
 
-# Определение корня проекта
-# __file__ -> scripts/create_draft.py
-# os.path.dirname(...) -> scripts/
-# os.path.dirname(...) -> hpi/
+# Добавляем корень в sys.path для импорта из src
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)
+from src.config import SPHERE_CONFIG
+
 DRAFT_FOLDER = os.path.join(PROJECT_ROOT, "reports_draft")
 DB_PATH = os.path.join(PROJECT_ROOT, 'database', 'questions.md')
-
-# Конфигурация сфер для сохранения правильного порядка и названий
-SPHERES_CONFIG = [
-    {"key": "Отношения с любимыми", "emoji": "💖"},
-    {"key": "Отношения с родными", "emoji": "🏡"},
-    {"key": "Друзья", "emoji": "🤝"},
-    {"key": "Карьера", "emoji": "💼"},
-    {"key": "Физическое здоровье", "emoji": "♂️"},
-    {"key": "Ментальное здоровье", "emoji": "🧠"},
-    {"key": "Хобби и увлечения", "emoji": "🎨"},
-    {"key": "Благосостояние", "emoji": "💰"}
-]
 
 def parse_question_database() -> Dict[str, Dict[str, List[Any]]]:
     """
@@ -36,11 +24,11 @@ def parse_question_database() -> Dict[str, Dict[str, List[Any]]]:
     with open(DB_PATH, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    all_data = {sphere['key']: {'basic': [], 'metrics': []} for sphere in SPHERES_CONFIG}
+    all_data = {sphere['name']: {'basic': [], 'metrics': []} for sphere in SPHERE_CONFIG}
     
     # Обновленный паттерн, который ищет emoji и название в конфигурации, а не пытается парсить их
-    for sphere_config in SPHERES_CONFIG:
-        sphere_key = sphere_config['key']
+    for sphere_config in SPHERE_CONFIG:
+        sphere_key = sphere_config['name']
         sphere_emoji = sphere_config['emoji']
         
         # Создаем паттерн для конкретной сферы
@@ -72,8 +60,8 @@ def generate_draft_content(db_data: Dict[str, Dict[str, List[Any]]]) -> str:
     
     # --- Собираем HPI секции (вопросы 1-8) ---
     hpi_sections = []
-    for i, sphere_config in enumerate(SPHERES_CONFIG, 1):
-        sphere_key = sphere_config['key']
+    for i, sphere_config in enumerate(SPHERE_CONFIG, 1):
+        sphere_key = sphere_config['name']
         sphere_emoji = sphere_config['emoji']
         sphere_title = f"## {i}. {sphere_emoji} {sphere_key}"
         
@@ -101,14 +89,14 @@ def generate_draft_content(db_data: Dict[str, Dict[str, List[Any]]]) -> str:
     for title, emoji in pro_sections_map.items():
         section_title = f"### {emoji} {title}"
         table_header = "| Сфера жизни | Ваши ответы |\n|:---|:---|"
-        table_rows = [f"| {s['emoji']} {s['key']} | |" for s in SPHERES_CONFIG]
+        table_rows = [f"| {s['emoji']} {s['name']} | |" for s in SPHERE_CONFIG]
         pro_sections.append(f"{section_title}\n{table_header}\n" + "\n".join(table_rows))
 
     # --- Собираем секцию "Мои метрики" ---
     metrics_header = "| Сфера жизни | Метрика | Текущее | Целевое |\n|:---|:---|:---:|:---:|"
     metrics_rows = []
-    for sphere_config in SPHERES_CONFIG:
-        sphere_key = sphere_config['key']
+    for sphere_config in SPHERE_CONFIG:
+        sphere_key = sphere_config['name']
         sphere_emoji = sphere_config['emoji']
         metrics = db_data.get(sphere_key, {}).get('metrics', [])
         for metric in metrics:

@@ -7,8 +7,10 @@ Status: Stable
 Модуль генерации радарных диаграмм для визуализации HPI.
 """
 
-import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
 from typing import Dict
 
 def create_radar_chart(scores: Dict[str, float], output_path: str, is_dashboard: bool = False) -> None:

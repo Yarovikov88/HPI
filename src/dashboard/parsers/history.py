@@ -60,13 +60,16 @@ class HistoryParser:
         Returns:
             Объект datetime или None, если не удалось извлечь дату
         """
-        try:
-            # Ожидаем формат: YYYY-MM-DD_report.md
-            date_str = filename.split('_')[0]
-            return datetime.strptime(date_str, '%Y-%m-%d')
-        except (IndexError, ValueError):
-            self.logger.warning(f"Не удалось извлечь дату из имени файла: {filename}")
-            return None
+        # Паттерн для YYYY-MM-DD
+        match = re.match(r'(\d{4}-\d{2}-\d{2})', filename)
+        if match:
+            try:
+                return datetime.strptime(match.group(1), '%Y-%m-%d')
+            except ValueError:
+                self.logger.warning(f"Некорректный формат даты в имени файла: {filename}")
+                return None
+        self.logger.warning(f"Не удалось извлечь дату из имени файла: {filename}")
+        return None
 
     def _extract_hpi(self, content: str) -> Optional[float]:
         """
@@ -109,41 +112,32 @@ class HistoryParser:
             content: Содержимое отчета
             
         Returns:
-            Словарь {сфера: оценка}
+            Словарь {нормализованная_сфера: оценка}
         """
         scores = {}
         
-        # Сначала пробуем найти в формате строк
-        pattern = r'([💖🏡🤝💼♂️🧠🎨💰])\s+([^:]+):\s+(\d+\.\d+)\s+[🟡🔵🔴]'
+        # Паттерн для поиска всех таблиц с баллами
+        pattern = r'\|\s*([^|]+?)\s*\|\s*(\d+\.\d+)\s*\|\s*[🟡🔵🔴]\s*\|'
         matches = re.finditer(pattern, content)
         
         for match in matches:
-            emoji = match.group(1)
-            value = float(match.group(3))
-            sphere = self.sphere_normalizer.get_sphere_by_emoji(emoji)
-            if sphere:
-                scores[sphere] = value
+            sphere_identifier = match.group(1).strip()
+            value = float(match.group(2))
+            
+            # Пропускаем строку с HPI
+            if 'Итоговый HPI' in sphere_identifier:
+                continue
+            
+            # Нормализуем сферу по названию или эмодзи
+            normalized_sphere = self.sphere_normalizer.normalize(sphere_identifier)
+            
+            if normalized_sphere:
+                scores[normalized_sphere] = value
+            else:
+                self.logger.warning(
+                    f"Не удалось нормализовать сферу: '{sphere_identifier}'"
+                )
                 
-        # Если не нашли, ищем в формате таблицы
-        if not scores:
-            pattern = r'\|\s*([^|]+)\s*\|\s*(\d+\.\d+)\s*\|\s*[🟡🔵🔴]\s*\|'
-            matches = re.finditer(pattern, content)
-            
-            for match in matches:
-                sphere = match.group(1).strip()
-                value = float(match.group(2))
-                if sphere in [
-                    "Отношения с любимыми",
-                    "Отношения с родными",
-                    "Друзья",
-                    "Карьера",
-                    "Физическое здоровье",
-                    "Ментальное здоровье",
-                    "Хобби и увлечения",
-                    "Благосостояние"
-                ]:
-                    scores[sphere] = value
-            
         return scores
 
     def parse_report(self, file_path: str) -> Optional[HistoricalReport]:
@@ -227,12 +221,15 @@ class HistoryParser:
             self.logger.error(f"Директория с отчетами не найдена: {self.reports_dir}")
             return history
         for filename in os.listdir(self.reports_dir):
+            file_path = os.path.join(self.reports_dir, filename)
+            # Пропускаем директории (например, 'images')
+            if os.path.isdir(file_path):
+                continue
             if not filename.endswith('_report.md'):
                 continue
             date = self._extract_date_from_filename(filename)
             if not date:
                 continue
-            file_path = os.path.join(self.reports_dir, filename)
             report = self.parse_report(file_path)
             if report:
                 history.append(report)

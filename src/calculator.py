@@ -17,6 +17,7 @@ import sys
 import traceback
 import json
 from src.dashboard.parsers.pro_data import ProDataParser
+from src.config import SPHERE_CONFIG
 
 # Constants
 MIN_ANSWER = 1
@@ -54,18 +55,6 @@ SPHERE_WEIGHTS = {
     "7": 0.125,  # Хобби
     "8": 0.125   # Благосостояние
 }
-
-# Sphere configuration
-SPHERE_CONFIG = [
-    {"number": "1", "name": "Отношения с любимыми", "emoji": "💖"},
-    {"number": "2", "name": "Отношения с родными", "emoji": "🏡"},
-    {"number": "3", "name": "Друзья", "emoji": "🤝"},
-    {"number": "4", "name": "Карьера", "emoji": "💼"},
-    {"number": "5", "name": "Физическое здоровье", "emoji": "♂️"},
-    {"number": "6", "name": "Ментальное здоровье", "emoji": "🧠"},
-    {"number": "7", "name": "Хобби и увлечения", "emoji": "🎨"},
-    {"number": "8", "name": "Благосостояние", "emoji": "💰"}
-]
 
 # Создаем обратный справочник из emoji в имя сферы
 EMOJI_TO_SPHERE_NAME = {s['emoji'].strip(): s['name'] for s in SPHERE_CONFIG}

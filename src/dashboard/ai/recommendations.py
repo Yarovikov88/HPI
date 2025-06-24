@@ -18,8 +18,8 @@ from ..generators import Recommendation, ActionStep, Evidence
 # Загружаем переменные окружения
 load_dotenv()
 
-# Настраиваем OpenAI
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Убираем глобальную инициализацию клиента
+# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 @dataclass
@@ -44,6 +44,7 @@ class AIRecommendationEngine:
         """Инициализация движка."""
         self.logger = logging.getLogger(__name__)
         self.model = "gpt-3.5-turbo"  # Используем GPT-3.5 Turbo
+        self.client = None
         
         # Оптимизированный системный промпт для GPT-3.5
         self.system_prompt = """Ты - эксперт по развитию человеческого потенциала в системе HPI (Human Potential Index).
@@ -207,6 +208,14 @@ class AIRecommendationEngine:
             Объект рекомендации или None в случае ошибки
         """
         try:
+            # "Ленивая" инициализация клиента
+            if not self.client:
+                api_key = os.getenv("OPENAI_API_KEY")
+                if not api_key:
+                    self.logger.warning("OPENAI_API_KEY не найден. Генерация AI-рекомендаций невозможна.")
+                    return None
+                self.client = OpenAI(api_key=api_key)
+
             # Подготавливаем контекст
             context = self._prepare_sphere_context(sphere, pro_data, history)
             
@@ -214,7 +223,7 @@ class AIRecommendationEngine:
             prompt = self._format_prompt(context)
             
             # Делаем запрос к API
-            response = client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.system_prompt},

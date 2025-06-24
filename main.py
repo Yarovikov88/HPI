@@ -79,5 +79,5 @@ def main():
 
     logging.info("--- ✅ Система HPI завершила работу ---")
 
-if __name__ == "__main__":
-    main() 
+# if __name__ == "__main__":
+#     main() 
