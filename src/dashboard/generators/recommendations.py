@@ -47,8 +47,8 @@ class RecommendationGenerator:
         self.sphere_normalizer = SphereNormalizer()
         self.logger = logging.getLogger(__name__)
 
-        # Базовые шаблоны рекомендаций для каждой сферы
-        self.base_recommendations = {
+        # Базовые шаблоны рекомендаций для каждой сферы (ключи — нормализованные)
+        raw_base = {
             "Отношения с любимыми": {
                 "templates": [
                     {
@@ -162,6 +162,10 @@ class RecommendationGenerator:
                 ]
             }
         }
+        self.base_recommendations = {}
+        for ru_name, value in raw_base.items():
+            norm = self.sphere_normalizer.normalize(ru_name)
+            self.base_recommendations[norm] = value
 
     def _analyze_sphere_data(
         self,
@@ -377,8 +381,8 @@ class RecommendationGenerator:
         if not base:
             emoji = normalizer.get_emoji(normalized)
             emoji_part = f"{emoji} " if emoji else ""
-            print(f"[DEBUG] Нет шаблона для сферы: '{sphere}' (нормализовано: '{normalized}'). Доступные: {list(self.base_recommendations.keys())}")
-            return [f"{emoji_part}попробуйте поставить конкретную цель и сделать первый шаг."]
+            # Fallback: всегда возвращаем хотя бы одну рекомендацию
+            return [f"{emoji_part}Нет шаблона для этой сферы. Попробуйте поставить конкретную цель и сделать первый шаг к улучшению."]
         templates = base.get('templates', [])
         recs = []
         for tpl in templates:

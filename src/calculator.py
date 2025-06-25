@@ -10,6 +10,7 @@ Status: Development
 import os
 import re
 import shutil
+import logging
 from typing import Dict, List, Optional, Tuple
 from src.radar import create_radar_chart
 from datetime import datetime
@@ -122,13 +123,13 @@ def extract_answers_from_section(content: str, section_name: str) -> Optional[Li
         name = '.'.join(clean_section_name.split('.')[1:]).strip()
         section_pattern = rf"##\s*{number}\.\s*.*?\s*{re.escape(name)}.*?(\n\|[\s\S]*?)(?=\n##|\Z)"
 
-        print(f"[DEBUG] Ищем по шаблону: {section_pattern}")
+        logging.debug(f"[DEBUG] Ищем по шаблону: {section_pattern}")
         section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
         if not section_match:
-            print(f"[DEBUG] Секция не найдена: {section_name}")
+            logging.debug(f"[DEBUG] Секция не найдена: {section_name}")
             return []
         section_table = section_match.group(1)
-        print(f"[DEBUG] Найдено содержимое секции: {section_table}")
+        logging.debug(f"[DEBUG] Найдено содержимое секции: {section_table}")
         answers = []
         for line in section_table.splitlines():
             line = line.strip()
@@ -139,13 +140,13 @@ def extract_answers_from_section(content: str, section_name: str) -> Optional[Li
                 continue  # пропускаем строку-заголовок
             if cells and cells[-1].isdigit():
                 answers.append(int(cells[-1]))
-            print(f"[DEBUG] Обработка строки: {line} -> {cells}")
+            logging.debug(f"[DEBUG] Обработка строки: {line} -> {cells}")
             if len(answers) == 6:
                 break  # только первые 6 ответов
-        print(f"[DEBUG] Итоговые 6 ответов для {section_name}: {answers}")
+        logging.debug(f"[DEBUG] Итоговые 6 ответов для {section_name}: {answers}")
         return answers
     except Exception as e:
-        print(f"[DEBUG] Ошибка при парсинге секции {section_name}: {e}")
+        logging.debug(f"[DEBUG] Ошибка при парсинге секции {section_name}: {e}")
         return []
 
 def process_hpi_report(file_path: str) -> Dict[str, float]:
@@ -175,11 +176,11 @@ def process_hpi_report(file_path: str) -> Dict[str, float]:
                 _, normalized_score = calculate_sphere_score(answers, inverse_questions)
                 sphere_scores[sphere["number"]] = normalized_score
             else:
-                print(f"Предупреждение: В сфере '{section_name}' не все ответы заполнены")
+                logging.warning(f"Предупреждение: В сфере '{section_name}' не все ответы заполнены")
                 sphere_scores[sphere["number"]] = 0.0
                 all_data_valid = False
         except Exception as e:
-            print(f"Ошибка расчета для сферы {section_name}: {e}")
+            logging.error(f"Ошибка расчета для сферы {section_name}: {e}")
             sphere_scores[sphere["number"]] = 0.0
             all_data_valid = False
 
@@ -188,7 +189,7 @@ def process_hpi_report(file_path: str) -> Dict[str, float]:
         hpi_total = calculate_total_hpi(sphere_scores)
         sphere_scores["HPI"] = hpi_total
     except Exception as e:
-        print(f"Ошибка расчета итогового HPI: {e}")
+        logging.error(f"Ошибка расчета итогового HPI: {e}")
         sphere_scores["HPI"] = 0.0
         all_data_valid = False
 
@@ -249,22 +250,22 @@ def find_latest_draft() -> Optional[str]:
     """Находит самый свежий черновик в папке DRAFT_FOLDER."""
     try:
         if not os.path.exists(DRAFT_FOLDER):
-            print(f"Папка с черновиками не найдена: {DRAFT_FOLDER}")
+            logging.warning(f"Папка с черновиками не найдена: {DRAFT_FOLDER}")
             return None
 
         # Ищем файлы по новому стандарту: YYYY-MM-DD_draft.md
         drafts = [os.path.join(DRAFT_FOLDER, f) for f in os.listdir(DRAFT_FOLDER) if f.endswith("_draft.md") and re.match(r"\d{4}-\d{2}-\d{2}", f)]
         
         if not drafts:
-            print("Черновики по стандарту 'YYYY-MM-DD_draft.md' не найдены.")
+            logging.warning("Черновики по стандарту 'YYYY-MM-DD_draft.md' не найдены.")
             return None
             
         # Сортируем по дате в имени файла
         latest_draft = max(drafts, key=lambda x: re.search(r"(\d{4}-\d{2}-\d{2})", os.path.basename(x)).group(1))
-        print(f"Найден последний черновик по дате в имени: {latest_draft}")
+        logging.info(f"Найден последний черновик по дате в имени: {latest_draft}")
         return latest_draft
     except Exception as e:
-        print(f"Ошибка при поиске последнего черновика: {e}")
+        logging.error(f"Ошибка при поиске последнего черновика: {e}")
         return None
 
 def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
@@ -339,7 +340,7 @@ def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
             content += f"| {sphere['name']} | {score:.1f} | {emoji} |\n"
 
         # Добавляем итоговый HPI
-        total_hpi = calculate_total_hpi(scores)
+        total_hpi = scores.get("HPI", 0.0)
         hpi_emoji = get_score_emoji(total_hpi, is_hpi=True)
         content += f"| **Итоговый HPI** | **{total_hpi:.1f}** | {hpi_emoji} |\n"
 
@@ -362,26 +363,28 @@ def create_final_report(draft_path: str, scores: Dict[str, float]) -> None:
             f.write(content)
 
     except Exception as e:
-        print(f"Ошибка при создании финального отчета: {e}")
-        traceback.print_exc()
+        logging.error(f"Ошибка при создании финального отчета: {e}", exc_info=True)
         raise
 
 def print_scores(scores):
     """Выводит рассчитанные показатели в консоль."""
-    print(f"HPI: {scores['HPI']:.1f} {get_score_emoji(scores['HPI'])}")
+    logging.info(f"HPI: {scores['HPI']:.1f} {get_score_emoji(scores['HPI'], is_hpi=True)}")
     for sphere in SPHERE_CONFIG:
         sphere_num = sphere["number"]
-        print(f"{sphere['emoji']} {sphere['name']}: {scores[sphere_num]:.1f} {get_score_emoji(scores[sphere_num])}")
+        if sphere_num in scores:
+            logging.info(f"{sphere['emoji']} {sphere['name']}: {scores[sphere_num]:.1f} {get_score_emoji(scores[sphere_num])}")
+        else:
+            logging.warning(f"Нет оценки для сферы: {sphere['name']}")
 
 def run_calculator():
     """Основная функция для запуска калькулятора."""
     try:
         draft_path = find_latest_draft()
         if not draft_path:
-            print("Черновики для обработки не найдены.")
+            logging.warning("Черновики для обработки не найдены.")
             return
 
-        print(f"Найден последний черновик: {draft_path}")
+        logging.info(f"Найден последний черновик: {draft_path}")
         
         scores = process_hpi_report(draft_path)
         print_scores(scores)
@@ -389,8 +392,7 @@ def run_calculator():
         create_final_report(draft_path, scores)
 
     except Exception as e:
-        print(f"Произошла ошибка в работе калькулятора: {e}")
-        traceback.print_exc()
+        logging.error(f"Произошла ошибка в работе калькулятора: {e}", exc_info=True)
 
 if __name__ == "__main__":
     run_calculator() 

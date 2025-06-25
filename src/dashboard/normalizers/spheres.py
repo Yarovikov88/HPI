@@ -27,6 +27,10 @@ class SphereNormalizer:
             self._normalized_to_emoji[normalized] = emoji
             self._emoji_to_normalized[emoji] = normalized
 
+    def get_all_emojis(self) -> Dict[str, str]:
+        """Возвращает словарь {эмодзи: нормализованное_имя}."""
+        return self._emoji_to_normalized
+
     def get_all_normalized_names(self) -> List[str]:
         """Возвращает список всех нормализованных имен в правильном порядке."""
         return [config["normalized"] for config in SPHERE_CONFIG]

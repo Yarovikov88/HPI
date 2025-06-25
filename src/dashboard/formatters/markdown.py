@@ -377,49 +377,22 @@ class MarkdownFormatter:
                 result.append(f"> | {emoji} | {metric.name} | {metric.current_value} | {metric.target_value} | {change:+.1f} ({percent:+.1f}%) |")
         result.append("\n")
         # Базовые рекомендации
-        master_order = [
-            'Отношения с любимыми',
-            'Отношения с родными',
-            'Друзья',
-            'Карьера',
-            'Физическое здоровье',
-            'Ментальное здоровье',
-            'Хобби и увлечения',
-            'Благосостояние'
-        ]
-        has_recs = any(section.recommendation for k, section in sections.items() if k != 'ai_recommendations')
-        if has_recs:
-            result.append("> [!example]- 💡 Базовые рекомендации")
-            result.append("> | Сфера | Рекомендация |")
-            result.append("> |:---:|:---|")
-            for sphere_name in master_order:
-                section = sections.get(sphere_name)
-                if not section or not section.recommendation:
-                    continue
-                rec = section.recommendation
-                sphere_label = section.emoji if section.emoji else ''
-                # Для базовых рекомендаций выводим красиво: title, description, шаги
-                if isinstance(rec, list):
-                    for r in rec:
-                        if hasattr(r, 'title') and hasattr(r, 'description'):
-                            steps = ''
-                            if hasattr(r, 'action_steps') and r.action_steps:
-                                steps = ' Шаги: ' + '; '.join([s.description for s in r.action_steps])
-                            result.append(f"> | {sphere_label} | {r.title}: {r.description}{steps} |")
-                        else:
-                            result.append(f"> | {sphere_label} | {str(r)} |")
-                elif hasattr(rec, 'title') and hasattr(rec, 'description'):
-                    steps = ''
-                    if hasattr(rec, 'action_steps') and rec.action_steps:
-                        steps = ' Шаги: ' + '; '.join([s.description for s in rec.action_steps])
-                    result.append(f"> | {sphere_label} | {rec.title}: {rec.description}{steps} |")
-                else:
-                    result.append(f"> | {sphere_label} | {str(rec)} |")
-        else:
-            result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации (полные)</span>")
-            result.append("> | Сфера | Рекомендация | Описание | Шаги | Обоснование |")
-            result.append("> |:---:|:---|:---|:---|:---|")
-
+        result.append("> [!example]- 💡 Базовые рекомендации")
+        result.append("> | Сфера | Рекомендация |")
+        result.append("> |:---:|:---|")
+        for sphere_name in master_order:
+            section = sections.get(sphere_name)
+            emoji = section.emoji if section else ''
+            rec = section.recommendation if section else None
+            if not rec:
+                result.append(f"> | {emoji} | Нет рекомендации |")
+                continue
+            if isinstance(rec, str):
+                result.append(f"> | {emoji} | {rec} |")
+            elif hasattr(rec, 'title') and getattr(rec, 'title'):
+                result.append(f"> | {emoji} | {rec.title} |")
+            else:
+                result.append(f"> | {emoji} | {str(rec)} |")
         result.append("\n")
         # AI-рекомендации (только если нет ошибки)
         if not openai_error:

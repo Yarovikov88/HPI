@@ -191,6 +191,16 @@ class SectionGenerator:
             blockers = (current_report.blockers or {}).get(sphere_name, [])
             achievements = (current_report.achievements or {}).get(sphere_name, [])
 
+            # Корректно извлекаем рекомендацию (поддержка и списка, и объекта)
+            rec = recommendations.get(sphere_name)
+            if isinstance(rec, list):
+                rec = rec[0] if rec else None
+            # Если рекомендации нет — всегда fallback к generate_basic
+            if not rec:
+                from .recommendations import RecommendationGenerator
+                recgen = RecommendationGenerator()
+                basic = recgen.generate_basic({'sphere': sphere_name})
+                rec = basic[0] if basic else None
             sections[sphere_name] = SphereSection(
                 name=self.sphere_normalizer.get_original_name(sphere_name),
                 emoji=emoji,
@@ -203,6 +213,6 @@ class SectionGenerator:
                 goals=goals,
                 blockers=blockers,
                 achievements=achievements,
-                recommendation=recommendations.get(sphere_name)
+                recommendation=rec
             )
         return sections 

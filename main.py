@@ -51,15 +51,22 @@ def main():
 
         # Импортируем функцию проверки OpenAI
         from src.dashboard.ai.test_openai import check_openai_available
+        logging.info("Вызов check_openai_available...")
         openai_error = check_openai_available()
+        logging.info(f"check_openai_available завершен. Результат: {openai_error}")
+
         if openai_error:
             logging.warning(f"OpenAI API недоступен: {openai_error}")
         else:
             logging.info("OpenAI API доступен и работает корректно.")
 
         # Импортируем модули прямо здесь, чтобы быть уверенными, что sys.path уже обновлен
+        logging.info("Импорт run_calculator...")
         from src.calculator import run_calculator
+        logging.info("Импорт run_calculator завершен.")
+        logging.info("Импорт DashboardInjector...")
         from src.dashboard.injector import DashboardInjector
+        logging.info("Импорт DashboardInjector завершен.")
         
         logging.info("Шаг 1: Запуск калькулятора для расчета метрик...")
         run_calculator()
@@ -73,11 +80,11 @@ def main():
         logging.info(f"Дашборд обновлен: {dashboard_path}")
 
     except ImportError as e:
-        logging.error(f"Ошибка импорта. Убедитесь, что все скрипты находятся в папке 'src'. Ошибка: {e}")
+        logging.error(f"КРИТИЧЕСКАЯ ОШИБКА ИМПОРТА. Убедитесь, что все скрипты находятся в папке 'src' и все зависимости установлены. Ошибка: {e}", exc_info=True)
     except Exception as e:
-        logging.error(f"Произошла непредвиденная ошибка в главном процессе: {e}", exc_info=True)
+        logging.error(f"КРИТИЧЕСКАЯ НЕПРЕДВИДЕННАЯ ОШИБКА в главном процессе: {e}", exc_info=True)
 
     logging.info("--- ✅ Система HPI завершила работу ---")
 
-# if __name__ == "__main__":
-#     main() 
+if __name__ == "__main__":
+    main() 

@@ -138,18 +138,19 @@ class DashboardInjector:
         self._ai_error = None  # Сохраняем первую ошибку AI
         # Для каждой сферы генерируем рекомендации
         for sphere, score in pro_data.scores.items():
+            normalized = self.sphere_normalizer.normalize(sphere)
             sphere_recommendations = []
             if hasattr(self.ai_engine, 'generate_recommendation'):
                 try:
                     rec = self.ai_engine.generate_recommendation(
-                        sphere=sphere,
+                        sphere=normalized,
                         pro_data=pro_data,
                         history=history
                     )
                     if rec:
                         if isinstance(rec, str):
                             rec = Recommendation(
-                                sphere=sphere,
+                                sphere=normalized,
                                 priority=1,
                                 title=rec,
                                 description="",
@@ -160,14 +161,14 @@ class DashboardInjector:
                         sphere_recommendations = [rec]
                     else:
                         basic_recs = self.recommendation_generator.generate_basic({
-                            'sphere': sphere,
+                            'sphere': normalized,
                             'current_score': score,
                             'pro_data': pro_data,
                             'history': history
                         })
                         if isinstance(basic_recs, list) and basic_recs:
                             sphere_recommendations = [Recommendation(
-                                sphere=sphere,
+                                sphere=normalized,
                                 priority=3,
                                 title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
                                 description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
@@ -182,14 +183,14 @@ class DashboardInjector:
                     if self._ai_error is None:
                         self._ai_error = str(e)
                     basic_recs = self.recommendation_generator.generate_basic({
-                        'sphere': sphere,
+                        'sphere': normalized,
                         'current_score': score,
                         'pro_data': pro_data,
                         'history': history
                     })
                     if isinstance(basic_recs, list) and basic_recs:
                         sphere_recommendations = [Recommendation(
-                            sphere=sphere,
+                            sphere=normalized,
                             priority=3,
                             title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
                             description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
@@ -201,14 +202,14 @@ class DashboardInjector:
                         sphere_recommendations = []
             else:
                 basic_recs = self.recommendation_generator.generate_basic({
-                    'sphere': sphere,
+                    'sphere': normalized,
                     'current_score': score,
                     'pro_data': pro_data,
                     'history': history
                 })
                 if isinstance(basic_recs, list) and basic_recs:
                     sphere_recommendations = [Recommendation(
-                        sphere=sphere,
+                        sphere=normalized,
                         priority=3,
                         title=basic_recs[0].split(':')[0] if ':' in basic_recs[0] else basic_recs[0],
                         description=basic_recs[0].split(':', 1)[1].strip() if ':' in basic_recs[0] else basic_recs[0],
@@ -218,7 +219,7 @@ class DashboardInjector:
                     )]
                 else:
                     sphere_recommendations = []
-            recommendations[sphere] = sphere_recommendations
+            recommendations[normalized] = sphere_recommendations
         return recommendations
 
     def get_dashboard_data(self) -> Dict:

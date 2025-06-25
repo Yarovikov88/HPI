@@ -214,7 +214,7 @@ class ProDataParser:
             'scores': {},
             'general_notes': {}  # Новое поле
         }
-        print("[DEBUG] --- Начало парсинга PRO-секций ---")
+        self.logger.debug("[DEBUG] --- Начало парсинга PRO-секций ---")
         # Явное сопоставление секций с ключами
         section_map = {
             '🛑 Мои проблемы': 'problems',
@@ -241,8 +241,8 @@ class ProDataParser:
                 section_data = self._parse_regular_section(section_content)
                 self.logger.debug(f"Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер: {section_data}")
                 sections_data[section_key] = section_data
-        print(f"[DEBUG] Итоговые данные после парсинга: {sections_data}")
-        print("[DEBUG] --- Конец парсинга PRO-секций ---")
+        self.logger.debug(f"[DEBUG] Итоговые данные после парсинга: {sections_data}")
+        self.logger.debug("[DEBUG] --- Конец парсинга PRO-секций ---")
         return ProData(
             scores=sections_data['scores'],
             metrics=sections_data['metrics'],

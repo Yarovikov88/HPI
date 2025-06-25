@@ -83,7 +83,7 @@ def test_sphere_normalization():
     # Путь к базе вопросов
     db_path = os.path.join(os.path.dirname(__file__), 'database', 'questions.md')
     parser = QuestionsDatabaseParser(db_path)
-    master_spheres = set(parser.parse_spheres_master_list())
+    master_spheres = set([normalizer.normalize(s) for s in parser.parse_spheres_master_list()])
     normalizer = SphereNormalizer()
 
     pro_data = get_test_pro_data()
