@@ -135,7 +135,6 @@ class DashboardInjector:
             Словарь {сфера: список рекомендаций}
         """
         recommendations = {}
-        self._ai_error = None  # Сохраняем первую ошибку AI
         # Для каждой сферы генерируем рекомендации
         for sphere, score in pro_data.scores.items():
             normalized = self.sphere_normalizer.normalize(sphere)
@@ -179,9 +178,6 @@ class DashboardInjector:
                         else:
                             sphere_recommendations = []
                 except Exception as e:
-                    self.logger.error(f"Ошибка при генерации AI-рекомендации для сферы {sphere}: {e}")
-                    if self._ai_error is None:
-                        self._ai_error = str(e)
                     basic_recs = self.recommendation_generator.generate_basic({
                         'sphere': normalized,
                         'current_score': score,
@@ -280,8 +276,6 @@ class DashboardInjector:
             Путь к сохраненному файлу
         """
         self.logger.info("Начинаю обновление дашборда...")
-        ai_error = None
-        ai_recs = {}
         try:
             # Получаем исторические данные только из финальных отчетов
             history = self.history_parser.get_history()
@@ -303,24 +297,13 @@ class DashboardInjector:
             if ai_recs:
                 # Кладём в секцию не список, а сам Recommendation (или None)
                 sections['ai_recommendations'] = {sphere: recs[0] if recs else None for sphere, recs in ai_recs.items()}
-            # DEBUG: выводим структуру sections в лог и в markdown
-            self.logger.info(f"SECTIONS DEBUG: {{k: type(v) for k, v in sections.items()}}: " + str({k: type(v) for k, v in sections.items()}))
-            sections['debug_sections'] = {k: str(type(v)) for k, v in sections.items()}
-            # Преобразуем историю в формат для дашборда
-            history_data = []
-            for report in history:
-                history_data.append({
-                    'date': report.date.strftime('%Y-%m-%d'),
-                    'hpi': report.hpi,
-                    'scores': report.scores
-                })
             # Формируем дашборд
             dashboard_content = self.formatter.format_dashboard(
                 sections=sections,
-                history=history_data,
+                history=history,
                 date=history[-1].date,
                 version=self.version,
-                openai_error=openai_error or self._ai_error
+                openai_error=openai_error
             )
             # Сохраняем дашборд
             with open(MAIN_DASHBOARD_PATH, 'w', encoding='utf-8') as f:

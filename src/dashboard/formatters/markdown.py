@@ -279,17 +279,36 @@ class MarkdownFormatter:
         
         # Получаем последний HPI и оценки
         latest_report = history[-1] if history else None
-        latest_hpi = latest_report['hpi'] if latest_report else 0.0
-        latest_scores = latest_report['scores'] if latest_report else {}
-        
+        if latest_report:
+            # Если это объект, а не dict
+            latest_hpi = getattr(latest_report, 'hpi', 0.0)
+            latest_scores = getattr(latest_report, 'scores', {})
+        else:
+            latest_hpi = 0.0
+            latest_scores = {}
         # Определяем статус
         status = "🟢" if latest_hpi >= 70 else "🟡" if latest_hpi >= 50 else "🔴"
         
         # Генерируем график тренда
-        trend_path = generate_trend_chart(history)
+        trend_path = None
+        if history:
+            last_report = history[-1]
+            date = getattr(last_report, 'date', None)
+            if date:
+                date_str = date.strftime('%Y-%m-%d')
+                abs_candidate_path = os.path.join('reports_final', 'images', f'{date_str}_trend.png')
+                rel_candidate_path = f"../reports_final/images/{date_str}_trend.png"
+                if os.path.exists(abs_candidate_path):
+                    trend_path = rel_candidate_path
         if not trend_path:
-            self.logger.error("Не удалось сгенерировать график тренда")
-            trend_path = "../reports_final/images/trend.png"  # Fallback путь
+            abs_fallback_path = os.path.join('reports_final', 'images', 'trend.png')
+            rel_fallback_path = '../reports_final/images/trend.png'
+            if os.path.exists(abs_fallback_path):
+                trend_path = rel_fallback_path
+        if not trend_path:
+            trend_md = '> График недоступен'
+        else:
+            trend_md = f"> ![Динамика HPI]({trend_path})"
         
         # Добавляем заголовок
         result.append(f"# HPI Dashboard v{version}\n\n")
@@ -298,7 +317,7 @@ class MarkdownFormatter:
         result.extend([
             f"## Human Performance Index: {latest_hpi:.1f} {status}\n",
             "> [!note]- 📈 Динамика HPI",
-            f"> ![Динамика HPI]({trend_path})",
+            trend_md,
             ">\n",
             "> [!note]- ⚖️ Баланс по сферам",
             "> ![Баланс по сферам](../reports_final/images/2025-06-14_radar.png)",
@@ -309,9 +328,17 @@ class MarkdownFormatter:
         
         # Добавляем историю в обратном порядке (новые даты сверху)
         for report in reversed(history):
-            scores = report['scores']
+            # Если это объект, а не dict
+            date = getattr(report, 'date', None)
+            if date:
+                date_str = date.strftime('%Y-%m-%d')
+            else:
+                date_str = report.get('date', '')
+            scores = getattr(report, 'scores', None)
+            if scores is None:
+                scores = report.get('scores', {})
             result.append(
-                f"> | {report['date']} | " +
+                f"> | {date_str} | " +
                 f"{scores.get('Отношения с любимыми', 0.0):.1f} | " +
                 f"{scores.get('Отношения с родными', 0.0):.1f} | " +
                 f"{scores.get('Друзья', 0.0):.1f} | " +
@@ -400,7 +427,35 @@ class MarkdownFormatter:
             if ai_recs:
                 result.append("")
                 result.append("> [!example]- <span style='color:#b37feb'>🤖 AI рекомендации</span>")
-                # ... (оставить существующую логику вывода AI-рекомендаций, если есть)
+                result.append("> | Сфера | AI-рекомендация | Описание | Шаги | Обоснование |")
+                result.append("> |:---:|:---|:---|:---|:---|")
+                for sphere_name in master_order:
+                    emoji = normalizer.get_emoji(sphere_name)
+                    rec = ai_recs.get(sphere_name)
+                    if not rec:
+                        result.append(f"> | {emoji} | Нет AI-рекомендации |  |  |  |")
+                        continue
+                    # Title
+                    title = rec.title if hasattr(rec, 'title') and rec.title else (str(rec) if isinstance(rec, str) else '')
+                    # Description
+                    desc = rec.description if hasattr(rec, 'description') and rec.description else ''
+                    # Steps
+                    steps = ''
+                    if hasattr(rec, 'action_steps') and rec.action_steps:
+                        steps = '<br/>'.join(f"{i+1}. {s.description}" for i, s in enumerate(rec.action_steps))
+                    # Evidence
+                    evidence = ''
+                    if hasattr(rec, 'evidence') and rec.evidence:
+                        ev = rec.evidence
+                        parts = []
+                        if getattr(ev, 'data_points', None):
+                            parts.append('Наблюдения: ' + '; '.join(ev.data_points))
+                        if getattr(ev, 'correlations', None):
+                            parts.append('Корреляции: ' + '; '.join(ev.correlations))
+                        if getattr(ev, 'historical_success', None):
+                            parts.append(f"Исторический успех: {ev.historical_success*100:.0f}%")
+                        evidence = '<br/>'.join(parts)
+                    result.append(f"> | {emoji} | {title} | {desc} | {steps} | {evidence} |")
         # Добавляем блок ошибки OpenAI, только если есть ошибка
         if openai_error:
             result.append("")  # пустая строка для разрыва callout

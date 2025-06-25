@@ -241,6 +241,27 @@ class ProDataParser:
                 section_data = self._parse_regular_section(section_content)
                 self.logger.debug(f"Распарсена секция '{section_title}', найдено данных для {len(section_data)} сфер: {section_data}")
                 sections_data[section_key] = section_data
+        # --- Новый блок: парсим итоговые оценки HPI ---
+        hpi_section_match = re.search(r'##+\s*[🏆]*\s*Итоговые оценки HPI(.*?)(?:\n##|\Z)', content, re.DOTALL | re.IGNORECASE)
+        if hpi_section_match:
+            hpi_section = hpi_section_match.group(1)
+            # Ищем таблицу (строки, начинающиеся с |)
+            table_lines = [line for line in hpi_section.splitlines() if line.strip().startswith('|')]
+            for line in table_lines[2:]:  # Пропускаем заголовок и разделитель
+                parts = [p.strip() for p in line.strip().strip('|').split('|')]
+                if len(parts) >= 2:
+                    sphere_raw, score_raw = parts[0], parts[1]
+                    # Пропускаем итоговую строку
+                    if 'Итоговый' in sphere_raw:
+                        continue
+                    try:
+                        score = float(score_raw.replace(',', '.'))
+                    except Exception:
+                        continue
+                    sphere = self.sphere_normalizer.normalize(sphere_raw)
+                    sections_data['scores'][sphere] = score
+            self.logger.debug(f"[DEBUG] Итоговые оценки HPI: {sections_data['scores']}")
+        # --- Конец нового блока ---
         self.logger.debug(f"[DEBUG] Итоговые данные после парсинга: {sections_data}")
         self.logger.debug("[DEBUG] --- Конец парсинга PRO-секций ---")
         return ProData(
