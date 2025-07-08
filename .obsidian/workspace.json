@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "database/questions.md",
+                "file": "packages/webapp/docs/structure.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "questions"
+              "title": "structure"
             }
           }
         ]
@@ -167,13 +167,14 @@
   },
   "active": "6b910a3364e5ba99",
   "lastOpenFiles": [
-    "interfaces/dashboard.md",
-    "docs/architecture/architecture_hpi_0_8_0.md",
-    "docs/architecture/system_architecture.md",
-    "dashboard.pdf",
-    "docs/roadmap.md",
-    "interfaces/report_template.md",
-    "docs/ai_recommendations_guide.md",
+    "database/questions.md",
+    "packages/obsidian-plugin/interfaces/dashboard.md",
+    "packages/obsidian-plugin/docs/architecture/architecture_hpi_0_8_0.md",
+    "packages/obsidian-plugin/docs/architecture/system_architecture.md",
+    "packages/obsidian-plugin/docs/dashboard.pdf",
+    "packages/obsidian-plugin/docs/roadmap.md",
+    "packages/obsidian-plugin/interfaces/report_template.md",
+    "packages/obsidian-plugin/docs/ai_recommendations_guide.md",
     "README.md"
   ]
 }

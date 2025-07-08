@@ -43,11 +43,11 @@ HPI — это система для анализа и повышения чел
 ---
 
 ## Документация
-- [User Manual](docs/user_manual.md)
-- [AI Recommendations Guide](docs/ai_recommendations_guide.md)
-- [Changelog](docs/changelog.md)
-- [System Requirements](docs/system_requirements.md)
-- [Admin Manual](docs/admin_manual.md)
+- [User Manual](user_manual.md)
+- [AI Recommendations Guide](ai_recommendations_guide.md)
+- [Changelog](packages/obsidian-plugin/docs/changelog.md)
+- [System Requirements](system_requirements.md)
+- [Admin Manual](admin_manual.md)
 
 ---
 
