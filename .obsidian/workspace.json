@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "packages/webapp/docs/structure.md",
+                "file": "database/questions.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "structure"
+              "title": "questions"
             }
           }
         ]
@@ -167,20 +167,22 @@
   },
   "active": "6b910a3364e5ba99",
   "lastOpenFiles": [
-    "packages/webapp/src/pages/features/FeaturesIndexPage.tsx",
-    "packages/webapp/src/pages/features/FeaturesIndexPage.module.css",
-    "packages/webapp/src/pages/features/GoalsFeaturePage.tsx",
-    "packages/webapp/src/pages/features/AiFeaturePage.tsx",
-    "packages/webapp/src/pages/features/DashboardFeaturePage.tsx",
-    "packages/webapp/src/pages/IntegrationsPage.tsx",
-    "packages/webapp/src/pages/features",
+    "packages/webapp/src/pages/SurveyPage.module.css",
+    "packages/webapp/docs/api_contract.md",
+    "packages/webapp/src/components/ProtectedRoute.tsx",
+    "packages/webapp/src/pages/AccountPage.module.css",
+    "packages/webapp/src/pages/AccountPage.tsx",
+    "packages/webapp/src/pages/LoginPage.module.css",
+    "packages/webapp/src/contexts/AuthContext.tsx",
+    "packages/webapp/src/contexts",
+    "packages/webapp/src/pages/SurveyPage.tsx",
+    "packages/webapp/src/services/api.ts",
+    "packages/webapp/src/services",
+    "packages/webapp/src/_mocks/questions.json",
+    "packages/webapp/docs/structure.md",
     "packages/webapp/src/assets/logo88.svg",
     "packages/webapp/public/logo.svg",
-    "packages/webapp/src/vite-env.d.ts",
     "packages/webapp/src/assets/logo.svg",
-    "packages/webapp/node_modules/@rollup/rollup-darwin-x64",
-    "packages/webapp/node_modules/cosmiconfig/dist/ExplorerSync.js",
-    "packages/webapp/node_modules/cosmiconfig/dist/ExplorerBase.js",
     "packages/webapp/node_modules/@rollup/pluginutils/node_modules/picomatch/README.md",
     "packages/webapp/node_modules/@rollup/pluginutils/README.md",
     "packages/webapp/node_modules/@svgr/hast-util-to-babel-ast/node_modules/entities/readme.md",
@@ -204,8 +206,6 @@
     "packages/webapp/node_modules/json-parse-even-better-errors/README.md",
     "packages/webapp/node_modules/json-parse-even-better-errors/LICENSE.md",
     "packages/webapp/node_modules/json-parse-even-better-errors/CHANGELOG.md",
-    "packages/webapp/node_modules/error-ex/README.md",
-    "packages/webapp/node_modules/lines-and-columns/README.md",
     "packages/webapp/public/vite.svg",
     "packages/webapp/src/assets/logo-hpi-temp.svg",
     "packages/webapp/public/logo-hpi-temp.svg"
