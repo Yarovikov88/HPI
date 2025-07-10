@@ -12,6 +12,12 @@ from ...trend import generate_trend_chart
 from ..normalizers import SphereNormalizer
 from ..generators.sections import SphereSection
 
+# Emojis for score levels
+VERY_HIGH_SCORE_EMOJI = "🟢"  # 8.5-10
+HIGH_SCORE_EMOJI = "🔵"     # 6.5-8.4
+MEDIUM_SCORE_EMOJI = "🟡"   # 4.5-6.4
+LOW_SCORE_EMOJI = "🔴"      # 0-4.4
+
 
 class MarkdownFormatter:
     """Форматтер для создания Markdown-отчетов."""
