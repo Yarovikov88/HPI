@@ -1,7 +1,8 @@
-openai>=1.12.0
-python-dotenv>=1.0.0
-matplotlib>=3.8.2
-numpy>=1.26.3
-pytest>=8.0.0
-Flask>=2.0.0
-pandas>=2.2.0 
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+pydantic
+python-dotenv
+openai
+tiktoken 

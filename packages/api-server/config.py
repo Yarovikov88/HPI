@@ -2,6 +2,17 @@
 Глобальные константы и конфигурация проекта HPI.
 """
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# --- OpenAI ---
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# --- Database ---
+DATABASE_URL = "postgresql://hpi_user:hpi_password_2024@83.147.192.188:5433/hpi_db"
+
 SPHERE_CONFIG = [
     {"number": "1", "name": "Отношения с любимыми", "emoji": "💖", "normalized": "relations_love"},
     {"number": "2", "name": "Отношения с родными", "emoji": "🏡", "normalized": "relations_family"},

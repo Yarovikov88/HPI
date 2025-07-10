@@ -1,90 +1,58 @@
-import os
-import sys
 import logging
-from datetime import datetime
+import uvicorn
+import argparse
 
-# --- Информация о приложении ---
-APP_VERSION = "0.7.0"
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from . import models
+from . import database
+from .routers import questions as questions_router
+
+# Создание таблиц в БД
+models.Base.metadata.create_all(bind=database.engine)
 
 # --- Настройка логирования ---
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-LOG_DIR = os.path.join(PROJECT_ROOT, 'logs')
-LOG_PATH = os.path.join(LOG_DIR, 'app.log')
-BACKEND_DIR = os.path.join(PROJECT_ROOT, 'src')
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-# Добавляем папку с модулями в sys.path
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
+# --- Инициализация FastAPI ---
+app = FastAPI(
+    title="HPI.EXPERT API",
+    version="1.0.0",
+    description="Центральный API для всех сервисов HPI.EXPERT"
+)
 
-# Настраиваем логгер
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-if logger.hasHandlers():
-    logger.handlers.clear()
+# --- Настройка CORS ---
+origins = [
+    "http://localhost",
+    "http://localhost:5173", # Адрес для Vite dev server
+    "http://localhost:8001", # Потенциальный адрес для деплоя
+]
 
-formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Файловый обработчик
-os.makedirs(LOG_DIR, exist_ok=True)
-file_handler = logging.FileHandler(LOG_PATH, mode='a', encoding='utf-8')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
 
-# Консольный обработчик
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
-# --- Конец настройки логирования ---
+# --- Подключение роутеров ---
+app.include_router(questions_router.router, prefix="/api/v1", tags=["questions"])
 
-# --- Основная логика ---
-def main():
-    """
-    Основной воркфлоу системы HPI.
-    Последовательно вызывает калькулятор и инжектор в одном процессе.
-    """
-    logging.info("--- 🚀 Начало работы системы HPI (единый процесс) ---")
-    
-    try:
-        # Проверяем наличие API ключа
-        if not os.getenv("OPENAI_API_KEY"):
-            logging.warning("OPENAI_API_KEY не найден в переменных окружения. AI-рекомендации будут недоступны.")
+# --- Эндпоинты ---
+@app.get("/")
+def read_root():
+    """Тестовый эндпоинт для проверки работы сервера."""
+    logging.info("Root endpoint was called.")
+    return {"message": "HPI.EXPERT API is running!"}
 
-        # Импортируем функцию проверки OpenAI
-        from src.dashboard.ai.test_openai import check_openai_available
-        logging.info("Вызов check_openai_available...")
-        openai_error = check_openai_available()
-        logging.info(f"check_openai_available завершен. Результат: {openai_error}")
-
-        if openai_error:
-            logging.warning(f"OpenAI API недоступен: {openai_error}")
-        else:
-            logging.info("OpenAI API доступен и работает корректно.")
-
-        # Импортируем модули прямо здесь, чтобы быть уверенными, что sys.path уже обновлен
-        logging.info("Импорт run_calculator...")
-        from src.calculator import run_calculator
-        logging.info("Импорт run_calculator завершен.")
-        logging.info("Импорт DashboardInjector...")
-        from src.dashboard.injector import DashboardInjector
-        logging.info("Импорт DashboardInjector завершен.")
-        
-        logging.info("Шаг 1: Запуск калькулятора для расчета метрик...")
-        run_calculator()
-        logging.info("Калькулятор успешно завершил работу.")
-
-        logging.info("Шаг 2: Запуск инжектора для обновления PRO-дашборда...")
-        injector = DashboardInjector(version=APP_VERSION)
-        
-        # Обновляем основной дашборд, передаём openai_error
-        dashboard_path = injector.inject(save_draft=False, openai_error=openai_error)
-        logging.info(f"Дашборд обновлен: {dashboard_path}")
-
-    except ImportError as e:
-        logging.error(f"КРИТИЧЕСКАЯ ОШИБКА ИМПОРТА. Убедитесь, что все скрипты находятся в папке 'src' и все зависимости установлены. Ошибка: {e}", exc_info=True)
-    except Exception as e:
-        logging.error(f"КРИТИЧЕСКАЯ НЕПРЕДВИДЕННАЯ ОШИБКА в главном процессе: {e}", exc_info=True)
-
-    logging.info("--- ✅ Система HPI завершила работу ---")
-
+# --- Запуск сервера ---
 if __name__ == "__main__":
-    main() 
+    parser = argparse.ArgumentParser(description="HPI.EXPERT API Server")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+    args = parser.parse_args()
+
+    logging.info(f"Starting uvicorn server on port {args.port}...")
+    uvicorn.run("main:app", host="0.0.0.0", port=args.port, reload=True) 
