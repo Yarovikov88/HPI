@@ -93,7 +93,25 @@ def seed_database():
                 db.add(question)
 
         db.commit()
-        print("✅ База данных успешно заполнена.")
+        print("✅ База данных успешно заполнена вопросами и сферами.")
+        
+        # --- Добавляем тестового пользователя ---
+        test_user = db.query(models.User).filter(models.User.user_id == 179).first()
+        if not test_user:
+            user = models.User(
+                user_id=179,
+                username='testuser',
+                telegram_id=123456789,
+                first_name='Test',
+                last_name='User',
+                email='test@example.com'
+            )
+            db.add(user)
+            db.commit()
+            print("✅ Тестовый пользователь (id=179) успешно добавлен.")
+        else:
+            print("ℹ️ Тестовый пользователь (id=179) уже существует.")
+
 
     except Exception as e:
         db.rollback()
@@ -102,4 +120,5 @@ def seed_database():
         db.close()
 
 if __name__ == "__main__":
-    seed_database() 
+    seed_database()
+    print("Script finished.") 

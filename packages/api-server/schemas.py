@@ -10,8 +10,7 @@ class Sphere(BaseModel):
 
 class Question(BaseModel):
     id: str
-    sphere_id: Optional[str] = None
-    sphere: Optional[Sphere] = None
+    sphere_id: str
     category: Optional[str] = None
     text: Optional[str] = None
     options: Optional[List[str]] = None
