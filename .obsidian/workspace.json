@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "database/questions.md",
+                "file": "packages/webapp/docs/structure.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "questions"
+              "title": "structure"
             }
           }
         ]
@@ -165,8 +165,10 @@
       "command-palette:Открыть палитру команд": false
     }
   },
-  "active": "b7d5e5fabfa1cfac",
+  "active": "6b910a3364e5ba99",
   "lastOpenFiles": [
+    "database/questions.md",
+    "packages/webapp/src/contexts/SurveyContextDefinition.ts",
     "packages/webapp/src/hooks/useSurvey.ts",
     "packages/webapp/src/hooks",
     "packages/api-server/scripts/check_answers.py",
@@ -176,10 +178,7 @@
     "packages/api-server/routers/answers.py",
     "packages/obsidian-plugin/setup.py",
     "packages/obsidian-plugin/ai_recommendations.py",
-    "packages/obsidian-plugin/radar.py",
-    "packages/obsidian-plugin/trend.py",
     "packages/obsidian-plugin/interfaces/dashboard.md",
-    "database/questions.md",
     "packages/webapp/docs/api_contract.md",
     "packages/webapp/docs/structure.md",
     "packages/webapp/src/assets/logo88.svg",
