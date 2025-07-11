@@ -7,8 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
 from . import database
-from .routers import questions as questions_router
-from .routers import answers as answers_router
+from .routers import questions, answers, dashboard
 
 # Создание таблиц в БД
 models.Base.metadata.create_all(bind=database.engine)
@@ -40,8 +39,9 @@ app.add_middleware(
 
 
 # --- Подключение роутеров ---
-app.include_router(questions_router.router, prefix="/api/v1")
-app.include_router(answers_router.router, prefix="/api/v1")
+app.include_router(questions.router, prefix="/api/v1")
+app.include_router(answers.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")
 
 # --- Эндпоинты ---
 @app.get("/")

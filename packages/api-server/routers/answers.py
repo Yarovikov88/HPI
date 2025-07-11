@@ -2,9 +2,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from datetime import datetime
+from typing import Any, Optional
 from .. import models
 from .. import database
-from typing import Any
 
 router = APIRouter(tags=["answers"])
 
@@ -16,6 +17,7 @@ class AnswerBody(BaseModel):
     questionId: str
     userId: int
     value: Any
+    created_at: Optional[datetime] = None
 
 @router.post("/answer")
 def post_answer(answer_body: AnswerBody, db: Session = Depends(database.get_db)):
@@ -39,7 +41,8 @@ def post_answer(answer_body: AnswerBody, db: Session = Depends(database.get_db))
             question_id=answer_body.questionId,
             user_id=answer_body.userId,
             sphere=sphere_id,
-            answer=answer_body.value # Сохраняем как есть, без преобразования в строку
+            answer=answer_body.value,
+            created_at=answer_body.created_at or datetime.now()
         )
         logger.info("Adding answer to the session...")
         db.add(db_answer)

@@ -45,7 +45,7 @@ class Answer(Base):
     sphere = Column(Integer, nullable=False)
     question_id = Column(String, ForeignKey('questions.id'), nullable=False)
     answer = Column(Integer, nullable=False) # Используем Integer для универсальности
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True))
 
     user = relationship("User", back_populates="answers")
     question = relationship("Question") 
