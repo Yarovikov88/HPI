@@ -167,6 +167,8 @@
   },
   "active": "b7d5e5fabfa1cfac",
   "lastOpenFiles": [
+    "packages/webapp/src/hooks/useSurvey.ts",
+    "packages/webapp/src/hooks",
     "packages/api-server/scripts/check_answers.py",
     "packages/api-server/scripts/__pycache__/clear_answers.cpython-313.pyc",
     "packages/api-server/scripts/clear_answers.py",
@@ -176,8 +178,6 @@
     "packages/obsidian-plugin/ai_recommendations.py",
     "packages/obsidian-plugin/radar.py",
     "packages/obsidian-plugin/trend.py",
-    "packages/obsidian-plugin/calculator.py",
-    "packages/webapp/src/pages/ProtectedLayout.tsx",
     "packages/obsidian-plugin/interfaces/dashboard.md",
     "database/questions.md",
     "packages/webapp/docs/api_contract.md",
