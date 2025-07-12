@@ -14,7 +14,13 @@ class User(Base):
     last_name = Column(String, nullable=True)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    answers = relationship("Answer", back_populates="user")
+    
+    answers = relationship("Answer", back_populates="user", cascade="all, delete-orphan")
+    achievements = relationship("Achievement", back_populates="user", cascade="all, delete-orphan")
+    problems = relationship("Problem", back_populates="user", cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="user", cascade="all, delete-orphan")
+    blockers = relationship("Blocker", back_populates="user", cascade="all, delete-orphan")
+    metrics = relationship("Metric", back_populates="user", cascade="all, delete-orphan")
 
 class Sphere(Base):
     __tablename__ = 'spheres'
@@ -30,8 +36,8 @@ class Question(Base):
     type = Column(String, nullable=True)
     category = Column(String, nullable=True)
     text = Column(String)
-    options = Column(ARRAY(String), nullable=True)
-    scores = Column(ARRAY(PG_INTEGER), nullable=True)
+    options = Column(JSON, nullable=True)
+    scores = Column(JSON, nullable=True)
     fields = Column(JSON, nullable=True)
     metrics = Column(JSON, nullable=True)
 
@@ -42,10 +48,75 @@ class Answer(Base):
 
     id = Column(PG_INTEGER, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
-    sphere = Column(Integer, nullable=False)
+    sphere_id = Column("sphere", String, ForeignKey('spheres.id'), nullable=False)
     question_id = Column(String, ForeignKey('questions.id'), nullable=False)
     answer = Column(Integer, nullable=False) # Используем Integer для универсальности
     created_at = Column(DateTime(timezone=True))
 
     user = relationship("User", back_populates="answers")
-    question = relationship("Question") 
+    question = relationship("Question")
+
+# --- Модели для Pro-ответов ---
+
+class Achievement(Base):
+    __tablename__ = 'achievements'
+    id = Column(PG_INTEGER, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
+    sphere_id = Column("sphere", String, nullable=False, index=True)
+    description = Column(String, nullable=False)
+    date_achieved = Column(DateTime, nullable=True)
+    impact_areas = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="achievements")
+
+class Problem(Base):
+    __tablename__ = 'problems'
+    id = Column(PG_INTEGER, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
+    sphere_id = Column("sphere", String, nullable=False, index=True)
+    text = Column(String, nullable=False)
+    severity = Column(Integer, nullable=True)
+    status = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="problems")
+
+class Goal(Base):
+    __tablename__ = 'goals'
+    id = Column(PG_INTEGER, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
+    sphere_id = Column("sphere", String, nullable=False, index=True)
+    text = Column(String, nullable=False)
+    deadline = Column(DateTime, nullable=True)
+    priority = Column(Integer, nullable=True)
+    status = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="goals")
+
+class Blocker(Base):
+    __tablename__ = 'blockers'
+    id = Column(PG_INTEGER, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
+    sphere_id = Column("sphere", String, nullable=False, index=True)
+    text = Column(String, nullable=False)
+    impact_level = Column(Integer, nullable=True)
+    related_goals = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="blockers")
+
+class Metric(Base):
+    __tablename__ = 'metrics'
+    id = Column(PG_INTEGER, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
+    sphere_id = Column("sphere", String, nullable=False, index=True)
+    name = Column(String, nullable=False)
+    current_value = Column(Integer, nullable=False)
+    target_value = Column(Integer, nullable=True)
+    unit = Column(String, nullable=True)
+    type = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="metrics") 

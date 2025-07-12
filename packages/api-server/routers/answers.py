@@ -31,16 +31,17 @@ def post_answer(answer_body: AnswerBody, db: Session = Depends(database.get_db))
             raise HTTPException(status_code=404, detail=f"User with id {answer_body.userId} not found")
         logger.info(f"User found: {user.username}")
 
-        # Извлекаем ID сферы из ID вопроса
-        logger.info(f"Parsing sphere_id from question_id: {answer_body.questionId}")
-        sphere_id_str = answer_body.questionId.split('.')[0]
-        sphere_id = int(sphere_id_str)
-        logger.info(f"Parsed sphere_id: {sphere_id}")
+        # Получаем вопрос из БД, чтобы получить ID сферы
+        question = db.query(models.Question).filter(models.Question.id == answer_body.questionId).first()
+        if not question:
+            raise HTTPException(status_code=404, detail=f"Question with id {answer_body.questionId} not found")
+        
+        logger.info(f"Question found, sphere_id is: {question.sphere_id}")
 
         db_answer = models.Answer(
             question_id=answer_body.questionId,
             user_id=answer_body.userId,
-            sphere=sphere_id,
+            sphere_id=question.sphere_id, # Используем правильное поле и значение
             answer=answer_body.value,
             created_at=answer_body.created_at or datetime.now()
         )
@@ -52,9 +53,6 @@ def post_answer(answer_body: AnswerBody, db: Session = Depends(database.get_db))
         
         logger.info(f"Successfully saved answer for user {answer_body.userId}")
         return {"status": "success", "message": "Ответ успешно сохранен."}
-    except (ValueError, IndexError) as e:
-        logger.error(f"Error parsing sphere from questionId: {answer_body.questionId}", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid questionId format. Could not derive sphere.")
     except Exception as e:
         db.rollback()
         logger.error(f"!!! An unexpected error occurred in post_answer. Full traceback:", exc_info=True)

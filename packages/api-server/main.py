@@ -7,10 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
 from . import database
-from .routers import questions, answers, dashboard
+from .routers import questions, answers, dashboard, pro_answers, pro_dashboard
 
-# Создание таблиц в БД
-models.Base.metadata.create_all(bind=database.engine)
+# Строка для автоматического создания/проверки таблиц удалена
+# в соответствии с требованием.
+# Управление схемой БД должно производиться вручную.
+# models.Base.metadata.create_all(bind=database.engine, checkfirst=True)
 
 # --- Настройка логирования ---
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -42,6 +44,8 @@ app.add_middleware(
 app.include_router(questions.router, prefix="/api/v1")
 app.include_router(answers.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
+app.include_router(pro_answers.router, prefix="/api/v1")
+app.include_router(pro_dashboard.router, prefix="/api/v1")
 
 # --- Эндпоинты ---
 @app.get("/")
@@ -57,4 +61,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.info(f"Starting uvicorn server on port {args.port}...")
-    uvicorn.run("main:app", host="0.0.0.0", port=args.port, reload=True) 
+    uvicorn.run("packages.api-server.main:app", host="0.0.0.0", port=args.port, reload=True) 
