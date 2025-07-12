@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
 from . import database
-from .routers import questions, answers, dashboard, pro_answers, pro_dashboard
+from .routers import questions, answers, dashboard, pro_answers, pro_dashboard, debug
 
 # Строка для автоматического создания/проверки таблиц удалена
 # в соответствии с требованием.
@@ -46,6 +46,7 @@ app.include_router(answers.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(pro_answers.router, prefix="/api/v1")
 app.include_router(pro_dashboard.router, prefix="/api/v1")
+app.include_router(debug.router, prefix="/api/v1")
 
 # --- Эндпоинты ---
 @app.get("/")

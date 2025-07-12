@@ -1,6 +1,75 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+
+# --- Базовые схемы, используемые в разных местах ---
+
+class AnswerSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    question_id: str
+    answer: int
+    created_at: datetime
+
+class ProProblemSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    sphere_id: str
+    description: str
+    category: str  # Добавили поле категории
+    created_at: datetime
+
+class ProGoalSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    sphere_id: str
+    description: str
+    category: str  # Добавили поле категории
+    created_at: datetime
+
+class ProBlockerSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    sphere_id: str
+    description: str
+    category: str  # Добавили поле категории
+    created_at: datetime
+
+class ProAchievementSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    sphere_id: str
+    description: str
+    category: str  # Добавили поле категории
+    created_at: datetime
+
+class ProMetricSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    sphere_id: str
+    name: str
+    current_value: int
+    created_at: datetime
+
+# --- Схема для ответа от data_factory ---
+class GeneratedData(BaseModel):
+    answers: List[AnswerSchema]
+    # Используем Union для pro_answers, так как там могут быть разные типы
+    pro_answers: List[ProProblemSchema | ProGoalSchema | ProBlockerSchema | ProAchievementSchema | ProMetricSchema]
+
+# --- Существующие схемы ---
 
 class Sphere(BaseModel):
     id: str
@@ -83,7 +152,7 @@ class DashboardResponse(BaseModel):
     pro: Optional[ProDashboardData] = None
 
 
-# --- Схемы для ответов ---
+# --- Схемы для ответов (старые, могут быть использованы в других местах, пока не трогаем) ---
 
 class AnswerBase(BaseModel):
     question_id: str
