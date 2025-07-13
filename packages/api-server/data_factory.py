@@ -10,9 +10,10 @@ print("--- DEBUG: data_factory.py (version 1.2) is being imported ---")
 from sqlalchemy.orm import Session
 import logging
 from . import models
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import random
 from sqlalchemy.orm import joinedload
+from sqlalchemy import text
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,23 +34,30 @@ SPHERE_NAME_TO_ID = {
     "Финансы": "wealth",
 }
 
-def clear_user_data(db: Session, user_id: int):
+def clear_user_data_for_today(db: Session, user_id: int):
     """
-    Полностью удаляет все базовые и Pro-ответы для указанного пользователя.
+    Удаляет все базовые и Pro-ответы для указанного пользователя ТОЛЬКО ЗА СЕГОДНЯ.
     """
-    logging.info(f"Начало полной очистки данных для пользователя ID: {user_id}")
+    logging.info(f"Начало очистки сегодняшних данных для пользователя ID: {user_id}")
     
     models_to_clear = [
         models.Answer, models.Problem, models.Goal,
         models.Blocker, models.Achievement, models.Metric
     ]
-
+    
+    today = date.today()
     total_deleted = 0
+
     for model in models_to_clear:
         table_name = model.__tablename__
         try:
-            deleted_rows = db.query(model).filter(model.user_id == user_id).delete(synchronize_session=False)
-            logging.info(f"Удалено {deleted_rows} записей из таблицы '{table_name}'.")
+            # Добавляем фильтр по сегодняшней дате
+            deleted_rows = db.query(model).filter(
+                model.user_id == user_id,
+                text("date(created_at) = :today")
+            ).params(today=today).delete(synchronize_session=False)
+
+            logging.info(f"Удалено {deleted_rows} записей из таблицы '{table_name}' за сегодня.")
             total_deleted += deleted_rows
         except Exception as e:
             logging.error(f"Ошибка при удалении данных из таблицы '{table_name}': {e}")
@@ -57,7 +65,7 @@ def clear_user_data(db: Session, user_id: int):
             raise
 
     db.commit()
-    logging.info(f"Данные для пользователя ID: {user_id} успешно очищены. Всего удалено {total_deleted} записей.")
+    logging.info(f"Сегодняшние данные для пользователя ID: {user_id} успешно очищены. Всего удалено {total_deleted} записей.")
 
 
 def _create_answers_for_date(db: Session, user_id: int, questions: list, date: datetime, trends: dict):
@@ -161,13 +169,15 @@ SCENARIOS = {
 
 def seed_scenario(db: Session, user_id: int, scenario_name: str):
     """
-    Главная функция. Очищает старые данные, генерирует новые и ВОЗВРАЩАЕТ их.
+    Главная функция. Очищает СЕГОДНЯШНИЕ данные, генерирует новые и ВОЗВРАЩАЕТ их.
     """
     if scenario_name not in SCENARIOS:
         logging.error(f"Сценарий '{scenario_name}' не найден.")
         raise ValueError(f"Unknown scenario: {scenario_name}")
 
-    clear_user_data(db, user_id)
+    # Заменяем полную очистку на очистку только за сегодня
+    clear_user_data_for_today(db, user_id)
+    
     scenario_function = SCENARIOS[scenario_name]
     generated_data = scenario_function(db, user_id)
 

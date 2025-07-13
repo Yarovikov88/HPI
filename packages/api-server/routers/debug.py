@@ -39,12 +39,14 @@ def create_scenario_data(
         # Обрабатываем базовые ответы
         processed_answers = []
         for answer in generated_data["answers"]:
+            db.expunge(answer) # Отвязываем объект от сессии
             mapper = inspect(answer.__class__)
             processed_answers.append({c.key: getattr(answer, c.key) for c in mapper.column_attrs})
 
         # Обрабатываем Pro-ответы
         processed_pro_answers = []
         for item in generated_data["pro_answers"]:
+            db.expunge(item) # Отвязываем объект от сессии
             mapper = inspect(item.__class__)
             item_dict = {c.key: getattr(item, c.key) for c in mapper.column_attrs}
             
@@ -52,16 +54,18 @@ def create_scenario_data(
             category = ""
 
             if class_name == "Problem":
-                category = "problem"
+                category = "problems"
                 if 'text' in item_dict: item_dict['description'] = item_dict.pop('text')
             elif class_name == "Goal":
-                category = "goal"
+                category = "goals"
                 if 'text' in item_dict: item_dict['description'] = item_dict.pop('text')
             elif class_name == "Blocker":
-                category = "blocker"
+                category = "blockers"
                 if 'text' in item_dict: item_dict['description'] = item_dict.pop('text')
+            elif class_name == "Metric":
+                category = "metrics"
             elif class_name == "Achievement":
-                category = "achievement"
+                category = "achievements"
             
             if category:
                 item_dict["category"] = category
