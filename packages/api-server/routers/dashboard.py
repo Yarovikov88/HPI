@@ -47,7 +47,7 @@ def calculate_total_hpi(sphere_scores: Dict[str, float], sphere_weights: Dict[st
     return round(max(20.0, min(100.0, hpi_score)), 1)
 
 
-@router.get("/dashboard", response_model=schemas.DashboardResponse)
+@router.get("/api/v1/dashboard/", response_model=schemas.DashboardResponse)
 def get_dashboard_data(db: Session = Depends(database.get_db)):
     # 1. Получаем все справочные данные по сферам из БД
     all_db_spheres = db.query(models.Sphere).all()
@@ -58,6 +58,8 @@ def get_dashboard_data(db: Session = Depends(database.get_db)):
     
     # Динамически создаем веса для сфер (пока все равны)
     num_spheres = len(all_db_spheres)
+    if num_spheres == 0:
+        raise HTTPException(status_code=500, detail="Количество сфер не может быть равно нулю.")
     equal_weight = 1 / num_spheres
     sphere_weights = {s.id: equal_weight for s in all_db_spheres}
 

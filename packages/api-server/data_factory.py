@@ -122,7 +122,7 @@ def generate_burnout_scenario(db: Session, user_id: int):
     db.add_all(pro_items)
     all_generated_pro_answers.extend(pro_items)
 
-    db.commit()
+    # db.commit() # УБИРАЕМ COMMIT! ОН ПРОИСХОДИТ ВНЕ ФУНКЦИИ
     return {"answers": all_generated_answers, "pro_answers": all_generated_pro_answers}
 
 
@@ -159,7 +159,7 @@ def generate_growth_scenario(db: Session, user_id: int):
     db.add_all(pro_items)
     all_generated_pro_answers.extend(pro_items)
 
-    db.commit()
+    # db.commit() # УБИРАЕМ COMMIT!
     return {"answers": all_generated_answers, "pro_answers": all_generated_pro_answers}
 
 SCENARIOS = {

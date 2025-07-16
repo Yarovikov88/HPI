@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 
 # --- Базовые схемы, используемые в разных местах ---
@@ -62,6 +62,9 @@ class ProMetricSchema(BaseModel):
     name: str
     current_value: int
     created_at: datetime
+
+# --- Схема-объединение для всех видов Pro-ответов ---
+AnyProAnswer = Union[ProAchievementSchema, ProProblemSchema, ProGoalSchema, ProBlockerSchema, ProMetricSchema]
 
 # --- Схема для ответа от data_factory ---
 class GeneratedData(BaseModel):

@@ -8,17 +8,19 @@ from .. import database, schemas, models
 from ..data_factory import seed_scenario
 
 router = APIRouter(
-    prefix="/debug",  # ИСПРАВЛЕНО: Убран дублирующийся префикс /api/v1
     tags=["Debug"],
 )
+
+@router.get("/debug/test")
+def test_endpoint():
+    return {"status": "ok"}
 
 class ScenarioRequest(schemas.BaseModel):
     user_id: int
     scenario_name: str
 
-@router.post("/seed-scenario",
-             status_code=status.HTTP_201_CREATED,
-             response_model=schemas.GeneratedData)
+@router.post("/debug/seed-scenario/",
+             status_code=status.HTTP_201_CREATED)
 def create_scenario_data(
     request: ScenarioRequest, 
     db: Session = Depends(database.get_db)
@@ -39,6 +41,7 @@ def create_scenario_data(
         # Обрабатываем базовые ответы
         processed_answers = []
         for answer in generated_data["answers"]:
+            db.refresh(answer) # Принудительно загружаем все данные объекта
             db.expunge(answer) # Отвязываем объект от сессии
             mapper = inspect(answer.__class__)
             processed_answers.append({c.key: getattr(answer, c.key) for c in mapper.column_attrs})
@@ -46,6 +49,7 @@ def create_scenario_data(
         # Обрабатываем Pro-ответы
         processed_pro_answers = []
         for item in generated_data["pro_answers"]:
+            db.refresh(item) # Принудительно загружаем все данные объекта
             db.expunge(item) # Отвязываем объект от сессии
             mapper = inspect(item.__class__)
             item_dict = {c.key: getattr(item, c.key) for c in mapper.column_attrs}
@@ -71,6 +75,7 @@ def create_scenario_data(
                 item_dict["category"] = category
                 processed_pro_answers.append(item_dict)
 
+        db.commit() # ЯВНЫЙ COMMIT В КОНЦЕ
         return {
             "answers": processed_answers,
             "pro_answers": processed_pro_answers
@@ -82,14 +87,12 @@ def create_scenario_data(
             detail=str(e),
         )
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An internal server error occurred: {e}",
         )
 
-@router.get("/scenarios", response_model=list[str])
+@router.get("/debug/scenarios", response_model=list[str])
 def get_available_scenarios():
     """
     Возвращает список ключей всех доступных сценариев.

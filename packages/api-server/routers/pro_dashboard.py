@@ -10,7 +10,6 @@ from .. import database, models, schemas
 logging.warning("--- LOADING PRO_DASHBOARD ROUTER ---")
 
 router = APIRouter(
-    prefix="/pro-dashboard",
     tags=["pro-dashboard"]
 )
 
@@ -25,7 +24,7 @@ class ProDataResponse(BaseModel):
     metrics: List[schemas.ProMetricsItem]
 
 
-@router.get("/data", response_model=ProDataResponse)
+@router.get("/api/v1/pro-dashboard/data", response_model=ProDataResponse)
 def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
     # Helper to get sphere names
     all_db_spheres = db.query(models.Sphere).all()
@@ -39,13 +38,16 @@ def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
         latest_entry_subquery = db.query(
             model.sphere_id,
             func.max(model.created_at).label('max_created_at')
-        ).filter(model.user_id == USER_ID).group_by(model.sphere_id).subquery()
+        ).filter(model.user_id == USER_ID).group_by(model.sphere_id).subquery('latest_entries')
+
+        # Создаем псевдоним для модели, чтобы использовать в join
+        model_alias = aliased(model)
 
         # Получаем полные записи, соответствующие самым последним датам
-        latest_entries = db.query(model).join(
+        latest_entries = db.query(model_alias).join(
             latest_entry_subquery,
-            (model.sphere_id == latest_entry_subquery.c.sphere_id) &
-            (model.created_at == latest_entry_subquery.c.max_created_at)
+            (model_alias.sphere_id == latest_entry_subquery.c.sphere_id) &
+            (model_alias.created_at == latest_entry_subquery.c.max_created_at)
         ).all()
 
         return latest_entries
@@ -82,7 +84,7 @@ def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
         metrics=metrics
     )
 
-@router.get("/basic-recommendations", response_model=List[schemas.RecommendationItem])
+@router.get("/api/v1/pro-dashboard/basic-recommendations", response_model=List[schemas.RecommendationItem])
 def get_basic_recommendations(db: Session = Depends(database.get_db)):
     # Mock data for now
     return [
@@ -90,7 +92,7 @@ def get_basic_recommendations(db: Session = Depends(database.get_db)):
         schemas.RecommendationItem(sphere="Здоровье", recommendation="Попробуйте добавить 15-минутную прогулку в свой распорядок дня.")
     ]
 
-@router.get("/ai-recommendations", response_model=List[schemas.AiRecommendationItem])
+@router.get("/api/v1/pro-dashboard/ai-recommendations", response_model=List[schemas.AiRecommendationItem])
 def get_ai_recommendations(db: Session = Depends(database.get_db)):
     # Mock data for now
     return [
