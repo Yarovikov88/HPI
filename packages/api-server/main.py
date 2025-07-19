@@ -1,20 +1,27 @@
 import logging
 import uvicorn
 import argparse
+import sys
+import os
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime, date
 
-from . import models
-from . import database
-from .routers import questions, answers, dashboard, pro_answers, pro_dashboard, debug
+# --- РЕШЕНИЕ ПРОБЛЕМЫ С ИМПОРТАМИ ---
+# Добавляем корневую директорию проекта в sys.path
+# Это гарантирует, что Python всегда знает, где искать 'packages'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# -----------------------------------------
+
+from packages.api_server.routers import questions, answers, pro_answers, dashboard, pro_dashboard, debug
+from packages.api_server.database import engine, Base
 
 # Строка для автоматического создания/проверки таблиц удалена
 # в соответствии с требованием.
 # Управление схемой БД должно производиться вручную.
-# models.Base.metadata.create_all(bind=database.engine, checkfirst=True)
+Base.metadata.create_all(bind=engine)
 
 # --- Кастомный JSON-кодировщик для обработки datetime ---
 def json_serializer(obj):
@@ -64,12 +71,12 @@ app.add_middleware(
 
 # --- Подключение роутеров ---
 # Убираем все префиксы. Полные пути будут заданы в самих роутерах.
-app.include_router(questions.router)
-app.include_router(answers.router)
-app.include_router(dashboard.router)
-app.include_router(pro_answers.router)
-app.include_router(pro_dashboard.router)
-app.include_router(debug.router)
+app.include_router(questions.router, prefix="/api/v1")
+app.include_router(answers.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")
+app.include_router(pro_answers.router, prefix="/api/v1")
+app.include_router(pro_dashboard.router, prefix="/api/v1")
+app.include_router(debug.router, prefix="/api/v1")
 
 # --- Эндпоинты ---
 @app.get("/")

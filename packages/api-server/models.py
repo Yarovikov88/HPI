@@ -41,7 +41,7 @@ class Question(Base):
     fields = Column(JSON, nullable=True)
     metrics = Column(JSON, nullable=True)
 
-    sphere = relationship("Sphere", back_populates="questions", foreign_keys=[sphere_id])
+    sphere = relationship("Sphere", back_populates="questions", foreign_keys="Question.sphere_id")
 
 class Answer(Base):
     __tablename__ = 'answers'

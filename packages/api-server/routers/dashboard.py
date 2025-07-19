@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Dict, Tuple
-from datetime import datetime
+from datetime import datetime, date
 
 from .. import database, models, schemas
 
 router = APIRouter(
+    prefix="/api/v1/dashboard",
     tags=["dashboard"]
 )
 
@@ -47,8 +49,11 @@ def calculate_total_hpi(sphere_scores: Dict[str, float], sphere_weights: Dict[st
     return round(max(20.0, min(100.0, hpi_score)), 1)
 
 
-@router.get("/api/v1/dashboard/", response_model=schemas.DashboardResponse)
-def get_dashboard_data(db: Session = Depends(database.get_db)):
+@router.get("/", response_model=schemas.DashboardResponse)
+async def get_dashboard_data(
+    user_id: int = 179, # ВРЕМЕННО, пока нет реальной аутентификации
+    db: Session = Depends(database.get_db)
+):
     # 1. Получаем все справочные данные по сферам из БД
     all_db_spheres = db.query(models.Sphere).all()
     if not all_db_spheres:
@@ -71,30 +76,64 @@ def get_dashboard_data(db: Session = Depends(database.get_db)):
             questions_by_sphere[q.sphere_id] = []
         questions_by_sphere[q.sphere_id].append(q.id)
 
-    # 3. Получаем все ответы пользователя
-    # TODO: Фильтровать по user_id, когда будет аутентификация
-    all_answers = db.query(models.Answer).all()
+    # 3. Получаем ответы пользователя ТОЛЬКО за СЕГОДНЯ
+    today = date.today()
+    todays_answers = db.query(models.Answer).filter(
+        models.Answer.user_id == user_id,
+        func.date(models.Answer.created_at) == today
+    ).all()
+
+    # Если сегодня ответов нет, возвращаем пустой дашборд
+    if not todays_answers:
+        return schemas.DashboardResponse(basic=None)
+
+    # 4. Группируем сегодняшние ответы по ID вопроса для удобства
+    answers_map = {a.question_id: a for a in todays_answers}
     
-    # 4. Группируем ответы по датам прохождения
+    # 5. Проверяем, завершен ли опрос СЕГОДНЯ, и считаем HPI
+    sphere_scores = {}
+    is_complete_today = True
+    for sphere_id, question_ids in questions_by_sphere.items():
+        sphere_answers_today = [answers_map[qid] for qid in question_ids if qid in answers_map]
+        
+        if len(sphere_answers_today) == QUESTIONS_PER_SPHERE:
+            raw_score = sum(apply_fibonacci_score(ans.answer) for ans in sphere_answers_today)
+            normalized_score = normalize_sphere_score(raw_score)
+            sphere_scores[sphere_id] = normalized_score
+        else:
+            # Если хоть одна сфера не заполнена, опрос за сегодня не завершен
+            is_complete_today = False
+            break # Выходим из цикла, т.к. считать HPI нет смысла
+
+    # Если опрос за сегодня не завершен, то данных для дашборда нет
+    if not is_complete_today:
+        return schemas.DashboardResponse(basic=None)
+
+    hpi_today = calculate_total_hpi(sphere_scores, sphere_weights)
+    last_updated_today = datetime.combine(today, datetime.min.time())
+
+    # --- Расчет ИСТОРИЧЕСКИХ данных для ТРЕНДА ---
+    # Получаем ВСЕ ответы пользователя за все время
+    all_historical_answers = db.query(models.Answer).filter(models.Answer.user_id == user_id).order_by(models.Answer.created_at).all()
+
+    # Группируем ВСЕ ответы по датам
     answers_by_date: Dict[datetime.date, List[models.Answer]] = {}
-    for answer in all_answers:
+    for answer in all_historical_answers:
         completion_date = answer.created_at.date()
         if completion_date not in answers_by_date:
             answers_by_date[completion_date] = []
         answers_by_date[completion_date].append(answer)
 
-    # 5. Расчет HPI и данных для тренда
+    # Считаем HPI для каждой завершенной даты в прошлом
     trend_data = []
-    # Временное хранилище для трендов по сферам
     sphere_trends_accumulator: Dict[str, List[schemas.TrendDataPoint]] = {s.id: [] for s in all_db_spheres}
-
     sorted_dates = sorted(answers_by_date.keys())
 
-    for date in sorted_dates:
-        daily_answers_map = {a.question_id: a for a in answers_by_date[date]}
-        
+    for d in sorted_dates:
+        daily_answers_map = {a.question_id: a for a in answers_by_date[d]}
         daily_sphere_scores = {}
         is_complete_for_day = True
+
         for sphere_id, question_ids in questions_by_sphere.items():
             sphere_answers_for_day = [daily_answers_map[qid] for qid in question_ids if qid in daily_answers_map]
             
@@ -102,9 +141,8 @@ def get_dashboard_data(db: Session = Depends(database.get_db)):
                 raw_score = sum(apply_fibonacci_score(ans.answer) for ans in sphere_answers_for_day)
                 normalized_score = normalize_sphere_score(raw_score)
                 daily_sphere_scores[sphere_id] = normalized_score
-                # Сохраняем данные для тренда сферы
                 sphere_trends_accumulator[sphere_id].append(
-                    schemas.TrendDataPoint(date=datetime.combine(date, datetime.min.time()), hpi=normalized_score)
+                    schemas.TrendDataPoint(date=datetime.combine(d, datetime.min.time()), hpi=normalized_score)
                 )
             else:
                 is_complete_for_day = False
@@ -112,55 +150,48 @@ def get_dashboard_data(db: Session = Depends(database.get_db)):
         
         if is_complete_for_day:
             hpi = calculate_total_hpi(daily_sphere_scores, sphere_weights)
-            trend_data.append(schemas.TrendDataPoint(date=datetime.combine(date, datetime.min.time()), hpi=hpi))
+            trend_data.append(schemas.TrendDataPoint(date=datetime.combine(d, datetime.min.time()), hpi=hpi))
 
-    # 6. Расчет данных для последнего состояния
-    if not trend_data:
-        return schemas.DashboardResponse(basic=None)
 
-    # Вычисляем изменение HPI по сравнению с предыдущим значением
+    # --- Расчет изменения HPI (сегодня по сравнению с последним трендом) ---
     hpi_change = None
-    if len(trend_data) >= 2:
-        hpi_change = trend_data[-1].hpi - trend_data[-2].hpi
-        hpi_change = round(hpi_change, 1)
+    if len(trend_data) > 0:
+        # Убедимся, что последняя точка в тренде - это не сегодня
+        last_trend_date = trend_data[-1].date.date()
+        if last_trend_date < today:
+             hpi_change = hpi_today - trend_data[-1].hpi
+        elif len(trend_data) > 1: # Если последняя точка - сегодня, берем предпоследнюю
+             hpi_change = hpi_today - trend_data[-2].hpi
+        
+        if hpi_change is not None:
+            hpi_change = round(hpi_change, 1)
 
-    last_hpi = trend_data[-1].hpi
-    last_date = trend_data[-1].date.date()
-    
-    last_answers_map = {a.question_id: a for a in answers_by_date[last_date]}
 
     radar_data = []
-    for sphere_id, question_ids in questions_by_sphere.items():
-        sphere_answers = [last_answers_map[qid] for qid in question_ids if qid in last_answers_map]
-        score = 0.0
-        if len(sphere_answers) == QUESTIONS_PER_SPHERE:
-             raw_score = sum(apply_fibonacci_score(ans.answer) for ans in sphere_answers)
-             score = normalize_sphere_score(raw_score)
-        
+    for sphere_id, score in sphere_scores.items():
         radar_data.append(schemas.SphereScore(
             sphere_id=sphere_id,
             sphere_name=sphere_name_map.get(sphere_id, sphere_id),
             score=score
         ))
 
-    # 7. Формирование финальной структуры трендов по сферам
+    # --- Формирование финальной структуры ---
     sphere_trends_data = []
     for sphere_id, trend_points in sphere_trends_accumulator.items():
-        if trend_points: # Добавляем только если есть данные
+        if trend_points:
             sphere_trends_data.append(schemas.SphereTrendData(
                 sphere_id=sphere_id,
                 sphere_name=sphere_name_map.get(sphere_id, "Unknown Sphere"),
                 trend=trend_points
             ))
 
-
     basic_dashboard = schemas.BasicDashboardData(
-        hpi=last_hpi,
+        hpi=hpi_today,
         hpi_change=hpi_change,
         trend=trend_data,
         radar=radar_data,
         sphere_trends=sphere_trends_data,
-        last_updated=datetime.combine(last_date, datetime.min.time())
+        last_updated=datetime.combine(today, datetime.min.time())
     )
 
     return schemas.DashboardResponse(basic=basic_dashboard) 

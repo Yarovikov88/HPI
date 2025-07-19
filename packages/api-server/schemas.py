@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 
@@ -13,49 +13,42 @@ class AnswerSchema(BaseModel):
     answer: int
     created_at: datetime
 
-class ProProblemSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+# --- Схемы для Pro-ответов (ОТВЕТ API) ---
 
+class ProProblemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     sphere_id: str
-    description: str
-    category: str  # Добавили поле категории
+    text: str # Используем 'text' из модели SQLAlchemy
     created_at: datetime
 
-class ProGoalSchema(BaseModel):
+class ProGoalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     user_id: int
     sphere_id: str
-    description: str
-    category: str  # Добавили поле категории
+    text: str # Используем 'text' из модели SQLAlchemy
     created_at: datetime
-
-class ProBlockerSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
     
+class ProBlockerResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     sphere_id: str
-    description: str
-    category: str  # Добавили поле категории
+    text: str # Используем 'text' из модели SQLAlchemy
     created_at: datetime
 
-class ProAchievementSchema(BaseModel):
+class ProAchievementResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
     id: int
     user_id: int
     sphere_id: str
-    description: str
-    category: str  # Добавили поле категории
+    description: str # В модели Achievement поле называется description
     created_at: datetime
 
-class ProMetricSchema(BaseModel):
+class ProMetricResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
     id: int
     user_id: int
     sphere_id: str
@@ -63,14 +56,22 @@ class ProMetricSchema(BaseModel):
     current_value: int
     created_at: datetime
 
-# --- Схема-объединение для всех видов Pro-ответов ---
-AnyProAnswer = Union[ProAchievementSchema, ProProblemSchema, ProGoalSchema, ProBlockerSchema, ProMetricSchema]
+
+# --- Схема-объединение для всех видов Pro-ответов (старая, может понадобиться где-то еще) ---
+AnyProAnswer = Union[ProAchievementResponse, ProProblemResponse, ProGoalResponse, ProBlockerResponse, ProMetricResponse]
+
+# --- Новая схема для сгруппированных Pro-ответов за сегодня ---
+class ProAnswersTodayResponse(BaseModel):
+    problems: List[ProProblemResponse] = []
+    goals: List[ProGoalResponse] = []
+    blockers: List[ProBlockerResponse] = []
+    achievements: List[ProAchievementResponse] = []
+    metrics: List[ProMetricResponse] = []
 
 # --- Схема для ответа от data_factory ---
 class GeneratedData(BaseModel):
     answers: List[AnswerSchema]
-    # Используем Union для pro_answers, так как там могут быть разные типы
-    pro_answers: List[ProProblemSchema | ProGoalSchema | ProBlockerSchema | ProAchievementSchema | ProMetricSchema]
+    pro_answers: List[Any] # Оставляем Any, т.к. тут могут быть разные типы
 
 # --- Существующие схемы ---
 
@@ -185,15 +186,15 @@ class ProAchievementCreate(ProAchievementBase):
     pass
 
 class ProAchievement(ProAchievementBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
 
 class ProProblemBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     sphere_id: str
-    text: str
+    text: str = Field(alias='description')
     severity: Optional[int] = None
     status: Optional[str] = None
 
@@ -201,15 +202,15 @@ class ProProblemCreate(ProProblemBase):
     pass
 
 class ProProblem(ProProblemBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
 
 class ProGoalBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     sphere_id: str
-    text: str
+    text: str = Field(alias='description')
     deadline: Optional[datetime] = None
     priority: Optional[int] = None
     status: Optional[str] = None
@@ -218,15 +219,15 @@ class ProGoalCreate(ProGoalBase):
     pass
 
 class ProGoal(ProGoalBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
 
 class ProBlockerBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     sphere_id: str
-    text: str
+    text: str = Field(alias='description')
     impact_level: Optional[int] = None
     related_goals: Optional[str] = None
 
@@ -234,11 +235,10 @@ class ProBlockerCreate(ProBlockerBase):
     pass
 
 class ProBlocker(ProBlockerBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
 
 class ProMetricBase(BaseModel):
     sphere_id: str

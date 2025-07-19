@@ -1,8 +1,6 @@
 fastapi
-uvicorn[standard]
-SQLAlchemy
-psycopg2-binary
-pydantic
+uvicorn
+sqlalchemy
 python-dotenv
-openai
-tiktoken 
+# Драйвер для подключения к PostgreSQL
+psycopg2-binary 

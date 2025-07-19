@@ -2,7 +2,8 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
-from typing import List
+from datetime import date
+from typing import List, Dict
 from pydantic import BaseModel
 
 from .. import database, models, schemas
@@ -10,11 +11,11 @@ from .. import database, models, schemas
 logging.warning("--- LOADING PRO_DASHBOARD ROUTER ---")
 
 router = APIRouter(
-    tags=["pro-dashboard"]
+    prefix="/api/v1/pro-dashboard",
+    tags=['pro-dashboard']
 )
 
-# TODO: Get user_id from auth token
-USER_ID = 179
+USER_ID = 179 # TODO: в будущем получать из токена авторизации
 
 class ProDataResponse(BaseModel):
     achievements: List[schemas.ProSectionItem]
@@ -24,7 +25,7 @@ class ProDataResponse(BaseModel):
     metrics: List[schemas.ProMetricsItem]
 
 
-@router.get("/api/v1/pro-dashboard/data", response_model=ProDataResponse)
+@router.get("/data", response_model=ProDataResponse)
 def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
     # Helper to get sphere names
     all_db_spheres = db.query(models.Sphere).all()
@@ -53,14 +54,30 @@ def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
         return latest_entries
 
     # Fetch data for the user using the helper
-    achievements_db = get_latest_for_each_sphere(models.Achievement)
+    # ИСПРАВЛЕНИЕ: для достижений получаем ВСЕ записи, но ТОЛЬКО ЗА СЕГОДНЯ
+    achievements_db = db.query(models.Achievement).filter(
+        models.Achievement.user_id == USER_ID,
+        func.DATE(models.Achievement.created_at) == func.current_date()
+    ).order_by(models.Achievement.created_at.desc()).all()
+    
     problems_db = get_latest_for_each_sphere(models.Problem)
     goals_db = get_latest_for_each_sphere(models.Goal)
     blockers_db = get_latest_for_each_sphere(models.Blocker)
     
-    # Для метрик логика может быть сложнее, если на одну сферу их может быть несколько.
-    # Пока оставляем как есть, но если метрики тоже дублируются, нужно будет доработать.
-    metrics_db = db.query(models.Metric).filter(models.Metric.user_id == USER_ID).order_by(models.Metric.created_at.desc()).all()
+    # ИЗМЕНЕНИЕ: Для метрик тоже нужно получать только последние значения
+    # Группируем по имени метрики и сфере, чтобы для каждой уникальной метрики была только одна последняя запись
+    latest_metrics_subquery = db.query(
+        models.Metric.sphere_id,
+        models.Metric.name,
+        func.max(models.Metric.created_at).label('max_created_at')
+    ).filter(models.Metric.user_id == USER_ID).group_by(models.Metric.sphere_id, models.Metric.name).subquery('latest_metrics')
+
+    metrics_db = db.query(models.Metric).join(
+        latest_metrics_subquery,
+        (models.Metric.sphere_id == latest_metrics_subquery.c.sphere_id) &
+        (models.Metric.name == latest_metrics_subquery.c.name) &
+        (models.Metric.created_at == latest_metrics_subquery.c.max_created_at)
+    ).all()
     
     # Transform data into response model
     achievements = [schemas.ProSectionItem(sphere=sphere_name_map.get(a.sphere_id, 'N/A'), value=a.description) for a in achievements_db]
@@ -84,7 +101,7 @@ def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
         metrics=metrics
     )
 
-@router.get("/api/v1/pro-dashboard/basic-recommendations", response_model=List[schemas.RecommendationItem])
+@router.get("/basic-recommendations", response_model=List[schemas.RecommendationItem])
 def get_basic_recommendations(db: Session = Depends(database.get_db)):
     # Mock data for now
     return [
@@ -92,7 +109,7 @@ def get_basic_recommendations(db: Session = Depends(database.get_db)):
         schemas.RecommendationItem(sphere="Здоровье", recommendation="Попробуйте добавить 15-минутную прогулку в свой распорядок дня.")
     ]
 
-@router.get("/api/v1/pro-dashboard/ai-recommendations", response_model=List[schemas.AiRecommendationItem])
+@router.get("/ai-recommendations", response_model=List[schemas.AiRecommendationItem])
 def get_ai_recommendations(db: Session = Depends(database.get_db)):
     # Mock data for now
     return [
