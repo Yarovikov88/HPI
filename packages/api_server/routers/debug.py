@@ -12,7 +12,7 @@ from .. import database, models, schemas
 from ..data_factory import seed_scenario
 
 router = APIRouter(
-    prefix="/api/v1/debug",
+    prefix="/debug",
     tags=["debug"]
 )
 

@@ -15,7 +15,7 @@ from datetime import datetime, date
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 # -----------------------------------------
 
-from packages.api_server.routers import questions, answers, pro_answers, dashboard, pro_dashboard, debug
+from packages.api_server.routers import questions, answers, pro_answers, dashboard, pro_dashboard, debug, diagnostics
 from packages.api_server.database import engine, Base
 
 # Строка для автоматического создания/проверки таблиц удалена
@@ -77,6 +77,7 @@ app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(pro_answers.router, prefix="/api/v1")
 app.include_router(pro_dashboard.router, prefix="/api/v1")
 app.include_router(debug.router, prefix="/api/v1")
+app.include_router(diagnostics.router, prefix="/api/v1")
 
 # --- Эндпоинты ---
 @app.get("/")
@@ -92,4 +93,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.info(f"Starting uvicorn server on port {args.port}...")
-    uvicorn.run("packages.api-server.main:app", host="0.0.0.0", port=args.port, reload=True) 
+    import sys
+    is_windows = sys.platform.startswith("win")
+    uvicorn.run(
+        "packages.api_server.main:app",
+        host="0.0.0.0",
+        port=args.port,
+        reload=not is_windows
+    ) 

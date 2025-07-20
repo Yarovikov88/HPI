@@ -160,7 +160,7 @@ class DashboardResponse(BaseModel):
 
 class AnswerBase(BaseModel):
     question_id: str
-    score: int
+    answer: int
 
 class AnswerCreate(AnswerBase):
     pass

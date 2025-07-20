@@ -10,7 +10,7 @@ from .. import models
 from .. import database
 
 router = APIRouter(
-    prefix="/api/v1/questions",
+    prefix="/questions",
     tags=["questions"]
 )
 

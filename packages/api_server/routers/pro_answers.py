@@ -8,7 +8,7 @@ from typing import Any, List
 from .. import models, schemas, database
 
 router = APIRouter(
-    prefix="/api/v1/pro-answers",
+    prefix="/pro-answers",
     tags=['pro-answers']
 )
 

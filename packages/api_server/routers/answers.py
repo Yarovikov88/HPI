@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
@@ -9,7 +9,7 @@ from typing import Any, Optional, List, Dict
 from .. import database, models, schemas
 
 router = APIRouter(
-    prefix="/api/v1/answers",
+    prefix="/answers",
     tags=['answers']
 )
 
@@ -23,8 +23,8 @@ class AnswerBody(BaseModel):
     # userId убрали, будем хардкодить
     # value переименовали в answer
 
-@router.post("/", response_model=schemas.AnswerResponse)
-def create_or_update_answer(answer: schemas.AnswerCreate, db: Session = Depends(database.get_db), user_id: int = 179):
+@router.post("/", response_model=schemas.AnswerSchema, status_code=status.HTTP_200_OK)
+def create_or_update_answer(answer: schemas.AnswerCreate, response: Response, db: Session = Depends(database.get_db), user_id: int = 179):
     today = date.today()
     
     existing_answer = db.query(models.Answer).filter(
@@ -52,6 +52,7 @@ def create_or_update_answer(answer: schemas.AnswerCreate, db: Session = Depends(
         db.add(db_answer)
         db.commit()
         db.refresh(db_answer)
+        response.status_code = status.HTTP_201_CREATED
         return db_answer
 
 @router.delete("/{question_id}", status_code=204)
@@ -71,7 +72,7 @@ def delete_answer(question_id: str, db: Session = Depends(database.get_db), user
     return
 
 
-@router.get("/today", response_model=List[schemas.AnswerResponse])
+@router.get("/today", response_model=List[schemas.AnswerSchema])
 def get_todays_answers(db: Session = Depends(database.get_db), user_id: int = 179):
     today = date.today()
     todays_answers = db.query(models.Answer).filter(

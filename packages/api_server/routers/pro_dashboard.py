@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from datetime import date
@@ -7,11 +7,12 @@ from typing import List, Dict
 from pydantic import BaseModel
 
 from .. import database, models, schemas
+from .dashboard import find_last_completed_date # Импортируем нашу новую функцию
 
 logging.warning("--- LOADING PRO_DASHBOARD ROUTER ---")
 
 router = APIRouter(
-    prefix="/api/v1/pro-dashboard",
+    prefix="/pro-dashboard",
     tags=['pro-dashboard']
 )
 
@@ -26,60 +27,55 @@ class ProDataResponse(BaseModel):
 
 
 @router.get("/data", response_model=ProDataResponse)
-def get_pro_dashboard_data(db: Session = Depends(database.get_db)):
-    # Helper to get sphere names
+def get_pro_dashboard_data(
+    date_str: str | None = None,
+    db: Session = Depends(database.get_db)
+):
+    # 1. Определяем, для какой даты строим дашборд
+    if date_str:
+        try:
+            target_date = date.fromisoformat(date_str)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Неверный формат даты. Используйте YYYY-MM-DD.")
+    else:
+        # Если дата не передана, используем последнюю завершенную
+        target_date = find_last_completed_date(USER_ID, db)
+
+    # Если даты нет, возвращаем пустой ответ
+    if not target_date:
+        return ProDataResponse(achievements=[], problems=[], goals=[], blockers=[], metrics=[])
+        
+    # 2. Получаем все справочные данные по сферам
     all_db_spheres = db.query(models.Sphere).all()
     sphere_name_map = {s.id: s.name for s in all_db_spheres}
 
-    def get_latest_for_each_sphere(model):
-        """
-        Для каждой сферы получает самую последнюю запись из указанной таблицы (модели).
-        """
-        # Создаем подзапрос для нахождения последней даты для каждой сферы
-        latest_entry_subquery = db.query(
-            model.sphere_id,
-            func.max(model.created_at).label('max_created_at')
-        ).filter(model.user_id == USER_ID).group_by(model.sphere_id).subquery('latest_entries')
-
-        # Создаем псевдоним для модели, чтобы использовать в join
-        model_alias = aliased(model)
-
-        # Получаем полные записи, соответствующие самым последним датам
-        latest_entries = db.query(model_alias).join(
-            latest_entry_subquery,
-            (model_alias.sphere_id == latest_entry_subquery.c.sphere_id) &
-            (model_alias.created_at == latest_entry_subquery.c.max_created_at)
-        ).all()
-
-        return latest_entries
-
-    # Fetch data for the user using the helper
-    # ИСПРАВЛЕНИЕ: для достижений получаем ВСЕ записи, но ТОЛЬКО ЗА СЕГОДНЯ
+    # 3. Получаем ВСЕ pro-ответы за найденную дату
     achievements_db = db.query(models.Achievement).filter(
         models.Achievement.user_id == USER_ID,
-        func.DATE(models.Achievement.created_at) == func.current_date()
-    ).order_by(models.Achievement.created_at.desc()).all()
-    
-    problems_db = get_latest_for_each_sphere(models.Problem)
-    goals_db = get_latest_for_each_sphere(models.Goal)
-    blockers_db = get_latest_for_each_sphere(models.Blocker)
-    
-    # ИЗМЕНЕНИЕ: Для метрик тоже нужно получать только последние значения
-    # Группируем по имени метрики и сфере, чтобы для каждой уникальной метрики была только одна последняя запись
-    latest_metrics_subquery = db.query(
-        models.Metric.sphere_id,
-        models.Metric.name,
-        func.max(models.Metric.created_at).label('max_created_at')
-    ).filter(models.Metric.user_id == USER_ID).group_by(models.Metric.sphere_id, models.Metric.name).subquery('latest_metrics')
-
-    metrics_db = db.query(models.Metric).join(
-        latest_metrics_subquery,
-        (models.Metric.sphere_id == latest_metrics_subquery.c.sphere_id) &
-        (models.Metric.name == latest_metrics_subquery.c.name) &
-        (models.Metric.created_at == latest_metrics_subquery.c.max_created_at)
+        func.DATE(models.Achievement.created_at) == target_date
     ).all()
     
-    # Transform data into response model
+    problems_db = db.query(models.Problem).filter(
+        models.Problem.user_id == USER_ID,
+        func.DATE(models.Problem.created_at) == target_date
+    ).all()
+    
+    goals_db = db.query(models.Goal).filter(
+        models.Goal.user_id == USER_ID,
+        func.DATE(models.Goal.created_at) == target_date
+    ).all()
+
+    blockers_db = db.query(models.Blocker).filter(
+        models.Blocker.user_id == USER_ID,
+        func.DATE(models.Blocker.created_at) == target_date
+    ).all()
+
+    metrics_db = db.query(models.Metric).filter(
+        models.Metric.user_id == USER_ID,
+        func.DATE(models.Metric.created_at) == target_date
+    ).all()
+    
+    # 4. Трансформируем данные в модель ответа
     achievements = [schemas.ProSectionItem(sphere=sphere_name_map.get(a.sphere_id, 'N/A'), value=a.description) for a in achievements_db]
     problems = [schemas.ProSectionItem(sphere=sphere_name_map.get(p.sphere_id, 'N/A'), value=p.text) for p in problems_db]
     goals = [schemas.ProSectionItem(sphere=sphere_name_map.get(g.sphere_id, 'N/A'), value=g.text) for g in goals_db]
