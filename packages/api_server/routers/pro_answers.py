@@ -76,28 +76,28 @@ def upsert_pro_answer_daily(db: Session, model: Any, schema_create: Any, user_id
     db.refresh(existing_record)
     return existing_record
 
-@router.post("/achievement/", response_model=schemas.ProAchievement, status_code=201)
+@router.post("/achievements", response_model=schemas.ProAchievement, status_code=201)
 def create_achievement(achievement: schemas.ProAchievementCreate, db: Session = Depends(database.get_db)):
     user_id = 179 # TODO: Get user_id from auth token
     return upsert_pro_answer_daily(db, models.Achievement, achievement, user_id)
 
 
-@router.post("/problem/", response_model=schemas.ProProblem, status_code=201)
+@router.post("/problems", response_model=schemas.ProProblem, status_code=201)
 def create_problem(problem: schemas.ProProblemCreate, db: Session = Depends(database.get_db)):
     user_id = 179 # TODO: Get user_id from auth token
     return upsert_pro_answer_daily(db, models.Problem, problem, user_id)
 
-@router.post("/goal/", response_model=schemas.ProGoal, status_code=201)
+@router.post("/goals", response_model=schemas.ProGoal, status_code=201)
 def create_goal(goal: schemas.ProGoalCreate, db: Session = Depends(database.get_db)):
     user_id = 179 # TODO: Get user_id from auth token
     return upsert_pro_answer_daily(db, models.Goal, goal, user_id)
 
-@router.post("/blocker/", response_model=schemas.ProBlocker, status_code=201)
+@router.post("/blockers", response_model=schemas.ProBlocker, status_code=201)
 def create_blocker(blocker: schemas.ProBlockerCreate, db: Session = Depends(database.get_db)):
     user_id = 179 # TODO: Get user_id from auth token
     return upsert_pro_answer_daily(db, models.Blocker, blocker, user_id)
 
-@router.post("/metric/", response_model=schemas.ProMetric, status_code=201)
+@router.post("/metrics", response_model=schemas.ProMetric, status_code=201)
 def create_metric(metric: schemas.ProMetricCreate, db: Session = Depends(database.get_db)):
     """
     Создает или обновляет метрику для пользователя за ТЕКУЩИЕ СУТКИ.

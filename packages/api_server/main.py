@@ -70,14 +70,14 @@ app.add_middleware(
 
 
 # --- Подключение роутеров ---
-# Убираем все префиксы. Полные пути будут заданы в самих роутерах.
-app.include_router(questions.router, prefix="/api/v1")
-app.include_router(answers.router, prefix="/api/v1")
-app.include_router(dashboard.router, prefix="/api/v1")
-app.include_router(pro_answers.router, prefix="/api/v1")
-app.include_router(pro_dashboard.router, prefix="/api/v1")
-app.include_router(debug.router, prefix="/api/v1")
-app.include_router(diagnostics.router, prefix="/api/v1")
+# Префиксы уже заданы в файлах роутеров, здесь их дублировать не нужно.
+app.include_router(questions.router)
+app.include_router(answers.router)
+app.include_router(dashboard.router)
+app.include_router(pro_answers.router)
+app.include_router(pro_dashboard.router)
+app.include_router(debug.router)
+app.include_router(diagnostics.router)
 
 # --- Эндпоинты ---
 @app.get("/")
