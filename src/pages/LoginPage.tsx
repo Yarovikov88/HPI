@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import styles from './LoginPage.module.css';
@@ -19,17 +20,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1>Вход в личный кабинет</h1>
-      <p>Для доступа к опросам и результатам, пожалуйста, войдите.</p>
-      <div className={styles.buttonGroup}>
-        <button onClick={handleLogin} className={styles.telegramButton}>
-          Войти через Telegram
-        </button>
-        <button onClick={handleLogin} className={styles.emailButton}>
-          Войти через Email
-        </button>
+    <>
+      <Helmet>
+        <title>Вход — HPI.expert</title>
+        <meta name="description" content="Войдите в свой личный кабинет HPI.expert, чтобы получить доступ к опросам, дашбордам и персональным рекомендациям." />
+      </Helmet>
+      <div className={styles.container}>
+        <h1>Вход в личный кабинет</h1>
+        <p>Для доступа к опросам и результатам, пожалуйста, войдите.</p>
+        <div className={styles.buttonGroup}>
+          <button onClick={handleLogin} className={styles.telegramButton}>
+            Войти через Telegram
+          </button>
+          <button onClick={handleLogin} className={styles.emailButton}>
+            Войти через Email
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
