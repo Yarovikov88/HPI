@@ -1,0 +1,202 @@
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem; /* Увеличим отступы для лучшего вида */
+  border: 1px solid #e0e0e0;
+  border-radius: 12px; /* Сделаем скругление побольше */
+  background-color: #ffffff; /* Белый фон */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Легкая тень */
+  margin-bottom: 1.5rem;
+  height: 100%; /* Растягиваем карточку на всю высоту */
+}
+
+.formContainer:last-child {
+  margin-bottom: 0;
+}
+
+.sphereTitle {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fieldContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fieldLabel {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.metricRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.metricRow:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.metricLabel {
+  font-weight: 500;
+  color: #333;
+}
+
+.metricInputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.metricInput {
+  width: 100px; /* Фиксированная ширина для инпутов */
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.metricInput:focus {
+  outline: none;
+  border-color: #8884d8;
+  box-shadow: 0 0 0 2px rgba(136, 132, 216, 0.2);
+}
+
+.textInput {
+  flex: 1;
+}
+
+.metricsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metricLabel {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.textInput,
+.textareaInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.textareaInput {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.textInput:focus,
+.textareaInput:focus {
+  outline: none;
+  border-color: #0A2463;
+}
+
+.scaleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scaleContainer span {
+  font-weight: 500;
+}
+
+.scaleInput {
+  flex-grow: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity .2s;
+}
+
+.scaleInput:hover {
+  opacity: 1;
+}
+
+.scaleInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #FB3640;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.scaleInput::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #FB3640;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+/* Скрываем стандартные стрелки для input[type="number"] */
+.metricInput::-webkit-outer-spin-button,
+.metricInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.metricInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+@media (max-width: 768px) {
+  .metricInputs {
+    grid-template-columns: 1fr;
+  }
+} 
+
+.questionCard {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.sphereHeader {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+} 

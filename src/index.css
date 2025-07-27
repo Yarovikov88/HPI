@@ -1,0 +1,65 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Цветовая палитра HPI */
+  --primary-brand-color: #0a2463;  /* Основной темный (для текста, шапок) */
+  --secondary-brand-color: #e0cba8; /* Вторичный (для акцентов) */
+  --cta-brand-color: #fb3640;      /* Призыв к действию (кнопки) */
+
+  /* Системные цвета */
+  --background-color: #f8f9fa; /* Consistent page background */
+  --background-color-secondary: #ffffff; /* Белый для карточек */
+  --text-color-primary: #333333;
+  --border-color-light: #e0e0e0;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color-primary);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* ВРЕМЕННО для дебага: проверить, применяется ли глобальный стиль */
+.marker {
+  width: 32px !important;
+  height: 32px !important;
+  /* background: red !important; */
+  z-index: 1000 !important;
+  display: inline-block !important;
+}
+
+/* Цветовые классы для маркеров таймлайна (латиница) */
+.marker.career { background: #2A5B8C !important; }
+.marker.team { background: #42A5F5 !important; }
+.marker.education { background: #26A69A !important; }
+.marker.family { background: #FF7043 !important; }
+.marker.crisis { background: #EF5350 !important; }
+.marker.move { background: #AB47BC !important; }
+.marker.innovation { background: #7E57C2 !important; }
+.marker.health { background: #66BB6A !important; }
+.marker.hobby { background: #FFD600 !important; }
+
+.timelineCard.career { background: #2A5B8C; color: #fff; }
+.timelineCard.team { background: #42A5F5; color: #fff; }
+.timelineCard.education { background: #26A69A; color: #fff; }
+.timelineCard.family { background: #FF7043; color: #fff; }
+.timelineCard.crisis { background: #EF5350; color: #fff; }
+.timelineCard.move { background: #AB47BC; color: #fff; }
+.timelineCard.innovation { background: #7E57C2; color: #fff; }
+.timelineCard.health { background: #66BB6A; color: #fff; }
+.timelineCard.hobby { background: #7E57C2; color: #fff; }
+.cardBadge.hobby { background: #7E57C2; color: #fff; } 

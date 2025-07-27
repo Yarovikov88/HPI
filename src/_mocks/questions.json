@@ -1,0 +1,1021 @@
+[
+  {
+    "type": "basic",
+    "sphere": "love",
+    "text": "Как часто вы проводите качественное время вместе?",
+    "options": ["Редко или никогда", "Иногда", "Часто", "Регулярно и осознанно"]
+  },
+  {
+    "id": "1.1",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Частота качественного времени",
+    "options": ["Менее 1 раза в неделю", "1-2 раза в неделю", "3-4 раза в неделю", "Ежедневно"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "1.2",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Синхронизация жизненных целей",
+    "options": ["У нас совершенно разные планы", "Есть частичное совпадение", "В основном совпадают", "Полностью синхронизированы"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "1.3",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Решение конфликтов",
+    "options": ["Частые ссоры без решения", "Иногда споры, но компромиссы", "Редкие конфликты, конструктив", "Практически никогда не конфликтуем"],
+    "scores": [4, 3, 2, 1],
+    "inverse": true
+  },
+  {
+    "id": "1.4",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Поддержка в кризисах",
+    "options": ["Партнёр не участвует", "Минимальная помощь", "Активно поддерживает", "Полная совместная работа"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "1.5",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Проявление внимания и заботы",
+    "options": ["Редко или никогда", "Иногда", "Часто", "Постоянно и разнообразно"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "1.6",
+    "sphere": "love",
+    "type": "basic",
+    "text": "Ощущение любви и принятия",
+    "options": ["Совсем нет / В слабой степени", "В некоторой степени", "В значительной степени", "Абсолютно / Полностью"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p1",
+    "sphere": "love",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в отношениях с любимыми...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g1",
+    "sphere": "love",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в отношениях с любимыми...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b1",
+    "sphere": "love",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает улучшить в отношениях с любимыми...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m1",
+    "sphere": "love",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в отношениях с любимыми...",
+    "metrics": [
+      {
+        "name": "Часы вместе в неделю",
+        "unit": "ч",
+        "type": "number"
+      },
+      {
+        "name": "Число совместных мероприятий в месяц",
+        "unit": "шт",
+        "type": "number"
+      },
+      {
+        "name": "Качество общения",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a1",
+    "sphere": "love",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в отношениях с любимыми...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "family",
+    "text": "Насколько регулярно вы общаетесь с семьей?",
+    "options": ["Очень редко", "Время от времени", "Регулярно", "Очень часто"]
+  },
+  {
+    "id": "2.1",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Взаимодействие с детьми",
+    "options": ["Неприменимо / Редко или нет возможности", "Иногда, но недостаточно", "Регулярно, в целом достаточно", "Часто и полноценно"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "2.2",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Взаимодействие с родителями",
+    "options": ["Неприменимо / Минимальное или отсутствует", "Редкое, формальное", "Регулярное, поддерживающее", "Тесное, активное участие"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "2.3",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Семейные традиции",
+    "options": ["Нет традиций / Не участвую", "Редко, формально", "Периодически, с удовольствием", "Активно создаю и поддерживаю"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "2.4",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Конфликты с родными",
+    "options": ["Постоянные разногласия, не решаются", "Частые споры, компромиссы с трудом", "Редкие недоразумения, решаются конструктивно", "Практически нет, полное взаимное понимание"],
+    "scores": [4, 3, 2, 1],
+    "inverse": true
+  },
+  {
+    "id": "2.5",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Ощущение общности и взаимной поддержки",
+    "options": ["Практически отсутствует", "Проявляется иногда", "Часто ощущаю", "Постоянное сильное ощущение"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "2.6",
+    "sphere": "family",
+    "type": "basic",
+    "text": "Удовлетворённость общением с другими близкими родственниками",
+    "options": ["Неприменимо / Не общаюсь / Неудовлетворительно", "Редко, формально", "Периодически, тепло", "Часто, с удовольствием и пользой"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p2",
+    "sphere": "family",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в отношениях с родными...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g2",
+    "sphere": "family",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в отношениях с родными...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b2",
+    "sphere": "family",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает улучшить отношения с родными...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m2",
+    "sphere": "family",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в отношениях с родными...",
+    "metrics": [
+      {
+        "name": "Количество встреч в месяц",
+        "unit": "шт",
+        "type": "number"
+      },
+      {
+        "name": "Длительность общения в неделю",
+        "unit": "ч",
+        "type": "number"
+      },
+      {
+        "name": "Качество отношений",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a2",
+    "sphere": "family",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в отношениях с родными...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "friends",
+    "text": "Как часто вы встречаетесь с друзьями?",
+    "options": ["Реже раза в месяц", "Пару раз в месяц", "Каждую неделю", "Несколько раз в неделю"]
+  },
+  {
+    "id": "3.1",
+    "sphere": "friends",
+    "type": "basic",
+    "text": "Количество близких друзей",
+    "options": ["Нет / Только приятели", "1-2", "3-5", "Более 5"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "3.2",
+    "sphere": "friends",
+    "type": "basic",
+    "text": "Качество общения с друзьями",
+    "options": ["Поверхностное, формальное", "В основном развлекательное", "Глубокое, доверительное", "Очень близкое, полная поддержка"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "3.3",
+    "sphere": "friends",
+    "type": "basic",
+    "text": "Совместные интересы и хобби",
+    "options": ["Практически нет", "Есть некоторые", "Много общих тем", "Очень много, постоянно что-то делаем вместе"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "3.4",
+    "sphere": "friends",
+    "type": "basic",
+    "text": "Поддержка со стороны друзей",
+    "options": ["Отсутствует", "Минимальная", "Хорошая, можно положиться", "Максимальная, всегда помогут"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "3.5",
+    "sphere": "friends",
+    "type": "basic",
+    "text": "Инициатива в общении",
+    "options": ["Только отвечаю на предложения", "Чаще отвечаю, чем предлагаю", "Примерно поровну", "Часто выступаю инициатором"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p3",
+    "sphere": "friends",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в отношениях с друзьями...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g3",
+    "sphere": "friends",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в отношениях с друзьями...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b3",
+    "sphere": "friends",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает улучшить отношения с друзьями...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m3",
+    "sphere": "friends",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в отношениях с друзьями...",
+    "metrics": [
+      {
+        "name": "Количество встреч в месяц",
+        "unit": "шт",
+        "type": "number"
+      },
+      {
+        "name": "Время на общение в неделю",
+        "unit": "ч",
+        "type": "number"
+      },
+      {
+        "name": "Качество дружбы",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a3",
+    "sphere": "friends",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в отношениях с друзьями...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "career",
+    "text": "Насколько вы удовлетворены своей текущей работой/карьерой?",
+    "options": ["Совсем не удовлетворен", "Скорее не удовлетворен", "В целом удовлетворен", "Полностью удовлетворен"]
+  },
+  {
+    "id": "4.1",
+    "sphere": "career",
+    "type": "basic",
+    "text": "Уровень дохода",
+    "options": ["Недостаточный, едва хватает", "Хватает на базовые нужды", "Хороший, позволяет делать накопления", "Отличный, полностью устраивает"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "4.2",
+    "sphere": "career",
+    "type": "basic",
+    "text": "Возможности для роста и развития",
+    "options": ["Отсутствуют", "Ограничены", "Хорошие", "Отличные"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "4.3",
+    "sphere": "career",
+    "type": "basic",
+    "text": "Баланс работы и личной жизни",
+    "options": ["Сильный перекос в сторону работы", "Иногда приходится задерживаться", "Хороший баланс", "Идеальный баланс"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "4.4",
+    "sphere": "career",
+    "type": "basic",
+    "text": "Признание и обратная связь",
+    "options": ["Отсутствует", "Редко и формально", "Регулярно и конструктивно", "Постоянно, чувствую свою ценность"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "4.5",
+    "sphere": "career",
+    "type": "basic",
+    "text": "Соответствие работы вашим интересам и ценностям",
+    "options": ["Совершенно не соответствует", "Частично соответствует", "В основном соответствует", "Полностью соответствует"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p4",
+    "sphere": "career",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в карьере...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g4",
+    "sphere": "career",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в карьере...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b4",
+    "sphere": "career",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает моему карьерному росту...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m4",
+    "sphere": "career",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в карьере...",
+    "metrics": [
+      {
+        "name": "Доход в месяц",
+        "unit": "руб",
+        "type": "number"
+      },
+      {
+        "name": "Новые навыки в квартал",
+        "unit": "шт",
+        "type": "number"
+      },
+      {
+        "name": "Удовлетворенность работой",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a4",
+    "sphere": "career",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в карьере...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "physical",
+    "text": "Как вы оцениваете свое физическое здоровье?",
+    "options": ["Плохо", "Удовлетворительно", "Хорошо", "Отлично"]
+  },
+  {
+    "id": "5.1",
+    "sphere": "physical",
+    "type": "basic",
+    "text": "Регулярность физических нагрузок",
+    "options": ["Отсутствуют", "Реже 1 раза в неделю", "1-2 раза в неделю", "3 и более раз в неделю"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "5.2",
+    "sphere": "physical",
+    "type": "basic",
+    "text": "Качество сна",
+    "options": ["Плохой, часто не высыпаюсь", "Удовлетворительный, бывают проблемы", "Хороший, в основном высыпаюсь", "Отличный, всегда бодр и свеж"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "5.3",
+    "sphere": "physical",
+    "type": "basic",
+    "text": "Качество питания",
+    "options": ["Нерегулярное, много вредной пищи", "Стараюсь, но не всегда получается", "В основном сбалансированное", "Строго сбалансированное и полезное"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "5.4",
+    "sphere": "physical",
+    "type": "basic",
+    "text": "Уровень энергии в течение дня",
+    "options": ["Низкий, постоянная усталость", "Нестабильный, бывают спады", "Достаточный для дел", "Высокий, хватает на все"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "5.5",
+    "sphere": "physical",
+    "type": "basic",
+    "text": "Соответствие веса норме",
+    "options": ["Значительное отклонение", "Небольшое отклонение", "В пределах нормы", "Идеальный вес"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p5",
+    "sphere": "physical",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в моем физическом здоровье...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g5",
+    "sphere": "physical",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в физическом здоровье...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b5",
+    "sphere": "physical",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает улучшить мое физическое здоровье...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m5",
+    "sphere": "physical",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в физическом здоровье...",
+    "metrics": [
+      {
+        "name": "Вес",
+        "unit": "кг",
+        "type": "number"
+      },
+      {
+        "name": "Тренировки в неделю",
+        "unit": "шт",
+        "type": "number"
+      },
+      {
+        "name": "Качество сна",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a5",
+    "sphere": "physical",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в физическом здоровье...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "mental",
+    "text": "Как вы оцениваете свое ментальное здоровье?",
+    "options": ["Плохо", "Удовлетворительно", "Хорошо", "Отлично"]
+  },
+  {
+    "id": "6.1",
+    "sphere": "mental",
+    "type": "basic",
+    "text": "Уровень стресса",
+    "options": ["Очень высокий, постоянный", "Высокий, частые стрессы", "Умеренный, управляемый", "Низкий, легко справляюсь"],
+    "scores": [4, 3, 2, 1],
+    "inverse": true
+  },
+  {
+    "id": "6.2",
+    "sphere": "mental",
+    "type": "basic",
+    "text": "Эмоциональная стабильность",
+    "options": ["Частые перепады настроения", "Иногда бываю раздражительным", "В основном стабилен", "Полностью контролирую эмоции"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "6.3",
+    "sphere": "mental",
+    "type": "basic",
+    "text": "Практики для ментального здоровья (медитация, психотерапия и т.д.)",
+    "options": ["Не практикую", "Пробовал, но нерегулярно", "Практикую время от времени", "Регулярно и осознанно"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "6.4",
+    "sphere": "mental",
+    "type": "basic",
+    "text": "Умение радоваться жизни",
+    "options": ["Редко испытываю радость", "Иногда, по большим поводам", "Часто нахожу поводы для радости", "Испытываю радость каждый день"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "6.5",
+    "sphere": "mental",
+    "type": "basic",
+    "text": "Ощущение осмысленности и цели в жизни",
+    "options": ["Отсутствует", "Смутное", "Есть в некоторых областях", "Четкое и ясное"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p6",
+    "sphere": "mental",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в моем ментальном здоровье...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g6",
+    "sphere": "mental",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в ментальном здоровье...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b6",
+    "sphere": "mental",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает улучшить мое ментальное здоровье...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m6",
+    "sphere": "mental",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в ментальном здоровье...",
+    "metrics": [
+      {
+        "name": "Уровень стресса",
+        "unit": "1-10",
+        "type": "scale"
+      },
+      {
+        "name": "Часы на отдых в день",
+        "unit": "ч",
+        "type": "number"
+      },
+      {
+        "name": "Уровень удовлетворенности жизнью",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a6",
+    "sphere": "mental",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в ментальном здоровье...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "hobby",
+    "text": "Есть ли у вас хобби или увлечения, которым вы регулярно уделяете время?",
+    "options": ["Нет", "Есть, но времени не хватает", "Да, стараюсь уделять время", "Да, это важная часть моей жизни"]
+  },
+  {
+    "id": "7.1",
+    "sphere": "hobby",
+    "type": "basic",
+    "text": "Время, уделяемое хобби в неделю",
+    "options": ["Менее 1 часа", "1-3 часа", "3-5 часов", "Более 5 часов"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "7.2",
+    "sphere": "hobby",
+    "type": "basic",
+    "text": "Разнообразие увлечений",
+    "options": ["Однообразные, рутинные", "Есть несколько, но похожих", "Разные, из нескольких областей", "Очень разнообразные и постоянно пробую новое"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "7.3",
+    "sphere": "hobby",
+    "type": "basic",
+    "text": "Удовлетворение от хобби",
+    "options": ["Не приносит радости", "Иногда интересно", "Приносит удовольствие", "Источник энергии и вдохновения"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "7.4",
+    "sphere": "hobby",
+    "type": "basic",
+    "text": "Влияние хобби на другие сферы жизни",
+    "options": ["Никак не влияет / Мешает", "Нейтрально", "Положительно влияет на отдых", "Значительно улучшает другие сферы"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "7.5",
+    "sphere": "hobby",
+    "type": "basic",
+    "text": "Финансирование хобби",
+    "options": ["Не требует / Нет возможности", "Ограниченный бюджет", "Достаточный бюджет", "Неограниченный бюджет"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p7",
+    "sphere": "hobby",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в моих хобби...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g7",
+    "sphere": "hobby",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в моих хобби...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b7",
+    "sphere": "hobby",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает моим хобби...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m7",
+    "sphere": "hobby",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в хобби...",
+    "metrics": [
+      {
+        "name": "Часы на хобби в неделю",
+        "unit": "ч",
+        "type": "number"
+      },
+      {
+        "name": "Расходы на хобби в месяц",
+        "unit": "руб",
+        "type": "number"
+      },
+      {
+        "name": "Уровень мастерства",
+        "unit": "1-10",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a7",
+    "sphere": "hobby",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в хобби...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  },
+  {
+    "type": "basic",
+    "sphere": "wealth",
+    "text": "Насколько вы удовлетворены своим финансовым положением?",
+    "options": ["Совсем не удовлетворен", "Скорее не удовлетворен", "В целом удовлетворен", "Полностью удовлетворен"]
+  },
+  {
+    "id": "8.1",
+    "sphere": "wealth",
+    "type": "basic",
+    "text": "Финансовая подушка безопасности",
+    "options": ["Отсутствует", "Менее 3-х месячных расходов", "3-6 месячных расходов", "Более 6 месячных расходов"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "8.2",
+    "sphere": "wealth",
+    "type": "basic",
+    "text": "Наличие пассивного дохода",
+    "options": ["Отсутствует", "Незначительный", "Покрывает часть расходов", "Покрывает все расходы"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "8.3",
+    "sphere": "wealth",
+    "type": "basic",
+    "text": "Долговая нагрузка (кредиты, ипотека)",
+    "options": ["Очень высокая, сложно справляться", "Высокая, но управляемая", "Низкая, не вызывает проблем", "Отсутствует"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "8.4",
+    "sphere": "wealth",
+    "type": "basic",
+    "text": "Финансовая грамотность и планирование",
+    "options": ["Отсутствует", "Базовые знания, нет плана", "Хорошие знания, есть бюджет", "Экспертный уровень, долгосрочная стратегия"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "8.5",
+    "sphere": "wealth",
+    "type": "basic",
+    "text": "Инвестиции и сбережения",
+    "options": ["Отсутствуют", "Небольшие, нерегулярные", "Регулярные, есть портфель", "Значительные, диверсифицированный портфель"],
+    "scores": [1, 2, 3, 4]
+  },
+  {
+    "id": "p8",
+    "sphere": "wealth",
+    "type": "pro",
+    "category": "problems",
+    "text": "Мои проблемы",
+    "description": "Что меня беспокоит в моем благосостоянии...",
+    "fields": {
+      "text": "string",
+      "severity": "number",
+      "created_at": "datetime",
+      "status": "active|resolved"
+    }
+  },
+  {
+    "id": "g8",
+    "sphere": "wealth",
+    "type": "pro",
+    "category": "goals",
+    "text": "Мои цели",
+    "description": "Чего я хочу достичь в благосостоянии...",
+    "fields": {
+      "text": "string",
+      "deadline": "date",
+      "priority": "number",
+      "status": "planned|in_progress|achieved"
+    }
+  },
+  {
+    "id": "b8",
+    "sphere": "wealth",
+    "type": "pro",
+    "category": "blockers",
+    "text": "Мои блокеры",
+    "description": "Что мешает моему благосостоянию...",
+    "fields": {
+      "text": "string",
+      "impact_level": "number",
+      "related_goals": ["goal_ids"]
+    }
+  },
+  {
+    "id": "m8",
+    "sphere": "wealth",
+    "type": "pro",
+    "category": "metrics",
+    "text": "Мои метрики",
+    "description": "Что я могу измерить в благосостоянии...",
+    "metrics": [
+      {
+        "name": "Чистый капитал",
+        "unit": "руб",
+        "type": "number"
+      },
+      {
+        "name": "Ежемесячные сбережения",
+        "unit": "% от дохода",
+        "type": "number"
+      },
+      {
+        "name": "Финансовая независимость",
+        "unit": "%",
+        "type": "scale"
+      }
+    ]
+  },
+  {
+    "id": "a8",
+    "sphere": "wealth",
+    "type": "pro",
+    "category": "achievements",
+    "text": "Мои достижения",
+    "description": "Что у меня уже есть сегодня в благосостоянии...",
+    "fields": {
+      "text": "string",
+      "date_achieved": "datetime",
+      "impact_areas": ["sphere_ids"]
+    }
+  }
+] 

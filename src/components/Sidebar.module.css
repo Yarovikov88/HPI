@@ -1,0 +1,207 @@
+.sidebar {
+  flex: 0 0 280px;
+  background-color: #ffffff; /* Возвращаем белый фон */
+  padding: 1.5rem;
+  border-radius: 16px; /* Добавляем скругление */
+  box-shadow: 0 4px 24px rgba(10, 36, 99, 0.06); /* Добавляем тень */
+  align-self: flex-start;
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.userInfo {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f0f0; /* Более мягкая граница */
+}
+
+.userInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.userInfo p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.navLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 8px; /* Увеличим скругление для эффекта "таблетки" */
+  text-decoration: none;
+  color: #555; /* Более темный серый для лучшей читаемости */
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navLink:not(.active):hover {
+  background-color: #f5f5f5; /* Легкий фон при наведении */
+  color: #0A2463;
+}
+
+.navLink.active {
+  background-color: #E0CBA8; /* Фирменный терракотовый цвет */
+  color: #333; /* Темный текст для контраста с фоном */
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(224, 203, 168, 0.4); /* Тень в цвет кнопки */
+}
+
+.collapsibleTrigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+button.collapsibleTrigger:not(.childLink) {
+  padding: 0;
+  border: none;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+/* Стили для раскрывающегося раздела */
+.collapsibleSection {
+  display: flex;
+  flex-direction: column;
+}
+
+button.navLink {
+  background: none;
+	border: none;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+  text-align: left;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-size: contain;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.collapsibleContent {
+  padding-left: 1rem;
+  /* margin-top: 0.5rem; */
+  border-left: 2px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subLink {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.subLink.activeParent,
+.subLink.active {
+  color: #333;
+  font-weight: 700;
+  background-color: transparent; /* Убеждаемся что нет фона у родителя */
+}
+.subLink.active:hover {
+  background-color: #f5f5f5;
+}
+
+.subCollapsible {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subLink.activeParent {
+  font-weight: 700;
+  color: #333;
+}
+
+.subSubMenu {
+  /* padding-left: 1rem; */
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  /* margin-top: 0.5rem; */
+}
+
+/* Стиль для НЕАКТИВНЫХ дочерних ссылок (простой текст) */
+.childLink {
+  display: flex; /* Изменено на flex для выравнивания */
+  align-items: center; /* Выравнивает по вертикали */
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  text-decoration: none;
+  background-color: transparent; /* Фон прозрачный */
+  color: #718096; /* Светло-серый текст */
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.childLink.collapsibleTrigger {
+  justify-content: space-between;
+}
+
+.childLink:not(.activeChild):hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.completionCheckmark {
+  margin-left: 8px;
+  font-size: 14px; /* Можно подобрать размер */
+}
+
+.checkMark {
+  margin-left: 8px;
+  font-size: 0.8em;
+}
+
+.disabled {
+  color: #999;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Стиль для АКТИВНОЙ дочерней ссылки (бейдж БЕЗ РАМКИ) */
+.activeChild {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  text-decoration: none;
+  background-color: #E0CBA8; /* Терракотовый фон */
+  color: #333; /* Темный текст */
+  font-weight: 700;
+  border: 1px solid transparent; /* Убираем рамку, оставляя для выравнивания */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    width: 100%;
+    position: static;
+    height: auto;
+    flex-shrink: 1;
+  }
+} 

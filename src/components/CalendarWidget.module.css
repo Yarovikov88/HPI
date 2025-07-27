@@ -1,0 +1,99 @@
+/*
+  Финальная версия стилей с полным контролем.
+  Стили библиотеки отключены, все правила задаются здесь с нуля,
+  но с правильным использованием :global() для классов библиотеки.
+*/
+
+.calendarContainer {
+    margin-top: 0.5rem;
+}
+
+.reactCalendar {
+    width: 100%;
+    border: none;
+    font-family: inherit;
+    background: white;
+}
+
+/* --- ОБЩЕЕ ДЛЯ ВСЕХ КНОПОК --- */
+.reactCalendar :global(button) {
+    margin: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    font-family: inherit;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+.reactCalendar :global(button:enabled:hover) {
+    cursor: pointer;
+}
+
+/* --- НАВИГАЦИЯ И ЗАГОЛОВОК --- */
+.reactCalendar :global(.react-calendar__navigation) {
+    display: flex;
+    height: 44px;
+    margin-bottom: 0.5em;
+    align-items: center;
+}
+.reactCalendar :global(.react-calendar__navigation button) {
+    min-width: 44px;
+}
+.reactCalendar :global(.react-calendar__navigation button:enabled:hover),
+.reactCalendar :global(.react-calendar__navigation button:enabled:focus) {
+    background-color: #f3f4f6;
+}
+.reactCalendar :global(.react-calendar__navigation__label) {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* --- ДНИ НЕДЕЛИ --- */
+.reactCalendar :global(.react-calendar__month-view__weekdays) {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-bottom: 0.5em;
+}
+.reactCalendar :global(.react-calendar__month-view__weekdays__weekday abbr) {
+    text-decoration: none !important;
+}
+
+/* --- ЯЧЕЙКИ С ДАТАМИ --- */
+.reactCalendar :global(.react-calendar__tile) {
+    max-width: 100%;
+    padding: 0.75em 0.5em;
+    text-align: center;
+}
+.reactCalendar :global(.react-calendar__tile:enabled:hover),
+.reactCalendar :global(.react-calendar__tile:enabled:focus) {
+    background-color: #f3f4f6;
+}
+
+/* --- СТИЛИЗАЦИЯ ПО СОСТОЯНИЯМ (правильный приоритет) --- */
+
+/* 1. Даты с пройденной диагностикой -> синий фирменный */
+.completed {
+    background-color: #0a2463 !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+/* 2. Стиль для СЕГОДНЯШНЕЙ даты (перекрывает .completed) */
+.today {
+    background: #FB3640 !important;
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+/* 3. Стиль для ВЫБРАННОЙ даты (перекрывает ВСЁ) */
+.reactCalendar .react-calendar__tile--active {
+    background: #E0CBA8 !important;
+    color: #333 !important;
+    font-weight: bold !important;
+}
+.reactCalendar .react-calendar__tile--active:hover {
+    background: #c9b28b !important;
+} 

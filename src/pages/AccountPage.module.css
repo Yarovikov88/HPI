@@ -1,0 +1,271 @@
+/* Общий контейнер для страницы личного кабинета */
+.accountLayout {
+  display: flex;
+  max-width: 1400px;
+  margin: 2rem auto;
+  gap: 2rem;
+  padding: 0 2rem;
+}
+
+/* Боковая панель (сайдбар) */
+.sidebar {
+  flex: 1;
+  max-width: 280px;
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(10, 36, 99, 0.06);
+  align-self: flex-start; /* Чтобы сайдбар не растягивался по высоте */
+}
+
+.userInfo {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.userInfo h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+/* Навигация в сайдбаре */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav button {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background-color: transparent;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav button:hover {
+  background-color: #f5f5f5;
+  color: #0A2463;
+}
+
+.nav button.active {
+  background-color: #0A2463;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(10, 36, 99, 0.15);
+}
+
+/* Основной контент */
+.mainContent {
+  flex: 3;
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px rgba(10, 36, 99, 0.06);
+}
+
+.mainContent h2 {
+  margin-top: 0;
+  color: #0A2463;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Стили для раздела "Диагностика" */
+.diagnosticsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.surveyCard {
+  background-color: #f9fafb;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.surveyCard h3 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: #0A2463;
+}
+
+.surveyCard p {
+  flex-grow: 1;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.ctaButton {
+  background-color: #FB3640; /* Возвращаем коралловый для призыва к действию */
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.ctaButton:hover:not(:disabled) {
+  background-color: #d92d35; /* Более темный оттенок для наведения */
+}
+
+.ctaButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.accountContainer {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.profileHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.userName {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 8px; /* Consistent border radius */
+  padding: 2.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Consistent shadow */
+  border: 1px solid #e9ecef; /* Optional: adds a subtle border */
+}
+
+.field {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="tel"] {
+  padding: 0.8rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #0A2463;
+}
+
+.userId {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  background-color: #f3f4f6;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  color: #333;
+  user-select: all;
+}
+
+.saveButton {
+  padding: 0.8rem 2rem;
+  background-color: #0A2463; /* Firm blue */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover {
+  background-color: #1A3F8A;
+}
+
+.buttonContainer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 1rem;
+}
+
+.logoutButton {
+  padding: 0.8rem 2rem;
+  background-color: #E0CBA8; /* Terracotta */
+  color: #333; /* Dark text */
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600; /* Make text bold */
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logoutButton:hover {
+  background-color: #d4bda0;
+  border-color: #c9b091;
+}
+
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .accountLayout {
+    flex-direction: column;
+    margin: 1rem auto;
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+
+  .diagnosticsContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-width: 100%;
+    align-self: stretch; /* Сбрасываем стиль для корректной ширины в колонке */
+  }
+  
+  /* TODO: Добавить логику для скрытия/показа сайдбара по кнопке "бургер" */
+} 

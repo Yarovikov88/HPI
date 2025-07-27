@@ -1,0 +1,117 @@
+.heroBanner {
+  background: linear-gradient(105deg, #0A2463 65%, #1A3F8A 100%);
+  color: #fff;
+  padding: 4rem 2rem;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heroContent {
+  max-width: 600px;
+}
+
+.heroTitle {
+  font-size: 1.7rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  line-height: 1.15;
+  text-shadow: 0 2px 8px rgba(10,36,99,0.10);
+}
+.heroSubtitle {
+  font-size: 1rem;
+  margin-bottom: 16px;
+  max-width: 500px;
+  text-shadow: 0 2px 8px rgba(10,36,99,0.10);
+}
+.ctaContainer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.primaryBtn {
+  background: #FB3640;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.primaryBtn:hover {
+  background: #c92a32;
+}
+.secondaryBtn {
+  background: #FFF;
+  color: #0A2463;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(10,36,99,0.1);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.secondaryBtn:hover {
+  background: #E0CBA8;
+  color: #0A2463;
+}
+.heroText {
+  flex-basis: 65%;
+}
+.profileContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.profilePhoto {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 24px rgba(10,36,99,0.13);
+  border: 4px solid #fff;
+  background: #F8F5F0;
+}
+.profileCaption {
+  font-size: 0.85rem;
+  color: #fff;
+  text-align: center;
+  line-height: 1.4;
+  max-width: 200px;
+}
+@media (max-width: 768px) {
+  .heroContent {
+    flex-direction: column-reverse;
+    gap: 24px;
+    align-items: center;
+  }
+  .heroText {
+    flex-basis: auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ctaContainer {
+    justify-content: center;
+  }
+  .profilePhoto {
+    width: 92px;
+    height: 92px;
+  }
+} 

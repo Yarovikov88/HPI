@@ -1,0 +1,66 @@
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 32px rgba(10,36,99,0.08);
+}
+
+.heroContainer {
+  max-width: 900px;
+  margin: 40px auto 0; /* Убираем нижний отступ, чтобы он не складывался с верхним у .container */
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #0A2463;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #444;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.sectionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.sectionCard {
+  background: #E0CBA8;
+  border-radius: 12px;
+  padding: 24px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 4px 16px rgba(10, 36, 99, 0.06);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sectionCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(181, 134, 76, 0.2);
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0A2463;
+  margin: 0 0 12px 0;
+}
+
+.sectionDesc {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+} 

@@ -1,0 +1,161 @@
+/* Общий контейнер для страницы опроса */
+.surveyContainer {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+/* Боковая панель навигации */
+.sidebar {
+  flex: 0 0 280px;
+  background-color: var(--background-color-light);
+  padding: 1.5rem;
+  border-radius: 8px;
+  align-self: flex-start;
+  position: sticky;
+  top: 80px;
+}
+
+.sidebarTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+}
+
+.sidebarList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebarLink {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 0.95rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebarLink:hover, .sidebarLink:focus {
+  background-color: var(--background-color-hover);
+  color: var(--text-color);
+}
+
+.sidebarLink.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
+}
+
+.sidebarLink:disabled {
+  color: var(--text-color-disabled);
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Основной контент */
+.mainContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Прогресс-бар */
+.progressContainer {
+  width: 100%;
+  background-color: var(--background-color-light);
+  border-radius: 8px;
+  height: 8px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 8px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Кнопки навигации */
+.navigationButtons {
+  display: flex;
+  justify-content: space-between; /* Как в базовой диагностике */
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+}
+
+.navigationButtons button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.navigationButtons button:first-child {
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+}
+
+.navigationButtons button:first-child:hover {
+  background-color: #edf2f7;
+}
+
+.navigationButtons button:last-child {
+  background-color: #0A2463; /* Фирменный синий */
+  color: white;
+}
+
+.navigationButtons button:last-child:hover {
+  background-color: #081f54; /* Фирменный синий, темнее */
+  filter: none; /* Убираем яркость, так как цвет задан напрямую */
+}
+
+.navigationButtons button:disabled {
+  background-color: #e2e8f0;
+  cursor: not-allowed;
+  color: #a0aec0;
+}
+
+
+/* Сообщение об ошибке валидации */
+.errorMessage {
+  color: #e53e3e;
+  text-align: right;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+  .surveyContainer {
+    flex-direction: column;
+  }
+  .sidebar {
+    position: static;
+    width: 100%;
+  }
+} 

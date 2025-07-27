@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-python-dotenv
-# Драйвер для подключения к PostgreSQL
-psycopg2-binary 

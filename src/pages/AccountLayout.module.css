@@ -1,0 +1,159 @@
+.accountLayout {
+  display: flex;
+  min-height: calc(100vh - 70px); /* Adjust 70px to your header's height */
+  background-color: #f8f9fa; /* The overall page background */
+  padding: 1.5rem; /* Uniform padding */
+  gap: 1.5rem; /* Uniform spacing between cards */
+}
+
+.sidebar {
+  flex: 0 0 280px; /* Fixed width */
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  align-self: flex-start; /* Aligns the sidebar to the top */
+}
+
+.userInfo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Spacing for main sections */
+.nav > ul > li {
+  margin-bottom: 1rem;
+}
+
+.nav li {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle,
+.sectionLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.9em;
+  color: #6c757d;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sectionTitle:hover,
+.sectionLink:hover {
+  color: #343a40;
+}
+
+/* Generic styles for all summaries in the nav */
+.nav summary {
+  display: flex;
+  align-items: center;
+  list-style: none; /* Remove default marker */
+}
+.nav summary::-webkit-details-marker {
+  display: none; /* Remove default marker for Safari/Chrome */
+}
+
+/* Arrow for all summaries */
+.nav summary::after {
+  content: '▾';
+  font-size: 1.2em;
+  color: #adb5bd;
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+/* Arrow for top-level links */
+.sectionLink::after {
+  content: '›';
+  font-size: 1.6em;
+  color: #adb5bd;
+}
+
+/* Rotate arrow when details is open */
+.nav details[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 1rem; /* Base indentation for the first level */
+  margin-top: 0.75rem;
+}
+
+/* Add extra indentation for nested submenus */
+.submenu .submenu {
+  padding-left: 1rem; /* Each nested level adds another step */
+}
+
+/* Spacing for submenu items */
+.submenu li {
+  margin-bottom: 0.2rem; /* Reduced spacing for a tighter list */
+}
+
+/* Common style for ALL submenu items (links and expandable sections) */
+.submenu a,
+.submenu summary {
+  display: block;
+  position: relative; /* For arrow positioning */
+  padding: 0.7rem 0.5rem;
+  text-decoration: none;
+  color: #343a40;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.submenu a:hover,
+.submenu summary:hover {
+  background-color: #f8f9fa;
+}
+
+/* Arrow for expandable submenu items */
+.submenu summary::after {
+  content: '▾';
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1em;
+  color: #adb5bd;
+  transition: transform 0.2s;
+}
+
+.submenu details[open] > summary::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.check {
+  color: #28a745;
+  font-size: 1.2em;
+  margin-left: auto; /* Push checkmark to the right */
+  padding-right: 0.5rem;
+}
+
+.mainContent {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+} 

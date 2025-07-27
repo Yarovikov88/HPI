@@ -1,0 +1,219 @@
+.container {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.error {
+  color: #d32f2f;
+  text-align: center;
+}
+
+.mainTitle {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-brand-color);
+  font-size: 2.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.sectionCard {
+  background-color: var(--background-color-secondary);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.sectionCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--primary-brand-color);
+}
+
+.toggleIcon {
+  margin-right: 0.75rem;
+  transition: transform 0.2s ease-in-out;
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.toggleIcon.open {
+  transform: rotate(90deg);
+}
+
+.proTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.proTable th, .proTable td {
+  border: 1px solid var(--border-color-light);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.proTable th {
+  background-color: var(--background-color-secondary);
+}
+
+.proTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.iconColumn {
+  width: 80px;
+  text-align: center;
+}
+
+.iconCell {
+  text-align: center;
+  font-size: 1.5rem; /* Делаем иконку крупнее */
+  vertical-align: middle;
+}
+
+.aiRecsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.aiRecCard {
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.aiRecCard h3 {
+  margin-top: 0;
+  color: #FB3640;
+}
+
+.aiRecCard p {
+  margin-bottom: 0.5rem;
+}
+
+.justification {
+  font-style: italic;
+  color: #555;
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--secondary-brand-color);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metricCard {
+  background-color: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Центрируем контент */
+  gap: 0.5rem; /* Добавляем равномерный отступ */
+}
+
+.metricName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  /* margin-bottom убираем, так как теперь есть gap */
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metricValueRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  /* margin-bottom убираем, так как теперь есть gap */
+}
+
+.metricIcon {
+  font-size: 2.5rem; /* Делаем иконку большой */
+  line-height: 1;
+}
+
+.metricValue {
+  font-size: 2.5rem; /* Делаем цифру большой */
+  font-weight: 700;
+  color: #8884d8;
+  line-height: 1;
+}
+
+.metricTarget {
+  font-size: 0.9rem;
+  color: #888;
+  height: 1.2em; /* Резервируем место, чтобы карточки не прыгали */
+} 
+
+/* НОВЫЕ СТИЛИ ДЛЯ ШИРОКИХ КАРТОЧЕК */
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.itemRowCard {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.itemRowCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.itemRowIcon {
+  font-size: 2rem;
+}
+
+.itemRowValue {
+  color: #333;
+  margin: 0;
+  font-size: 1rem;
+} 
