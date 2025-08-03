@@ -6,12 +6,12 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true, // <-- Добавляем эту строку
     proxy: {
       '/api': {
-        target: 'http://dotalounge.online:8888',
+        target: 'https://hpi.expert:8443',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },

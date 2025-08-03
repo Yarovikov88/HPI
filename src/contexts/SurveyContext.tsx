@@ -5,10 +5,16 @@ import React, {
   useCallback,
   useRef
 } from 'react';
-// import { apiClient } from '../services/api';
-import mockQuestions from '../_mocks/questions.json'; // Импортируем моковые данные
-import { SPHERES } from '../data/spheres';
+import { apiClient } from '../services/api';
+// import mockQuestions from '../_mocks/questions.json'; // Убираем моковые данные
+import { SPHERES, SPHERE_ORDERED } from '../data/spheres'; // Импортируем SPHERE_ORDERED
 import { SurveyContext, type SurveyContextType } from './survey';
+
+// Создаем карту: числовой ID из API -> строковый ID из нашего кода
+const sphereIdMap: Record<number, string> = {};
+SPHERE_ORDERED.forEach((sphere, index) => {
+  sphereIdMap[index + 1] = sphere.id;
+});
 
 // Добавляем недостающие поля в тип Question локально
 export type Question = {
@@ -136,57 +142,55 @@ const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const refetchAllData = useCallback(async () => {
     setLoading(true);
     try {
-      // const rawQuestions = await apiClient.getQuestions(); // Временно отключаем
-      const rawQuestions = mockQuestions as Question[]; // Используем моковые данные
-      const allQuestions = rawQuestions.map((q: Question) => ({
-        ...q,
-        sphere: q.sphere_id ? SPHERES[q.sphere_id] : undefined
-      }));
-      setQuestions(allQuestions as any);
+      const [
+        basicQuestionsData,
+        basicAnswersData,
+        proQuestionsData,
+        proAnswersData
+      ] = await Promise.all([
+        apiClient.getQuestions(),
+        apiClient.getAnswers(),
+        apiClient.getProQuestions(),
+        apiClient.getProAnswers()
+      ]);
 
-      // Обработка базовых ответов
+      // --- Обработка базовых вопросов ---
+      const flattenedBasicQuestions = basicQuestionsData.flatMap((sphereGroup: any) =>
+        sphereGroup.questions.map((question: any) => ({
+          ...question,
+          sphere_id: sphereIdMap[sphereGroup.sphere],
+        }))
+      );
+
+      // --- Обработка Pro-вопросов ---
+      const mappedProQuestions = proQuestionsData.map((question: any) => ({
+          ...question,
+          sphere_id: sphereIdMap[question.sphere], // Используем карту для Pro-вопросов
+      }));
+
+      // --- Объединение всех вопросов ---
+      const allQuestions = [...flattenedBasicQuestions, ...mappedProQuestions];
+
+      const mappedQuestions = allQuestions.map((q: Question) => ({
+        ...q,
+        sphere: q.sphere_id ? SPHERES[q.sphere_id] : undefined,
+      }));
+      setQuestions(mappedQuestions as any);
+
+      // --- Обработка базовых ответов ---
       const newAnswersState: Record<string, number> = {};
-      // todaysAnswers.forEach(answer => { // Временно отключаем
-      //   newAnswersState[answer.question_id] = answer.answer;
-      // });
+      basicAnswersData.forEach((answer: any) => {
+        newAnswersState[answer.question_id] = answer.answer;
+      });
       setAnswers(newAnswersState);
 
-      // Обработка Pro-ответов - пока отключаем, так как данных нет
-      setProAnswers({});
-      /*
-      if (todaysProData && typeof todaysProData === 'object' && !Array.isArray(todaysProData)) {
-        const proDataTyped = todaysProData as Record<string, any[]>;
-        const categories: string[] = ['problems', 'goals', 'blockers', 'achievements'];
-        
-        categories.forEach(category => {
-          if (proDataTyped[category]) {
-            proDataTyped[category].forEach((item: any) => {
-              const question = allQuestions.find(q => q.sphere_id === item.sphere_id && q.category === category);
-              if (question) {
-                newProAnswersState[question.id] = item.description || item.text;
-              }
-            });
-          }
-        });
-        
-        if (proDataTyped.metrics) {
-          proDataTyped.metrics.forEach((metric: any) => {
-            const question = allQuestions.find(q => q.sphere_id === metric.sphere_id && q.category === 'metrics');
-            if (question) {
-              if (!newProAnswersState[question.id]) {
-                newProAnswersState[question.id] = {};
-              }
-              newProAnswersState[question.id][metric.name] = {
-                current_value: metric.current_value,
-                target_value: metric.target_value,
-              };
-            }
-          });
-        }
-      }
-
+      // --- Обработка Pro-ответов ---
+      const newProAnswersState: Record<string, string> = {};
+      proAnswersData.forEach((answer: any) => {
+        newProAnswersState[answer.question_id] = answer.answer;
+      });
       setProAnswers(newProAnswersState);
-      */
+      
     } catch (e) {
       console.error("Ошибка при загрузке данных опросов:", e);
       setAnswers({});

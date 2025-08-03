@@ -7,11 +7,13 @@ import styles from '../App.module.css';
 export default function Layout() {
   return (
     <AuthProvider>
-      <Header />
-      <main className={styles.mainContainer}>
-        <Outlet />
-      </main>
-      <Footer />
+      <div className={styles.layout}>
+        <Header />
+        <main className={styles.mainContainer}>
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
     </AuthProvider>
   );
 } 

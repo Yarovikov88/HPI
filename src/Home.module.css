@@ -1,5 +1,5 @@
 .container {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 40px auto;
   padding: 32px;
   background: #fff;
@@ -8,14 +8,14 @@
 }
 
 .heroContainer {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 40px auto 0; /* Убираем нижний отступ, чтобы он не складывался с верхним у .container */
 }
 
 .title {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #0A2463;
+  color: var(--primary-brand-color);
   margin-bottom: 16px;
   text-align: center;
 }
@@ -34,9 +34,9 @@
 }
 
 .sectionCard {
-  background: #E0CBA8;
-  border-radius: 12px;
-  padding: 24px;
+  background: var(--secondary-brand-color);
+  border-radius: 16px;
+  padding: 32px;
   text-decoration: none;
   color: inherit;
   box-shadow: 0 4px 16px rgba(10, 36, 99, 0.06);
@@ -54,13 +54,13 @@
 .sectionTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0A2463;
+  color: var(--primary-brand-color);
   margin: 0 0 12px 0;
 }
 
 .sectionDesc {
   font-size: 1rem;
   line-height: 1.5;
-  color: #333;
+  color: var(--text-color-primary);
   margin: 0;
 } 

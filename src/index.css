@@ -5,15 +5,12 @@
 }
 
 :root {
-  /* Цветовая палитра HPI */
-  --primary-brand-color: #0a2463;  /* Основной темный (для текста, шапок) */
-  --secondary-brand-color: #e0cba8; /* Вторичный (для акцентов) */
-  --cta-brand-color: #fb3640;      /* Призыв к действию (кнопки) */
-
-  /* Системные цвета */
-  --background-color: #f8f9fa; /* Consistent page background */
-  --background-color-secondary: #ffffff; /* Белый для карточек */
-  --text-color-primary: #333333;
+  --primary-brand-color: #0a2463;
+  --secondary-brand-color: #e0cba8;
+  --cta-brand-color: #FB3640;
+  --background-color: #F7F8FA;
+  --background-color-secondary: #fff;
+  --text-color-primary: #333;
   --border-color-light: #e0e0e0;
 }
 

@@ -6,7 +6,7 @@ import styles from './ProDashboardPage.module.css';
 export default function ProDashboardPage() {
     const location = useLocation();
     // const [data, setData] = useState<ProDashboardData | null>(null);
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,6 +49,6 @@ export default function ProDashboardPage() {
                 <h3>Динамика</h3>
                 <p>Здесь будет график динамики.</p>
             </div> */}
-        </div>
+      </div>
     );
 } 

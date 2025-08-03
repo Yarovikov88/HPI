@@ -14,6 +14,8 @@ export type TrendData = any;
 export type Recommendation = any;
 export type ProQuestion = any;
 
+const PRO_CATEGORIES = ['problems', 'goals', 'blockers', 'metrics', 'achievements'];
+
 const axiosInstance = axios.create({
   baseURL: "/api",
 });
@@ -48,6 +50,28 @@ axiosInstance.interceptors.response.use(
 
 export const apiClient = {
   // Auth
+  telegramAuth: async () => {
+    const authData = {
+      id: 1014395380,
+      first_name: "WebApp",
+      last_name: "User",
+      username: "webappuser",
+      photo_url: null,
+    };
+    try {
+      // Используем относительный путь, чтобы сработал прокси
+      const response = await axios.post('/api/telegram_auth', authData);
+      if (response.data.access_token) {
+        localStorage.setItem('authToken', response.data.access_token);
+        console.log("Токен получен и сохранен!");
+        return response.data.access_token;
+      }
+    } catch (error) {
+      console.error("Ошибка при получении токена:", error);
+      toast.error("Не удалось автоматически авторизоваться.");
+    }
+    return null;
+  },
   register: async (data: UserRegister) => {
     const response = await axiosInstance.post('/auth/register', data);
     return response.data;
@@ -75,28 +99,45 @@ export const apiClient = {
 
   // Questions
   getQuestions: async (): Promise<Question[]> => {
-    const response = await axiosInstance.get('/questions/');
+    const response = await axiosInstance.get('/questions'); // ИСПРАВЛЕНО СОГЛАСНО SWAGGER
     return response.data;
   },
   getProQuestions: async (): Promise<ProQuestion[]> => {
-    const response = await axiosInstance.get('/questions/pro/');
-    return response.data;
+    const requests = PRO_CATEGORIES.map(category =>
+      axiosInstance.get(`/pro/questions/${category}`)
+    );
+    const responses = await Promise.all(requests);
+    
+    let allProQuestions: ProQuestion[] = [];
+    responses.forEach((response, index) => {
+        const category = PRO_CATEGORIES[index];
+        const questions = response.data.map((q: any) => ({
+            ...q,
+            category,
+            sphere_id: q.sphere // <--- ДОБАВЛЯЕМ ЭТУ СТРОКУ
+        }));
+        allProQuestions = [...allProQuestions, ...questions];
+    });
+    return allProQuestions;
   },
 
   // Answers
   submitAnswers: async (answers: AnswerPayload[]): Promise<Answer[]> => {
-    const response = await axiosInstance.post('/answers/', answers);
+    const response = await axiosInstance.post('/answers', answers); // ИСПРАВЛЕНО СОГЛАСНО SWAGGER
     return response.data;
   },
   getAnswers: async (date?: string): Promise<Answer[]> => {
     const params = date ? { date_str: date } : {};
-    const response = await axiosInstance.get('/answers/', { params });
+    const response = await axiosInstance.get('/answers', { params }); // ИСПРАВЛЕНО СОГЛАСНО SWAGGER
     return response.data;
   },
   getProAnswers: async (date?: string): Promise<any[]> => {
-    const params = date ? { date_str: date } : {};
-    const response = await axiosInstance.get('/pro-answers/', { params });
-    return response.data;
+    // date is not used here based on swagger, but kept for consistency
+    const requests = PRO_CATEGORIES.map(category =>
+        axiosInstance.get(`/pro/answers/${category}`)
+      );
+    const responses = await Promise.all(requests);
+    return responses.flatMap(response => response.data);
   },
   
   // Dashboard

@@ -122,8 +122,18 @@ export default function SurveyPage() {
     navigate('/account/diagnostics', { replace: true });
   };
 
-  if (loading || !currentSphereId) return <div>Загрузка...</div>;
+  if (loading) return <div>Загрузка...</div>;
+
+  // Если после загрузки вопросы не появились, сообщаем об этом
+  if (sphereIds.length === 0) {
+    return <div>Не удалось загрузить вопросы для базовой диагностики. Возможно, они еще не созданы для вашего аккаунта.</div>
+  }
   
+  // Этот код останется на случай, если sphereId еще не установлен в URL
+  if (!currentSphereId) {
+    return <div>Инициализация...</div>;
+  }
+
   const sphereData = SPHERES[currentSphereId];
   const sphereIcon = sphereData ? sphereData.emoji : '';
   const sphereText = sphereData ? sphereData.name : currentSphereId;

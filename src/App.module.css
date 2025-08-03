@@ -1,26 +1,35 @@
 body {
-  background: #f4f4f4;
+  background: var(--background-color);
 }
 
 #root {
-  background: #f4f4f4;
+  background: var(--background-color);
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .mainContainer {
   flex: 1;
-  /* Padding will be handled by child components */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
 }
 
 .title {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 16px;
-  color: #2a4365;
+  color: var(--primary-brand-color);
 }
 
 .text {
   font-size: 1.1rem;
-  color: #444;
+  color: var(--text-color-primary);
 }
 
 .mainBlock {

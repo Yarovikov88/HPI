@@ -1,134 +1,100 @@
-.siteHeader {
+.header {
+  height: 64px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 2rem;
-  background: linear-gradient(105deg, #0A2463 65%, #1A3F8A 100%);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  padding: 0 32px;
+  background: #0a2463;
+}
+
+.headerContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .logo {
+  height: auto; /* Сброс высоты для текстового лого */
+  text-decoration: none;
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* Предотвращает сжатие логотипа */
+  margin-right: 40px; /* Возвращаем отступ */
 }
 
-.headerNav {
+.logoText {
+  background: #E0CBA8; /* Вторичный бежевый */
+  color: #0a2463; /* Основной синий */
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.logoExpert {
+  color: #0a2463; /* Основной синий */
+  font-weight: 700;
+}
+
+.nav {
   display: flex;
-  gap: 2rem;
-  margin: 0 auto;
+  gap: 32px;
+  flex: 1;
 }
 
-.headerLink {
-  text-decoration: none;
+.navLink {
   color: #fff;
-  font-weight: 500;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 8px 0;
   position: relative;
-  padding-bottom: 5px;
-  transition: color 0.3s ease;
+  font-weight: 400;
 }
 
-.headerLink::after {
+.navLink::after {
   content: '';
   position: absolute;
+  left: 0;
+  bottom: -2px;
   width: 0;
   height: 2px;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #FB3640; /* Brand red */
-  transition: width 0.3s ease;
+  background: #FB3640;
+  transition: width 0.3s;
 }
 
-.headerLink:hover,
-.activeLink {
-  color: #fff;
-}
-
-.headerLink:hover::after,
+.navLink:hover::after,
 .activeLink::after {
   width: 100%;
 }
 
-.activeLink {
-  color: #fff; /* Brand red */
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.authButton {
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  text-align: center;
-  border: 1px solid transparent;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
 .loginButton {
-  composes: authButton;
-  background-color: #FB3640; /* Возвращаем исходный красный */
-  color: white;
-  border: 2px solid #FB3640;
-}
-
-.loginButton:hover {
-  background-color: #d92d35;
-  border-color: #d92d35;
-}
-
-.logoutButton {
-  composes: authButton;
-  background-color: #E0CBA8; /* Возвращаем исходный терракотовый */
-  color: #333;
-  border: 2px solid #E0CBA8;
-}
-
-.logoutButton:hover {
-  background-color: #d4bda0;
-  border-color: #d4bda0;
-}
-
-.userMenu {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.avatarLink {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #fff;
-  transition: border-color 0.2s;
+  background: #FB3640;
+  color: #fff;
+  border: none;
+  border-radius: 6px; /* Как у логотипа */
+  font-size: 16px;
+  height: 36px; /* Устанавливаем высоту как у логотипа */
+  padding: 0 24px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  font-weight: 500;
+  margin-left: 24px;
+  text-decoration: none;
+  box-shadow: none;
 }
 
-.avatarLink:hover {
-  border-color: #E0CBA8;
+.controls {
+  display: flex;
+  align-items: center;
 }
 
-.avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-
-@media (max-width: 768px) {
-  .headerNav {
-    display: none;
-  }
+.loginButton:hover {
+  background: #e13c3e;
+  box-shadow: 0 2px 8px rgba(251,54,64,0.15);
 } 

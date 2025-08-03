@@ -1,6 +1,7 @@
 import React from 'react';
-import authorPhoto from './assets/author.jpg'; // Ваше фото
+import logoHPI from './assets/logo HPI.jpg'; // Новый логотип
 import styles from './HeroBanner.module.css';
+import buttonStyles from './components/Button.module.css'; // Исправляем путь
 import { Link } from 'react-router-dom'; // Возвращаем Link
 
 const HeroBanner = () => {
@@ -18,25 +19,20 @@ const HeroBanner = () => {
                         успеху.
                     </p>
                     <div className={styles.ctaContainer}>
-                        <Link to="/login" className={styles.primaryBtn}>
+                        <Link to="/login" className={buttonStyles.ctaButton}>
                             Попробовать бесплатно
                         </Link>
-                        <a href="/how-it-works" className={styles.secondaryBtn}>
+                        <Link to="/methodology" className={buttonStyles.secondaryButton}>
                             Как это работает?
-                        </a>
+                        </Link>
                     </div>
                 </div>
                 <div className={styles.profileContainer}>
                     <img
-                        src={authorPhoto} // Используем ваше фото
-                        alt="Андрей Яровиков"
+                        src={logoHPI}
+                        alt="HPI.expert logo"
                         className={styles.profilePhoto}
                     />
-                    <p className={styles.profileCaption}>
-                        <b>Андрей Яровиков</b>
-                        <br />
-                        основатель HPI.expert
-                    </p>
                 </div>
             </div>
         </div>

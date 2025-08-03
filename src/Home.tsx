@@ -9,8 +9,8 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>HPI.expert — Платформа для управления личным развитием</title>
-        <meta name="description" content="HPI.expert — это data-driven платформа для оценки и развития вашего потенциала. Отслеживайте прогресс, получайте AI-рекомендации и стройте системный путь к успеху." />
+        <title>HPI.EXPERT — Платформа для управления личным развитием</title>
+        <meta name="description" content="HPI.EXPERT — это data-driven платформа для оценки и развития вашего потенциала. Отслеживайте прогресс, получайте AI-рекомендации и стройте системный путь к успеху." />
       </Helmet>
       <div className={styles.heroContainer}>
         <HeroBanner />
