@@ -1,71 +1,82 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { apiClient, type UserProfile, type UserLogin, type UserRegister } from '../services/api';
 
-// Определяем структуру данных пользователя
-interface User {
-  id: string;
-  email: string;
-  full_name?: string;
-  phone?: string;
-  telegram?: string;
-}
-
-// Определяем, что будет храниться в контексте
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
   isAuthenticated: boolean;
-  loading: boolean; // Добавили состояние загрузки
-  login: (userData: User) => void;
+  loading: boolean;
+  login: (credentials: UserLogin) => Promise<void>;
+  register: (data: UserRegister) => Promise<void>;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
-// Создаем контекст с начальным значением undefined
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Создаем провайдер контекста
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Начальное состояние - загрузка
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Имитация проверки аутентификации при запуске приложения
-    const checkAuth = () => {
+    const init = async () => {
       try {
-        // В реальном приложении здесь была бы проверка токена в localStorage
-        // Для демонстрации, мы просто считаем, что пользователь "вошел в систему"
-        // если в localStorage есть мок-данные.
-        const mockUser = localStorage.getItem('mockUser');
-        if (mockUser) {
-          setUser(JSON.parse(mockUser));
+        let token = localStorage.getItem('authToken');
+        if (!token) {
+          // Автовход через Telegram-авторизацию (dev/стаб)
+          token = await apiClient.telegramAuth();
         }
-      } catch (error) {
-        console.error("Ошибка при проверке аутентификации", error);
-        setUser(null);
+        if (token) {
+          try {
+            const profile = await apiClient.getProfile();
+            setUser(profile);
+          } catch {
+            // Фоллбэк: если профиль не доступен, но токен есть — используем заглушку id=1
+            setUser({ id: 1, full_name: 'User One' });
+          }
+        } else {
+          setUser(null);
+        }
       } finally {
-        setLoading(false); // Завершаем загрузку
+        setLoading(false);
       }
     };
-
-    checkAuth();
+    init();
   }, []);
 
-
-  // Функция для "входа"
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('mockUser', JSON.stringify(userData));
+  const refreshProfile = async () => {
+    try {
+      const profile = await apiClient.getProfile();
+      setUser(profile);
+    } catch {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        setUser({ id: 1, full_name: 'User One' });
+      } else {
+        setUser(null);
+      }
+    }
   };
 
-  // Функция для "выхода"
+  const login = async (credentials: UserLogin) => {
+    await apiClient.login(credentials);
+    await refreshProfile();
+  };
+
+  const register = async (data: UserRegister) => {
+    await apiClient.register(data);
+    await refreshProfile();
+  };
+
   const logout = () => {
+    apiClient.logout();
     setUser(null);
-    localStorage.removeItem('mockUser');
   };
 
-  const isAuthenticated = !loading && !!user; // Аутентифицирован, только если загрузка не идет и есть юзер
+  const isAuthenticated = !loading && !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

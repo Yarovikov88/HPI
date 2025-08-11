@@ -1,11 +1,11 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Calendar from 'react-calendar';
 // import 'react-calendar/dist/Calendar.css'; // ПОЛНОСТЬЮ ОТКЛЮЧАЕМ СТИЛИ БИБЛИОТЕКИ
 import styles from "./CalendarWidget.module.css";
-// import { apiClient } from "../services/api"; // ВРЕМЕННО ОТКЛЮЧЕНО
 import { format, parseISO } from "date-fns";
+import { apiClient, type CalendarDayStatus } from "../services/api";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -13,23 +13,36 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 export function CalendarWidget() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [completedDates, setCompletedDates] = useState<string[]>([]);
+    const [monthStatuses, setMonthStatuses] = useState<Record<string, CalendarDayStatus>>({});
     const [value, setValue] = useState<Value>(() => {
         const params = new URLSearchParams(location.search);
         const dateStr = params.get("date");
         return dateStr ? parseISO(dateStr) : null;
     });
 
+    const [activeStartDate, setActiveStartDate] = useState<Date>(() => {
+        const initial = value && value instanceof Date ? value : new Date();
+        return new Date(initial.getFullYear(), initial.getMonth(), 1);
+    });
+
+    // Загружаем статусы для видимого месяца
     useEffect(() => {
-        // apiClient.getCompletedDates()
-        //     .then(dates => {
-        //         setCompletedDates(dates); // Даты приходят как строки 'YYYY-MM-DD'
-        //     })
-        //     .catch(error => {
-        //         console.error("Failed to fetch diagnostic dates:", error);
-        //     });
-        console.warn('Fetching completed dates is disabled in CalendarWidget.');
-    }, []);
+        const fetchStatuses = async () => {
+            try {
+                const from = format(activeStartDate, 'yyyy-MM-01');
+                const toDate = new Date(activeStartDate.getFullYear(), activeStartDate.getMonth() + 1, 0);
+                const to = format(toDate, 'yyyy-MM-dd');
+                const data = await apiClient.getCalendarStatus(from, to);
+                const map: Record<string, CalendarDayStatus> = {};
+                (data || []).forEach((d) => { map[d.date] = d; });
+                setMonthStatuses(map);
+            } catch (e) {
+                console.error('Failed to load calendar statuses:', e);
+                setMonthStatuses({});
+            }
+        };
+        fetchStatuses();
+    }, [activeStartDate]);
     
     const handleDayClick = (newValue: Value) => {
         setValue(newValue);
@@ -39,24 +52,29 @@ export function CalendarWidget() {
         } else {
             params.delete("date");
         }
-        navigate({ search: params.toString() });
+        navigate({ pathname: '/account/diagnostics', search: params.toString() });
     };
 
     const tileClassName = ({ date, view }: { date: Date, view: string }) => {
         if (view === 'month') {
-            const classNames = [];
+            const classNames: string[] = [];
             const dateString = format(date, 'yyyy-MM-dd');
             const todayString = format(new Date(), 'yyyy-MM-dd');
+            const status = monthStatuses[dateString];
 
-            // Сначала добавляем базовый стиль для пройденных
-            if (completedDates.includes(dateString)) {
+            // Полностью завершено (basic.complete и pro.complete) -> синий
+            if (status && status.basic?.status === 'complete' && status.pro?.status === 'complete') {
                 classNames.push(styles.completed);
+            } else if (status && (status.basic?.status === 'draft' || status.pro?.status === 'draft' || status.basic?.status === 'complete' || status.pro?.status === 'complete')) {
+                // Любая активность, но не полное завершение обеих -> коричневый
+                classNames.push(styles.draft);
             }
-            // Затем добавляем стиль для сегодняшней даты, он будет иметь приоритет
+
+            // Текущая дата — красная обводка поверх
             if (dateString === todayString) {
-                classNames.push(styles.today);
+                classNames.push(styles.todayOutline);
             }
-    
+     
             return classNames.length > 0 ? classNames.join(' ') : null;
         }
         return null;
@@ -70,6 +88,9 @@ export function CalendarWidget() {
                 locale="ru-RU"
                 tileClassName={tileClassName}
                 className={styles.reactCalendar}
+                onActiveStartDateChange={({ activeStartDate }) => {
+                    if (activeStartDate) setActiveStartDate(activeStartDate);
+                }}
                 navigationLabel={({ date, label, locale, view }) => label.replace(' г.', '')}
             />
         </div>

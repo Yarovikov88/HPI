@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:5175": "vite --host=127.0.0.1 --port=5175 --strictPort",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:calendar": "node scripts/test-calendar-status.cjs",
+    "test:pro": "node scripts/test-pro-answers.cjs",
+    "test:pro:get": "node scripts/test-pro-get.cjs",
+    "test:basic": "node scripts/basic_test.js"
   },
   "dependencies": {
     "axios": "^1.7.2",

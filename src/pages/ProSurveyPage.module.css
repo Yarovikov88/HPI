@@ -159,3 +159,23 @@ h1 {
     width: 100%;
   }
 } 
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.dateBadge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+} 

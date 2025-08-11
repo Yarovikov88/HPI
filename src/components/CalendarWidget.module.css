@@ -74,21 +74,25 @@
 
 /* --- СТИЛИЗАЦИЯ ПО СОСТОЯНИЯМ (правильный приоритет) --- */
 
-/* 1. Даты с пройденной диагностикой -> синий фирменный */
+/* 1. Даты с полностью завершённой базовой и PRO диагностикой -> синий */
 .completed {
     background-color: #0a2463 !important;
     color: white !important;
     font-weight: bold;
 }
 
-/* 2. Стиль для СЕГОДНЯШНЕЙ даты (перекрывает .completed) */
-.today {
-    background: #FB3640 !important;
-    color: white !important;
-    font-weight: 700 !important;
+/* 2. Черновики/частично заполнено -> коричневый */
+.draft {
+    background-color: #8B5E3C !important; /* коричневый */
+    color: #fff !important;
 }
 
-/* 3. Стиль для ВЫБРАННОЙ даты (перекрывает ВСЁ) */
+/* 3. Сегодня — красная обводка поверх любых состояний */
+.todayOutline {
+    box-shadow: 0 0 0 2px #FB3640 inset !important;
+}
+
+/* 4. Выбранная дата (перекрывает ВСЁ по заливке) */
 .reactCalendar .react-calendar__tile--active {
     background: #E0CBA8 !important;
     color: #333 !important;

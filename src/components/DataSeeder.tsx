@@ -16,7 +16,7 @@ const DataSeeder: React.FC = () => {
   const [selectedScenario, setSelectedScenario] = useState(Object.keys(SCENARIOS)[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const userId = 179; // Захардкодим ID нашего тестового пользователя
+  const userId = 1; // Захардкодим ID тестового пользователя
 
   const handleSeed = async () => {
     setIsLoading(true);

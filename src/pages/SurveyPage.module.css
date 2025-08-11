@@ -332,3 +332,24 @@ h1 {
   border-bottom: 1px solid #eee;
   color: var(--primary-color);
 } 
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.dateBadge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap; /* Чтобы дата не переносилась на другую строку */
+} 

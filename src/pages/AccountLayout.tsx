@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, useLocation, Outlet } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import styles from './AccountLayout.module.css';
 import { useAuth } from '../hooks/useAuth';
 import { useSurvey } from '../hooks/useSurvey';
@@ -9,17 +9,53 @@ import { proSections } from '../data/proSections';
 
 const AccountLayout: React.FC = () => {
   const { user } = useAuth();
+  const surveyData = useSurvey(); // Сначала получаем весь объект
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const currentSphereId = searchParams.get('sphere');
+  const dateParam = searchParams.get('date');
+  const dateSuffix = dateParam ? `?date=${dateParam}` : '';
+
+  // Управляем сворачиванием/разворачиванием секций
+  const [isDiagnosticsOpen, setDiagnosticsOpen] = useState<boolean>(true);
+  const [isBasicOpen, setBasicOpen] = useState<boolean>(location.pathname.includes('/survey'));
+  const [isProOpen, setProOpen] = useState<boolean>(location.pathname.includes('/pro/'));
+  const basicRef = useRef<HTMLDetailsElement | null>(null);
+  const proRef = useRef<HTMLDetailsElement | null>(null);
+  const diagnosticsRef = useRef<HTMLDetailsElement | null>(null);
+
+  // Синхронизация с маршрутом
+  useEffect(() => {
+    if (location.pathname.includes('/diagnostics')) {
+      // На странице диагностик не трогаем состояние верхнего блока -> пользователь сам сворачивает/разворачивает
+      setBasicOpen(false);
+      setProOpen(false);
+      if (basicRef.current) basicRef.current.open = false;
+      if (proRef.current) proRef.current.open = false;
+      return;
+    }
+    // На внутренних маршрутах раздела держим верхний блок открытым
+    const onInner = location.pathname.includes('/survey') || location.pathname.includes('/pro/');
+    setDiagnosticsOpen(onInner ? true : isDiagnosticsOpen);
+    setBasicOpen(location.pathname.includes('/survey'));
+    setProOpen(location.pathname.includes('/pro/'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Если данные еще не загружены, показываем заглушку
+  if (!surveyData) {
+    return <div>Загрузка данных опроса...</div>;
+  }
+
+  // Теперь мы можем безопасно деструктурировать
   const { 
     isBasicSurveyComplete, 
     isProSurveyComplete, 
     isSphereComplete, 
     isProCategoryComplete 
-  } = useSurvey();
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const currentSphereId = searchParams.get('sphere');
+  } = surveyData;
 
-  const isDiagnosticsActive = location.pathname.includes('/diagnostics') || location.pathname.includes('/survey') || location.pathname.includes('/pro/');
   const isDashboardsActive = location.pathname.includes('/dashboard') || location.pathname.includes('/pro-dashboard');
 
   return (
@@ -28,16 +64,29 @@ const AccountLayout: React.FC = () => {
         <nav className={styles.nav}>
           <ul>
             <li>
-              <details open={isDiagnosticsActive}>
-                <summary className={styles.sectionTitle}>Диагностика</summary>
+              <details ref={diagnosticsRef} open={isDiagnosticsOpen} onToggle={(e) => setDiagnosticsOpen((e.currentTarget as HTMLDetailsElement).open)}>
+                <summary
+                  className={styles.sectionTitle}
+                  onClick={() => {
+                    // Навигация на diagnostics; верхний блок будет toggled нативно
+                    navigate('/account/diagnostics' + dateSuffix);
+                    // Сворачиваем вложенные секции
+                    setBasicOpen(false);
+                    setProOpen(false);
+                    if (basicRef.current) basicRef.current.open = false;
+                    if (proRef.current) proRef.current.open = false;
+                  }}
+                >
+                  Диагностика
+                </summary>
                 <ul className={styles.submenu}>
                   <li>
-                    <details open={location.pathname.includes('/survey')}>
+                    <details ref={basicRef} open={isBasicOpen} onToggle={(e) => setBasicOpen((e.currentTarget as HTMLDetailsElement).open)}>
                       <summary>Базовая {isBasicSurveyComplete && <span className={styles.check}>✔</span>}</summary>
                       <ul className={styles.submenu}>
                         {SPHERE_ORDERED.map(sphere => (
                           <li key={sphere.id}>
-                            <NavLink to={`/account/survey?sphere=${sphere.id}`}>
+                            <NavLink to={`/account/survey?sphere=${sphere.id}${dateParam ? `&date=${dateParam}` : ''}`}>
                               {sphere.name} {isSphereComplete(sphere.id) && <span className={styles.check}>✔</span>}
                             </NavLink>
                           </li>
@@ -46,12 +95,12 @@ const AccountLayout: React.FC = () => {
                     </details>
                   </li>
                   <li>
-                    <details open={location.pathname.includes('/pro/')}>
+                    <details ref={proRef} open={isProOpen} onToggle={(e) => setProOpen((e.currentTarget as HTMLDetailsElement).open)}>
                       <summary>Pro {isProSurveyComplete && <span className={styles.check}>✔</span>}</summary>
                       <ul className={styles.submenu}>
                         {proSections.map(section => (
                           <li key={section.category}>
-                            <NavLink to={`/account/pro/${section.category}`}>
+                            <NavLink to={`/account/pro/${section.category}${dateParam ? `?date=${dateParam}` : ''}`}>
                               {section.name} {isProCategoryComplete(section.category) && <span className={styles.check}>✔</span>}
                             </NavLink>
                           </li>
@@ -67,12 +116,12 @@ const AccountLayout: React.FC = () => {
                 <summary className={styles.sectionTitle}>Дашборды</summary>
                 <ul className={styles.submenu}>
                   <li>
-                    <NavLink to="/account/dashboard" end>
+                    <NavLink to={`/account/dashboard${dateSuffix}`} end>
                       Базовый
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/account/pro-dashboard">
+                    <NavLink to={`/account/pro-dashboard${dateSuffix}`}>
                       Pro
                     </NavLink>
                   </li>
@@ -91,6 +140,9 @@ const AccountLayout: React.FC = () => {
       <main className={styles.mainContent}>
         <Outlet />
       </main>
+      <div className={styles.activeUserBadge}>
+        ID пользователя: {user?.id ?? '—'}
+      </div>
     </div>
   );
 };

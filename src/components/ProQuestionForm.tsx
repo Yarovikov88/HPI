@@ -3,19 +3,19 @@ import styles from './ProQuestionForm.module.css';
 
 interface ProQuestionFormProps {
   sphere: { id: string; name: string; emoji: string };
-  questionId: string;
   answer: string;
-  onAnswerChange: (questionId: string, answer: string) => void;
+  onAnswerChange: (answer: string) => void;
+  readOnly?: boolean;
 }
 
 const ProQuestionForm: React.FC<ProQuestionFormProps> = ({
   sphere,
-  questionId,
   answer,
   onAnswerChange,
+  readOnly = false,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onAnswerChange(questionId, e.target.value);
+    if (!readOnly) onAnswerChange(e.target.value);
   };
 
   return (
@@ -25,12 +25,13 @@ const ProQuestionForm: React.FC<ProQuestionFormProps> = ({
         {sphere.name}
       </h3>
       <textarea
-        id={questionId}
+        id={sphere.id}
         value={answer}
         onChange={handleChange}
         className={styles.textareaInput}
-        placeholder="Опишите здесь..."
+        placeholder={readOnly ? '' : 'Опишите здесь...'}
         rows={5}
+        readOnly={readOnly}
       />
     </div>
   );

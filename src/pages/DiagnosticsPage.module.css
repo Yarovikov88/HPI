@@ -2,9 +2,24 @@
   padding: 2rem;
 }
 
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .title {
-  text-align: center;
+  text-align: left;
   margin-bottom: 0.5rem;
+}
+
+.dateBadge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .subtitle {
@@ -91,8 +106,8 @@
 }
 
 .mockButtonContainer {
-    margin-top: 2rem;
-    text-align: center;
+  margin-top: 2rem;
+  text-align: center;
 }
 
 /* Стили для модального окна */
@@ -194,7 +209,25 @@
 }
 
 .ctaButton:hover:not(:disabled) {
-  background-color: #d92d35;
+  background-color: #e13c3e;
+}
+
+/* Дополнительная (tertiary) кнопка для действий типа "Результаты/Посмотреть ответы" по ДС */
+.secondaryButton {
+  background-color: #E0CBA8;
+  color: #333;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background-color: #d2b98f;
 }
 
 .ctaButton:disabled {

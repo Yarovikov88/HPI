@@ -1,7 +1,8 @@
 import React, { useMemo, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSurvey } from '../hooks/useSurvey';
 import ProQuestionForm from '../components/ProQuestionForm';
+// import CalendarWidget from '../components/CalendarWidget'; // УДАЛЯЕМ ЭТОТ ИМПОРТ
 import { SPHERES } from '../data/spheres';
 import styles from './ProSurveyPage.module.css';
 
@@ -17,14 +18,34 @@ const categoryTranslations: { [key: string]: string } = {
 
 export default function ProSurveyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { category = proCategories[0] } = useParams<{ category: string }>();
 
   const {
     groupedProQuestions,
     proAnswers,
-    updateProAnswer,
+    updateProAnswerLocal,
+    // добавим метод пакетного сохранения
+    saveProCategoryAnswers,
     loading,
+    selectedDate,     // Получаем дату
+    // setSelectedDate,  // Получаем функцию для изменения даты
+    setSelectedDate,
   } = useSurvey();
+
+  const searchParams = new URLSearchParams(location.search);
+  const dateParam = searchParams.get('date');
+  // Сравниваем с ЛОКАЛЬНОЙ датой, а не UTC, чтобы не было ложной блокировки по часовому поясу
+  const getLocalYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = getLocalYMD(new Date());
+  const isToday = !dateParam || dateParam === todayStr;
+
+  useEffect(() => {
+    if (dateParam) {
+      const d = new Date(dateParam);
+      if (!Number.isNaN(d.getTime())) setSelectedDate(d);
+    }
+  }, [dateParam, setSelectedDate]);
 
   const currentCategoryIndex = useMemo(() => {
     const index = proCategories.indexOf(category);
@@ -43,13 +64,19 @@ export default function ProSurveyPage() {
   }, [category, navigate]);
 
   const handleNavigation = (direction: 'next' | 'prev') => {
-    const newIndex = direction === 'next' ? currentCategoryIndex + 1 : currentCategoryIndex - 1;
-    if (newIndex >= 0 && newIndex < proCategories.length) {
-      navigate(`/account/pro/${proCategories[newIndex]}`);
-    } else if (direction === 'next') {
-      // Finished the survey
-      navigate('/account/pro-dashboard');
-    }
+    const doNavigate = async () => {
+      if (direction === 'next' && saveProCategoryAnswers) {
+        await saveProCategoryAnswers(category);
+      }
+      const newIndex = direction === 'next' ? currentCategoryIndex + 1 : currentCategoryIndex - 1;
+      if (newIndex >= 0 && newIndex < proCategories.length) {
+        navigate(`/account/pro/${proCategories[newIndex]}${dateParam ? `?date=${dateParam}` : ''}`);
+      } else if (direction === 'next') {
+        navigate(`/account/pro-dashboard${dateParam ? `?date=${dateParam}` : ''}`);
+      }
+    };
+    // запустить асинхронно
+    void doNavigate();
   };
 
   if (loading) {
@@ -62,17 +89,34 @@ export default function ProSurveyPage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>Pro-опрос: {categoryTranslations[category] || category}</h1>
+      <div className={styles.header}>
+        <h1 className={styles.pageTitle}>Pro-опрос: {categoryTranslations[category] || category}</h1>
+        {/* Добавляем бейдж с датой */}
+        <div className={styles.dateBadge}>
+          {selectedDate.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })}
+        </div>
+      </div>
+      
       <div className={styles.formsContainer}>
         {questionsForCategory.map(question => {
           const sphereInfo = SPHERES[question.sphere_id] || { id: 'unknown', name: 'Unknown Sphere', emoji: '❓' };
+          
+          // Обновленная логика получения ответа
+          const proAnswerKey = `${category}-${question.sphere_id}`;
+          const numericKey = `${category}-${String(question.sphere_api_id ?? Math.max(1, Object.keys(SPHERES).indexOf(question.sphere_id) + 1))}`;
+          const currentAnswer = proAnswers[proAnswerKey]?.text || proAnswers[numericKey]?.text || '';
+
           return (
             <ProQuestionForm
-              key={question.id}
+              key={`${category}-${question.sphere_id}`}
               sphere={sphereInfo}
-              questionId={question.id}
-              answer={proAnswers[question.id] || ''}
-              onAnswerChange={updateProAnswer}
+              answer={currentAnswer}
+              onAnswerChange={(newAnswer) => {
+                const sphereApiId = (question.sphere_api_id ?? Math.max(1, Object.keys(SPHERES).indexOf(question.sphere_id) + 1)) as number;
+                // Локально обновляем, а сохранение уедет пакетно по кнопке "Далее"
+                updateProAnswerLocal?.({ sphere: sphereApiId, text: newAnswer }, category);
+              }}
+              readOnly={false}
             />
           );
         })}

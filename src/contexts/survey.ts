@@ -1,46 +1,50 @@
-import React, { createContext } from 'react';
-// import type { Question as ApiQuestion } from '../services/api';
+import { createContext } from 'react';
+import type { BasicAnswer, ProAnswer, BasicAnswerPayload, ProAnswerPayload } from '../services/api';
 
-export type Sphere = {
+// Единственный источник правды для типа Question
+export interface Question {
+  id: string;
+  text: string;
+  options: string[];
+  scores: number[];
+  category?: string;
+  sphere_id: string;
+  sphere_api_id?: number;
+  sphere?: {
     id: string;
     name: string;
     emoji: string;
+  };
+  [key: string]: any;
 }
 
-export type Question = { // Omit<ApiQuestion, 'sphere_id'> & {
-    sphere?: Sphere;
-    id: string; // Добавим id, так как он используется в коде
-};
-
-export type SurveyContextType = {
-  questions: Question[];
+export interface SurveyContextType {
+  // Состояние
   loading: boolean;
-  
-  // Basic Survey
-  answers: Record<string, string | number>;
-  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string | number>>>;
-  updateAnswer: (questionId: string, answer: string | number) => void;
-  removeAnswer: (questionId: string) => void;
+  questions: Question[];
+  answers: Record<string, BasicAnswer>;
+  proAnswers: Record<string, ProAnswer>;
   groupedQuestions: Record<string, Question[]>;
+  groupedProQuestions: Record<string, Question[]>;
+  selectedDate: Date;
+  setSelectedDate: (date: Date) => void;
+
+  // Методы
+  updateAnswer: (payload: Omit<BasicAnswerPayload, 'date'>) => Promise<void>;
+  updateProAnswer: (payload: Omit<ProAnswerPayload, 'date'>, category: string) => Promise<void>;
+  updateProAnswerLocal?: (payload: Omit<ProAnswerPayload, 'date'>, category: string) => void;
+  removeAnswer: (questionId: string) => Promise<void>;
+  saveSphereAnswers?: (sphereId: string) => Promise<void>;
+  saveProCategoryAnswers?: (category: string) => Promise<void>;
+
+  // Вычисляемые значения и прогресс
   isSphereComplete: (sphereId: string) => boolean;
   isBasicSurveyComplete: boolean;
-  getBasicSurveyProgress: () => { answered: number, total: number };
-  
-  // Pro Survey
-  proAnswers: Record<string, any>;
-  setProAnswers: React.Dispatch<React.SetStateAction<Record<string, any>>>;
-  updateProAnswer: (questionId: string, answer: any) => void;
-  proQuestions: Question[];
-  groupedProQuestions: Record<string, Question[]>;
-  isProStepComplete: (stepIndex: number) => boolean;
-  isProSurveyComplete: boolean;
-  getProSurveyProgress: () => { answered: number, total: number };
+  getBasicSurveyProgress: () => { answered: number; total: number };
   isProCategoryComplete: (category: string) => boolean;
-  
-  // Actions
-  fillAllWithMockData: () => void;
-  refetchAllData: () => Promise<void>;
-  setAnswersFromApi: (answersFromApi: any[]) => void;
+  isProSurveyComplete: boolean;
+  getProSurveyProgress: () => { answered: number; total: number };
 }
 
-export const SurveyContext = createContext<SurveyContextType | undefined>(undefined); 
+// Создаем контекст с начальным значением null, чтобы избежать ошибок
+export const SurveyContext = createContext<SurveyContextType | null>(null); 

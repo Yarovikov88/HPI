@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Pages
 import Home from './Home';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import MethodologyPage from './pages/MethodologyPage';
 import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
@@ -48,6 +49,7 @@ function App() {
                   {/* Public routes */}
                   <Route index element={<Home />} />
                   <Route path="login" element={<LoginPage />} />
+                  <Route path="signup" element={<SignupPage />} />
                   <Route path="methodology" element={<MethodologyPage />} />
                   <Route path="features" element={<FeaturesPage />} />
         <Route path="pricing" element={<PricingPage />} />

@@ -1,100 +1,90 @@
 .header {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 32px;
-  background: #0a2463;
+  background-color: #002366; /* Синий фон шапки */
+  padding: 1rem 2rem;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .headerContainer {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  width: 100%;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .logo {
-  height: auto; /* Сброс высоты для текстового лого */
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  margin-right: 40px; /* Возвращаем отступ */
+  color: white;
 }
 
 .logoText {
-  background: #E0CBA8; /* Вторичный бежевый */
-  color: #0a2463; /* Основной синий */
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 6px 10px;
-  border-radius: 6px;
-  display: inline-block;
+  font-size: 1.8rem;
+  font-weight: bold;
 }
 
 .logoExpert {
-  color: #0a2463; /* Основной синий */
-  font-weight: 700;
+  color: #a98c5a; /* Золотой цвет для .EXPERT */
 }
 
 .nav {
   display: flex;
-  gap: 32px;
-  flex: 1;
+  gap: 2rem;
 }
 
 .navLink {
-  color: #fff;
-  font-size: 16px;
+  color: #e0e0e0;
   text-decoration: none;
-  padding: 8px 0;
-  position: relative;
-  font-weight: 400;
+  font-size: 1rem;
+  transition: color 0.2s;
 }
 
-.navLink::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 0;
-  height: 2px;
-  background: #FB3640;
-  transition: width 0.3s;
-}
-
-.navLink:hover::after,
-.activeLink::after {
-  width: 100%;
-}
-
-.loginButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FB3640;
-  color: #fff;
-  border: none;
-  border-radius: 6px; /* Как у логотипа */
-  font-size: 16px;
-  height: 36px; /* Устанавливаем высоту как у логотипа */
-  padding: 0 24px;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
-  font-weight: 500;
-  margin-left: 24px;
-  text-decoration: none;
-  box-shadow: none;
+.navLink:hover,
+.activeLink {
+  color: white;
+  text-decoration: underline;
 }
 
 .controls {
   display: flex;
   align-items: center;
+  gap: 1.5rem;
+}
+
+.loginButton {
+  background-color: #a98c5a;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.2s;
 }
 
 .loginButton:hover {
-  background: #e13c3e;
-  box-shadow: 0 2px 8px rgba(251,54,64,0.15);
+  background-color: #c4a77e;
+}
+
+/* --- Стили для аватара --- */
+.profileLink {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #a98c5a; /* Золотая рамка */
+  transition: transform 0.2s;
+}
+
+.profileLink:hover {
+  transform: scale(1.1);
+}
+
+.profileAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 } 
