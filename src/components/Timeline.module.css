@@ -1,0 +1,405 @@
+.timelineContainer {
+  position: relative;
+  padding: 20px 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.timelineAxis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background-color: #e2e8f0; /* Light gray line */
+  transform: translateX(-50%);
+}
+
+.yearSection {
+  margin-bottom: 30px;
+}
+
+.yearMarker {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4a5568;
+}
+
+.timelineRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 0 -10px;
+}
+
+.leftCell,
+.rightCell {
+  flex: 1;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.leftCell {
+  align-items: flex-end;
+}
+
+.rightCell {
+  align-items: flex-start;
+}
+
+.centerCell {
+  flex: 0 0 2px;
+  background-color: #e2e8f0;
+  align-self: stretch;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 350px; /* Limit card width */
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: 20px;
+  min-height: 120px;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.cardPeriod {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #718096;
+}
+
+.cardHpiWrapper {
+  display: flex;
+}
+
+/* HPI Metrics */
+.hpiMetrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hpiMetric {
+  display: flex;
+  align-items: center;
+  background-color: #E0CBA8;
+  border-radius: 12px;
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  gap: 6px;
+}
+
+.hpiIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.hpiValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 400px 4px 400px;
+  align-items: start;
+  position: relative;
+  z-index: 1;
+}
+
+.timelineItem.left .timelineCard {
+  position: absolute;
+  left: auto;
+  right: 54%;
+  text-align: right;
+}
+
+.timelineItem.right .timelineCard {
+  position: absolute;
+  right: auto;
+  left: 54%;
+  text-align: left;
+  min-height: 80px;
+  height: 80px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.timelineCard {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 320px;
+  max-width: 320px;
+  min-height: 140px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  z-index: 2;
+  color: #222;
+  position: relative;
+}
+
+.timelineCard.career, .timelineCard.milestoneCard.career { background: #2A5B8C; color: #fff; }
+.timelineCard.team { background: #42A5F5; color: #fff; }
+.timelineCard.education { background: #26A69A; color: #fff; }
+.timelineCard.family, .timelineCard.milestoneCard.family { background: #FF7043; color: #fff; }
+.timelineCard.crisis { background: #EF5350; color: #fff; }
+.timelineCard.move { background: #AB47BC; color: #fff; }
+.timelineCard.innovation { background: #7E57C2; color: #fff; }
+.timelineCard.health, .timelineCard.milestoneCard.health { background: #66BB6A; color: #fff; }
+.timelineCard.hobby, .timelineCard.milestoneCard.hobby { background: #FFD600; color: #222; }
+
+.barsCell {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 320px;
+  max-width: 400px;
+  justify-content: center;
+  align-items: flex-end;
+  align-self: stretch;
+  padding-right: 32px;
+}
+
+.axisCell {
+  grid-column: 2;
+  width: 4px;
+  min-width: 4px;
+  max-width: 4px;
+  background: #e0e0e0;
+  height: auto;
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.milestoneCard, .emptyCell {
+  grid-column: 3;
+  min-width: 320px;
+  max-width: 400px;
+  align-items: flex-start;
+  align-self: stretch;
+  padding-left: 32px;
+  gap: 24px;
+}
+
+.milestoneCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.timelineItem.left::after,
+.timelineItem.right::after {
+  content: '';
+  position: absolute;
+  top: 36px;
+  width: 24px;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 1;
+}
+.timelineItem.left::after {
+  right: 50%;
+}
+.timelineItem.right::after {
+  left: 50%;
+}
+
+.timelineMarker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #fff;
+  border: 2px solid #e0e0e0;
+  z-index: 3;
+  margin-top: 28px;
+  display: none;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.timelineCard.hobby .title {
+  color: #222;
+}
+
+.meta {
+  color: rgba(255,255,255,0.85);
+  font-size: 18px;
+  margin-top: 6px;
+}
+
+.timelineCard.hobby .meta {
+  color: #333;
+}
+
+.type {
+  color: rgba(255,255,255,0.85);
+  font-size: 16px;
+}
+
+.timelineCard.hobby .type {
+  color: #333;
+}
+
+.duration {
+  color: #42a5f5;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.cardColumns {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.cardDates {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.cardDot {
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.cardBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  background: #E3D1B2;
+  color: #22335A;
+  min-width: 36px;
+  min-height: 36px;
+  margin-left: 12px;
+  position: static;
+}
+
+.cardBadgeCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  /* padding-top: 24px; */
+}
+
+.hpiMetric {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.95;
+  cursor: help;
+}
+
+.cardRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.timeline {
+  width: 100%;
+  margin-bottom: 48px;
+}
+
+.timelineTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #1a202c;
+  text-align: center;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Category colors for icons */
+.career .cardIcon { background-color: #e0e7ff; } /* Blueish */
+.family .cardIcon { background-color: #ffe4e6; } /* Reddish */
+.hobby .cardIcon { background-color: #f3e8ff; } /* Purpleish */
+.health .cardIcon { background-color: #dcfce7; } /* Greenish */
+
+/* Contextual Alignment */
+.leftCell .cardPeriod {
+  justify-content: flex-end;
+}
+.rightCell .cardPeriod {
+  justify-content: flex-start;
+}
+
+.leftCell .cardHpiWrapper {
+  justify-content: flex-start;
+}
+
+.rightCell .cardHpiWrapper {
+  justify-content: flex-end;
+}
+
+.leftCell .hpiMetrics {
+  /* No specific alignment needed here now */
+}
+
+.rightCell .hpiMetrics {
+  /* No specific alignment needed here now */
+} 

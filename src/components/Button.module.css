@@ -1,0 +1,43 @@
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background: #FB3640;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  line-height: 1.2;
+}
+
+.ctaButton:hover {
+  background: #e13c3e;
+  box-shadow: 0 2px 8px rgba(251,54,64,0.15);
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background: #E0CBA8;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(224,203,168,0.15);
+}
+
+.secondaryButton:hover {
+  background: #d4c19a;
+  box-shadow: 0 2px 8px rgba(224,203,168,0.2);
+} 

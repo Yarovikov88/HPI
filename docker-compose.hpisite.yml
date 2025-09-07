@@ -1,0 +1,187 @@
+services:
+  # Frontend (React приложение)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: hpisite-frontend
+    container_name: hpisite-frontend-1
+    ports:
+      - "0.0.0.0:3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost/api
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend (FastAPI)
+  backend:
+    build:
+      context: ./fastapi_app/backend
+      dockerfile: Dockerfile
+    image: hpisite-backend
+    container_name: hpisite-backend-1
+    ports:
+      - "0.0.0.0:8000:8000"
+    volumes:
+      - ./fastapi_app/backend:/app
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///hpi_local.db
+      - SECRET_KEY=your-secret-key-here
+      - JWT_SECRET_KEY=your-jwt-secret-key-here
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # База данных PostgreSQL (отключена, используем SQLite)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: hpisite-postgres-1
+  #   environment:
+  #     POSTGRES_DB: hpi
+  #     POSTGRES_USER: hpi_user
+  #     POSTGRES_PASSWORD: hpi_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5434:5432"
+  #   networks:
+  #     - hpisite-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U hpi_user -d hpi"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: hpisite-redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery для фоновых задач
+  celery:
+    build:
+      context: ./fastapi_app/backend
+      dockerfile: Dockerfile
+    image: hpisite-celery
+    container_name: hpisite-celery-1
+    volumes:
+      - ./fastapi_app/backend:/app
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///hpi_local.db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+
+  # Celery Beat для планировщика задач
+  celery-beat:
+    build:
+      context: ./fastapi_app/backend
+      dockerfile: Dockerfile
+    image: hpisite-celery-beat
+    container_name: hpisite-celery-beat-1
+    volumes:
+      - ./fastapi_app/backend:/app
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///hpi_local.db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+    command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
+
+  # Nginx для проксирования
+  nginx:
+    image: nginx:alpine
+    container_name: hpisite-nginx-1
+    ports:
+      - "0.0.0.0:8081:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+
+  # Prometheus для мониторинга
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hpisite-prometheus-1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+
+  # Grafana для визуализации метрик
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hpisite-grafana-1
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - hpisite-network
+    restart: unless-stopped
+
+volumes:
+  # postgres_data:  # Отключено, используем SQLite
+  redis_data:
+  grafana_data:
+
+networks:
+  hpisite-network:
+    driver: bridge 

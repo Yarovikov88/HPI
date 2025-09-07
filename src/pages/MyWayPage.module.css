@@ -1,0 +1,34 @@
+.pageContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.pageHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.pageHeader h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.pageHeader p {
+  font-size: 1.1rem;
+  color: #718096;
+}
+
+.timelinesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+}
+
+@media (min-width: 768px) {
+  .timelinesGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+} 

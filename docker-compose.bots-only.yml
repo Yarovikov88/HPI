@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Telegram боты (добавляются к существующему сайту)
+  hpi-bots:
+    build:
+      context: .
+      dockerfile: Dockerfile.bots
+    container_name: hpi-telegram-bots
+    environment:
+      - DASHBOARD_BOT_TOKEN=8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - API_BASE_URL=https://hpi.expert/api
+      - CHANNEL_ID=@hpi_expert_chat
+      - CHANNEL_LINK=https://t.me/hpi_expert_chat
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID:-}
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('https://api.telegram.org/bot8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM/getMe')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  logs: 

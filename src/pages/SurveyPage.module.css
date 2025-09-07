@@ -1,0 +1,795 @@
+/* Основные переменные */
+:root {
+  --container-max-width: 1200px;
+  --container-padding: 1rem;
+  --section-gap: 2rem;
+  --card-radius: 12px;
+  --card-padding: 2rem;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --primary-color: #0a2463;
+  --primary-hover: #081f54;
+  --accent-color: #E0CBA8;
+  --accent-hover: #d4bda0;
+  --text-color: #1a202c;
+  --text-color-secondary: #4a5568;
+  --text-color-light: #6b7280;
+  --background-color: #ffffff;
+  --background-color-light: var(--background-color-light);
+  --background-color-hover: var(--background-color-hover);
+  --border-color: #e2e8f0;
+  --border-color-light: #e0e0e0;
+  --error-color: #e53e3e;
+  --error-bg: #fed7d7;
+  --error-border: #feb2b2;
+}
+
+/* Заголовок страницы */
+.pageTitle {
+  display: flex;
+  align-items: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--text-color);
+}
+
+.titleIcon {
+  margin-right: 0.75rem;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+/* Общий контейнер для страницы опроса */
+.surveyContainer {
+  display: flex;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  gap: var(--section-gap);
+  padding: var(--container-padding);
+}
+
+/* Боковая панель навигации */
+.sidebar {
+  flex: 0 0 280px;
+  background-color: var(--background-color-light);
+  padding: 1.5rem;
+  border-radius: 8px;
+  align-self: flex-start;
+  position: sticky;
+  top: 80px;
+}
+
+.sidebarTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+}
+
+.sidebarList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebarLink {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 0.95rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebarLink:hover,
+.sidebarLink:focus {
+  background-color: var(--background-color-hover);
+  color: var(--text-color);
+}
+
+.sidebarLink.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
+}
+
+.sidebarLink:disabled {
+  color: var(--text-color-disabled);
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Основной контент */
+.mainContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Прогресс-бар */
+.progressContainer {
+  width: 100%;
+  background-color: var(--background-color-light);
+  border-radius: 8px;
+  height: 8px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 8px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Контейнер для одного вопроса */
+.questionContainer {
+  background: var(--background-color);
+  padding: var(--card-padding);
+  border-radius: var(--card-radius);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+/* Текст вопроса */
+.questionText {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Контейнер для кнопок-ответов */
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Стили для кнопок-ответов */
+.optionButton {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+  background-color: #f9fafb;
+}
+
+.optionButton:hover {
+  border-color: #cbd5e0;
+  background-color: #f0f2f5;
+}
+
+/* Стиль для ВЫБРАННОЙ кнопки */
+.selected {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(224, 203, 168, 0.3) !important;
+}
+
+.selected:hover {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.radioInput {
+  display: none;
+}
+
+.optionLabel {
+  display: block;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+}
+
+.optionLabel:hover {
+  border-color: #cbd5e0;
+}
+
+/* Кнопки навигации */
+.navigationButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding: 0 1.5rem;
+  height: 62px;
+}
+
+.navigationButtons button {
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.navigationButtons button:first-child {
+  background-color: #f7fafc;
+  border: 1px solid var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+.navigationButtons button:first-child:hover {
+  background-color: #edf2f7;
+}
+
+.navigationButtons button:last-child {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.navigationButtons button:last-child:hover {
+  background-color: var(--primary-hover);
+}
+
+.navigationButtons button:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+  color: #a0aec0;
+}
+
+.navigationButtons button.disabled {
+  background-color: var(--border-color) !important;
+  cursor: not-allowed;
+  color: #a0aec0 !important;
+  opacity: 0.6;
+}
+
+/* Счетчик вопросов */
+.progressInfo {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--text-color-light);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Сообщение об ошибке валидации */
+.errorMessage {
+  color: var(--error-color);
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.75rem;
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: 8px;
+}
+
+/* PRO опрос */
+.proSurveyContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(10, 36, 99, 0.06);
+}
+
+.proSurveyContainer h1 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.proSurveyContainer p {
+  text-align: center;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.proTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color-light);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.sphereSummary {
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 1rem;
+  background-color: #f0f4f8;
+  border-radius: 4px;
+}
+
+.sphereContent {
+  padding: 1rem;
+  border: 1px solid var(--border-color-light);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.categorySection {
+  margin-bottom: 2rem;
+}
+
+.categorySection h4 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: 0.5rem;
+}
+
+.proSurveyForm {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.stepContent {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  margin: 0 -1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.proQuestionWrap {
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-light);
+}
+
+.sphereTitle {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  color: var(--primary-color);
+}
+
+/* Заголовок страницы */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  margin-top: 112px;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.dateBadge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Рекомендации */
+.recsSection {
+  margin-top: 2rem;
+}
+
+.recsTitle {
+  text-align: left;
+  color: var(--primary-color);
+  margin: 0 0 0.75rem 0;
+}
+
+.recsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.recCard {
+  background: var(--background-color-secondary);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-light);
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ (1024px+) ===== */
+@media (min-width: 1024px) {
+  .surveyContainer {
+    padding: 2rem;
+    gap: 3rem;
+  }
+  
+  .sidebar {
+    padding: 2rem;
+    flex: 0 0 320px;
+  }
+  
+  .questionContainer {
+    padding: 2.5rem;
+  }
+  
+  .pageTitle {
+    font-size: 2rem;
+  }
+  
+  .questionText {
+    font-size: 1.2rem;
+  }
+  
+  .optionButton,
+  .optionLabel {
+    padding: 1.25rem;
+    font-size: 1.05rem;
+  }
+  
+  .proSurveyContainer {
+    padding: 3rem;
+    margin: 3rem auto;
+  }
+}
+
+/* ===== ПЛАНШЕТНАЯ ВЕРСИЯ (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .surveyContainer {
+    padding: 1.5rem;
+    gap: 2rem;
+  }
+  
+  .sidebar {
+    padding: 1.75rem;
+    flex: 0 0 260px;
+  }
+  
+  .questionContainer {
+    padding: 2rem;
+  }
+  
+  .pageTitle {
+    font-size: 1.8rem;
+  }
+  
+  .proSurveyContainer {
+    padding: 2.5rem;
+    margin: 2.5rem auto;
+  }
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (до 767px) ===== */
+@media (max-width: 767px) {
+  .surveyContainer {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .sidebar {
+    flex: none;
+    position: static;
+    order: 2;
+    margin-top: 1rem;
+  }
+  
+  .sidebarTitle {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .sidebarList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .sidebarLink {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  
+  .mainContent {
+    order: 1;
+  }
+  
+  .pageTitle {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .titleIcon {
+    font-size: 1.3rem;
+    margin-right: 0.5rem;
+  }
+  
+  .questionContainer {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+  
+  .questionText {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .optionsContainer {
+    gap: 0.75rem;
+  }
+  
+  .optionButton,
+  .optionLabel {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+    min-height: 50px;
+  }
+  
+  .navigationButtons {
+    position: fixed;
+    bottom: 62px;
+    left: 0;
+    right: 0;
+    background: var(--background-color);
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    margin-top: 0;
+    height: auto;
+  }
+  
+  .navigationButtons button {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+  
+  .progressContainer {
+    margin-bottom: 1.5rem;
+  }
+  
+  .progressInfo {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .errorMessage {
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .proSurveyContainer {
+    margin: 1rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .proSurveyContainer h1 {
+    font-size: 1.5rem;
+  }
+  
+  .proSurveyContainer p {
+    font-size: 0.95rem;
+  }
+  
+  .proTextarea {
+    min-height: 100px;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .sphereSummary {
+    font-size: 1.1rem;
+    padding: 0.875rem;
+  }
+  
+  .sphereContent {
+    padding: 0.875rem;
+  }
+  
+  .categorySection h4 {
+    font-size: 1rem;
+  }
+  
+  .proQuestionWrap {
+    padding: 1.25rem;
+  }
+  
+  .sphereTitle {
+    font-size: 1.1rem;
+  }
+  
+  .header {
+    margin-top: 90px;
+    margin-bottom: 10px;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .dateBadge {
+    align-self: flex-end;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .recsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .recCard {
+    padding: 1.25rem;
+  }
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (до 480px) ===== */
+@media (max-width: 480px) {
+  .surveyContainer {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .sidebar {
+    padding: 1rem;
+  }
+  
+  .sidebarTitle {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .sidebarLink {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+  
+  .pageTitle {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    padding: 0 0.75rem;
+  }
+  
+  .titleIcon {
+    font-size: 1.2rem;
+    margin-right: 0.4rem;
+  }
+  
+  .questionContainer {
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+  }
+  
+  .questionText {
+    font-size: 0.95rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  .optionsContainer {
+    gap: 0.5rem;
+  }
+  
+  .optionButton,
+  .optionLabel {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    min-height: 45px;
+  }
+  
+  .navigationButtons {
+    padding: 0.875rem;
+    bottom: 70px;
+  }
+  
+  .navigationButtons button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .progressContainer {
+    margin-bottom: 1.25rem;
+  }
+  
+  .progressInfo {
+    margin-top: 0.875rem;
+    font-size: 0.8rem;
+  }
+  
+  .errorMessage {
+    margin-top: 0.5rem;
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .proSurveyContainer {
+    margin: 0.75rem;
+    padding: 1.25rem;
+    border-radius: 8px;
+  }
+  
+  .proSurveyContainer h1 {
+    font-size: 1.3rem;
+  }
+  
+  .proSurveyContainer p {
+    font-size: 0.9rem;
+  }
+  
+  .proTextarea {
+    min-height: 80px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .sphereSummary {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .sphereContent {
+    padding: 0.75rem;
+  }
+  
+  .categorySection h4 {
+    font-size: 0.95rem;
+  }
+  
+  .proQuestionWrap {
+    padding: 1rem;
+  }
+  
+  .sphereTitle {
+    font-size: 1rem;
+  }
+  
+  .header {
+    margin-top: 80px;
+    margin-bottom: 8px;
+    gap: 0.75rem;
+  }
+  
+  .dateBadge {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  
+  .recsGrid {
+    gap: 0.5rem;
+  }
+  
+  .recCard {
+    padding: 1rem;
+  }
+} 

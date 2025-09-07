@@ -1,0 +1,89 @@
+.mobileMenu {
+  position: fixed;
+  top: 0;
+  left: -100%; /* Initially hidden */
+  width: 300px;
+  height: 100%;
+  background: #fff;
+  z-index: 2000;
+  transition: left 0.3s ease-in-out;
+  box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileMenu.open {
+  left: 0; /* Slides in */
+}
+
+.menuHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.menuHeader h4 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.mobileNav {
+  padding: 1rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.mobileNav a {
+  display: block;
+  padding: 1rem;
+  text-decoration: none;
+  color: #333;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.mobileNav a:hover {
+  background-color: #f0f0f0;
+}
+
+.mobileNav a.active {
+  background-color: var(--primary-brand-color);
+  color: white;
+}
+
+.mobileNav a.disabled {
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mobileNav a.disabled:hover {
+  background-color: transparent;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.overlay.open {
+  opacity: 1;
+  visibility: visible;
+} 

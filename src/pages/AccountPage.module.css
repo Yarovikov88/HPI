@@ -1,0 +1,954 @@
+/* Основные переменные */
+:root {
+  --container-max-width: 1400px;
+  --container-padding: 2rem;
+  --section-gap: 2rem;
+  --card-radius: 16px;
+  --card-padding: 2.5rem;
+  --shadow: 0 4px 24px rgba(10, 36, 99, 0.06);
+  --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --primary-color: #0A2463;
+  --primary-hover: #1a3f8a;
+  --accent-color: #FB3640;
+  --accent-hover: #d92d35;
+  --terracotta: #E0CBA8;
+  --terracotta-hover: #d4bda0;
+  --text-color: #1a202c;
+  --text-color-secondary: #4a5568;
+  --text-color-light: #555;
+  --background-color: #ffffff;
+  --background-color-secondary: var(--background-color-secondary);
+  --background-color-light: #f9fafb;
+  --border-color: #f0f0f0;
+  --border-color-light: var(--border-color-light);
+  --success-color: #16a34a;
+  --success-hover: #15803d;
+  --error-color: #dc2626;
+  --error-hover: #b91c1c;
+  --warning-color: #713f12;
+  --warning-bg: #fffbe6;
+  --warning-border: #fde047;
+}
+
+/* Новый контейнер */
+.container {
+  max-width: var(--container-max-width);
+  margin: 2rem auto;
+  padding: 0 var(--container-padding);
+}
+
+/* Карточка профиля */
+.profileCard {
+  background-color: var(--background-color);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+/* Секция аватара */
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--terracotta);
+}
+
+.userInfo {
+  flex: 1;
+}
+
+.userName {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.userEmail {
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+/* Секция формы */
+.formSection {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.field input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.field input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(10, 36, 99, 0.1);
+}
+
+.disabledInput {
+  background-color: var(--background-color-light);
+  color: var(--text-color-light);
+  cursor: not-allowed;
+}
+
+/* Контейнер кнопок */
+.buttonContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.changePwdButton {
+  background-color: var(--background-color-light);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.changePwdButton:hover {
+  background-color: var(--border-color);
+}
+
+.saveButton {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.saveButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.logoutButton {
+  background-color: var(--terracotta);
+  color: var(--primary-color);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  background-color: var(--terracotta-hover);
+  transform: translateY(-1px);
+}
+
+/* Pro Status Styles */
+.proStatus {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.proBadge,
+.basicBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.proBadge {
+  background-color: var(--terracotta);
+  color: #333;
+  border: 1px solid #c9a87c;
+}
+
+.basicBadge {
+  background-color: #e9ecef;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.proToggleButton {
+  margin-left: 1rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.proToggleButton:hover {
+  background-color: #f0f5ff;
+}
+
+.getProButton {
+  margin-left: 1rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--success-color);
+  color: var(--success-color);
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.getProButton:hover {
+  background-color: #f0fdf4;
+}
+
+.revokeProButton {
+  margin-left: 1rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.revokeProButton:hover {
+  background-color: #fef2f2;
+}
+
+.revokeProButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Notification Styles */
+.notification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  color: var(--warning-color);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--warning-color);
+  padding: 0 0.5rem;
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ (1024px+) ===== */
+@media (min-width: 1024px) {
+  .accountLayout {
+    margin: 3rem auto;
+    gap: 3rem;
+    padding: 0 3rem;
+  }
+  
+  .sidebar {
+    padding: 2rem;
+    max-width: 320px;
+  }
+  
+  .mainContent {
+    padding: 3rem;
+  }
+  
+  .mainContent h2 {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+  
+  .diagnosticsContainer {
+    gap: 3rem;
+    margin-top: 2rem;
+  }
+  
+  .surveyCard {
+    padding: 2.5rem;
+  }
+  
+  .surveyCard h3 {
+    font-size: 1.4rem;
+  }
+  
+  .accountContainer {
+    padding: 2rem;
+    max-width: 800px;
+  }
+  
+  .profileHeader {
+    margin-bottom: 3rem;
+  }
+  
+  .avatar {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .userName {
+    font-size: 2.2rem;
+  }
+  
+  .card {
+    padding: 3rem;
+  }
+  
+  .field {
+    margin-bottom: 1.5rem;
+  }
+  
+  .field label {
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .field input {
+    padding: 1rem 1.25rem;
+    font-size: 1.05rem;
+  }
+  
+  .buttonContainer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+  }
+  
+  .saveButton,
+  .logoutButton,
+  .changePwdButton {
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+  }
+}
+
+/* ===== ПЛАНШЕТНАЯ ВЕРСИЯ (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .accountLayout {
+    margin: 2.5rem auto;
+    gap: 2.5rem;
+    padding: 0 2.5rem;
+  }
+  
+  .sidebar {
+    padding: 1.75rem;
+    max-width: 260px;
+  }
+  
+  .mainContent {
+    padding: 2.75rem;
+  }
+  
+  .mainContent h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1.75rem;
+  }
+  
+  .diagnosticsContainer {
+    gap: 2.5rem;
+    margin-top: 1.75rem;
+  }
+  
+  .surveyCard {
+    padding: 2.25rem;
+  }
+  
+  .surveyCard h3 {
+    font-size: 1.3rem;
+  }
+  
+  .accountContainer {
+    padding: 1.5rem;
+    max-width: 750px;
+  }
+  
+  .profileHeader {
+    margin-bottom: 2.5rem;
+  }
+  
+  .avatar {
+    width: 110px;
+    height: 110px;
+    margin-bottom: 1.25rem;
+  }
+  
+  .userName {
+    font-size: 2rem;
+  }
+  
+  .card {
+    padding: 2.5rem;
+  }
+  
+  .field {
+    margin-bottom: 1.375rem;
+  }
+  
+  .field label {
+    font-size: 1.025rem;
+    margin-bottom: 0.625rem;
+  }
+  
+  .field input {
+    padding: 0.875rem 1.125rem;
+    font-size: 1.025rem;
+  }
+  
+  .buttonContainer {
+    margin-top: 2.75rem;
+    padding-top: 1.75rem;
+  }
+  
+  .saveButton,
+  .logoutButton,
+  .changePwdButton {
+    padding: 0.9rem 1.25rem;
+    font-size: 1.025rem;
+  }
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (до 767px) ===== */
+@media (max-width: 767px) {
+  .accountLayout {
+    flex-direction: column;
+    margin: 1rem auto;
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+  
+  .sidebar {
+    max-width: 100%;
+    align-self: stretch;
+    padding: 1.25rem;
+  }
+  
+  .userInfo {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1.1rem;
+  }
+  
+  .nav button {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .mainContent {
+    padding: 1.5rem;
+  }
+  
+  .mainContent h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.875rem;
+  }
+  
+  .diagnosticsContainer {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+  }
+  
+  .surveyCard {
+    padding: 1.5rem;
+  }
+  
+  .surveyCard h3 {
+    font-size: 1.2rem;
+  }
+  
+  .surveyCard p {
+    margin-bottom: 1.25rem;
+  }
+  
+  .ctaButton {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+  }
+  
+  .accountContainer {
+    padding: 0.75rem;
+    margin: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .profileHeader {
+    margin-bottom: 1.5rem;
+  }
+  
+  .avatar {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 0.875rem;
+  }
+  
+  .userName {
+    font-size: 1.5rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .field {
+    margin-bottom: 1rem;
+  }
+  
+  .field label {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .field input {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .buttonContainer {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    gap: 0.875rem;
+  }
+  
+  .buttonRow {
+    gap: 0.875rem;
+  }
+  
+  .saveButton,
+  .logoutButton,
+  .changePwdButton {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .proStatus {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .proToggleButton,
+  .getProButton,
+  .revokeProButton {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.85rem;
+  }
+  
+  .notification {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (до 480px) ===== */
+@media (max-width: 480px) {
+  .accountLayout {
+    margin: 0.75rem auto;
+    padding: 0 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .sidebar {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .userInfo {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1rem;
+  }
+  
+  .nav button {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    gap: 0.75rem;
+  }
+  
+  .mainContent {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+  
+  .mainContent h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  .diagnosticsContainer {
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+  
+  .surveyCard {
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+  
+  .surveyCard h3 {
+    font-size: 1.1rem;
+  }
+  
+  .surveyCard p {
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .ctaButton {
+    padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .accountContainer {
+    padding: 0.5rem;
+  }
+  
+  .profileHeader {
+    margin-bottom: 1.25rem;
+  }
+  
+  .avatar {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .userName {
+    font-size: 1.3rem;
+  }
+  
+  .card {
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+  
+  .field {
+    margin-bottom: 0.875rem;
+  }
+  
+  .field label {
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .field input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .buttonContainer {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .buttonRow {
+    gap: 0.75rem;
+  }
+  
+  .saveButton,
+  .logoutButton,
+  .changePwdButton {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .proStatus {
+    gap: 0.5rem;
+  }
+  
+  .proBadge,
+  .basicBadge {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .proToggleButton,
+  .getProButton,
+  .revokeProButton {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .notification {
+    padding: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .closeButton {
+    font-size: 1.25rem;
+    padding: 0 0.4rem;
+  }
+}
+
+/* Дополнительные стили для планшетов */
+@media (min-width: 640px) {
+  .buttonContainer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+} 
+
+.versionInfo {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  font-weight: 500;
+  padding: 0.5rem 0;
+} 
+
+/* Секция версии внизу страницы */
+.versionSection {
+  margin-top: 4rem;
+  padding: 2rem 0;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+}
+
+.versionTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #0A2463;
+  margin-bottom: 0.5rem;
+}
+
+.versionNumber {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+} 
+
+/* Модальное окно для смены пароля */
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.modalForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.modalField {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.modalLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.modalInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.modalInput:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(10, 36, 99, 0.1);
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.modalSecondary {
+  background-color: var(--background-color-light);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.modalSecondary:hover:not(:disabled) {
+  background-color: var(--border-color);
+}
+
+.modalPrimary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.modalPrimary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.modalPrimary:disabled,
+.modalSecondary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+  
+  .profileCard {
+    padding: 1.5rem;
+  }
+  
+  .avatarSection {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .avatar {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .userName {
+    font-size: 1.25rem;
+  }
+  
+  .buttonContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .buttonRow {
+    justify-content: center;
+  }
+  
+  .saveButton,
+  .logoutButton {
+    width: 100%;
+  }
+  
+  .modalCard {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .modalActions {
+    flex-direction: column;
+  }
+} 

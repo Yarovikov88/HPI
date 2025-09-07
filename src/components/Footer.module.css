@@ -1,0 +1,547 @@
+﻿/* Основные переменные */
+:root {
+  --footer-bg: #E0CBA8;
+  --footer-text: #0A2463;
+  --footer-accent: #FB3640;
+  --footer-border: #d2b98f;
+  --container-max-width: 1200px;
+  --footer-padding: 4rem 2rem 2rem;
+  --footer-bottom-padding: 5rem;
+  --content-gap: 2rem;
+  --link-gap: 2rem;
+  --column-gap: 0.75rem;
+  --social-gap: 1rem;
+  --bottom-gap: 1rem;
+  --bottom-links-gap: 1.5rem;
+  --accordion-gap: 0.5rem;
+  --accordion-padding: 1.25rem;
+  --chevron-size: 20px;
+  --chevron-line: 8px;
+}
+
+/* Основной футер */
+.footer {
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
+  padding: var(--footer-padding);
+  margin-top: auto;
+  padding-bottom: var(--footer-bottom-padding);
+}
+
+/* Содержимое футера */
+.footerContent {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--content-gap);
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--footer-border);
+  flex-wrap: wrap;
+}
+
+/* Бренд футера */
+.footerBrand {
+  flex: 1 1 300px;
+}
+
+.footerLogo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--footer-text);
+  margin: 0 0 1rem 0;
+}
+
+.footerBrand p,
+.footerBrand address {
+  margin: 0;
+  font-style: normal;
+}
+
+.footerBrand a {
+  color: var(--footer-text);
+  text-decoration: none;
+}
+
+.footerBrand a:hover {
+  color: var(--footer-accent);
+}
+
+/* Новые стили для текстовых ссылок - БЕЗ ЭФФЕКТОВ */
+.linkText {
+  color: var(--footer-text);
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.emailLink {
+  color: var(--footer-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.socialIcon {
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* Ссылки футера */
+.footerLinks {
+  display: flex;
+  gap: var(--link-gap);
+  flex-wrap: wrap;
+}
+
+.linkColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--column-gap);
+}
+
+.linkColumn h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--footer-text);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.linkColumn a {
+  color: var(--footer-text);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.linkColumn a:hover {
+  color: var(--footer-accent);
+}
+
+/* Социальные сети */
+.socials {
+  display: flex;
+  gap: var(--social-gap);
+  align-items: center;
+}
+
+/* Нижняя часть футера */
+.footerBottom {
+  max-width: var(--container-max-width);
+  margin: 2rem auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+  gap: var(--bottom-gap);
+}
+
+.copyright {
+  margin: 0;
+  order: 1;
+}
+
+.footerMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--bottom-gap);
+}
+
+.language {
+  opacity: 0.9;
+}
+
+.bottomLinks {
+  display: flex;
+  gap: var(--bottom-links-gap);
+}
+
+.bottomLinks a {
+  color: var(--footer-text);
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.bottomLinks a:hover {
+  color: var(--footer-accent);
+  text-decoration: underline;
+}
+
+.madeByLink {
+  text-decoration: none;
+  color: inherit;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.madeByLink strong {
+  color: var(--footer-text);
+  font-weight: bold;
+}
+
+/* Аккордеон (мобильная версия) */
+.accordion {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--accordion-gap);
+}
+
+.accordionItem {
+  border-top: 1px solid var(--footer-border);
+  margin-bottom: 0.5rem;
+}
+
+.accordionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  color: var(--footer-text);
+  padding: var(--accordion-padding) 0;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+}
+
+.accordionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chevron {
+  position: relative;
+  width: var(--chevron-size);
+  height: var(--chevron-size);
+}
+
+.chevron::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--chevron-line);
+  height: var(--chevron-line);
+  border-right: 2px solid var(--footer-text);
+  border-bottom: 2px solid var(--footer-text);
+  transform: translate(-50%, -60%) rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.chevron.open::before {
+  transform: translate(-50%, -40%) rotate(135deg);
+}
+
+.accordionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 0 1.5rem 0;
+}
+
+.socialLink {
+  color: inherit;
+  text-decoration: none;
+  font-size: 24px;
+}
+
+.socialLink:hover {
+  opacity: 0.8;
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ (1024px+) ===== */
+@media (min-width: 1024px) {
+  .footer {
+    padding: 5rem 3rem 2rem;
+    padding-bottom: 6rem;
+  }
+  
+  .footerContent {
+    gap: 3rem;
+    padding-bottom: 2.5rem;
+  }
+  
+  .footerLogo {
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .footerLinks {
+    gap: 3rem;
+  }
+  
+  .linkColumn h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .footerBottom {
+    margin: 2.5rem auto 0;
+    gap: 1.5rem;
+  }
+  
+  .bottomLinks {
+    gap: 2rem;
+  }
+  
+  .socials {
+    gap: 1.25rem;
+  }
+  
+  .socialLink {
+    font-size: 28px;
+  }
+}
+
+/* ===== ПЛАНШЕТНАЯ ВЕРСИЯ (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .footer {
+    padding: 4.5rem 2.5rem 2rem;
+    padding-bottom: 5.5rem;
+  }
+  
+  .footerContent {
+    gap: 2.5rem;
+    padding-bottom: 2.25rem;
+  }
+  
+  .footerLogo {
+    font-size: 1.625rem;
+    margin-bottom: 1.125rem;
+  }
+  
+  .footerLinks {
+    gap: 2.5rem;
+  }
+  
+  .linkColumn h4 {
+    font-size: 1.05rem;
+    margin-bottom: 0.625rem;
+  }
+  
+  .footerBottom {
+    margin: 2.25rem auto 0;
+    gap: 1.25rem;
+  }
+  
+  .bottomLinks {
+    gap: 1.75rem;
+  }
+  
+  .socials {
+    gap: 1.125rem;
+  }
+  
+  .socialLink {
+    font-size: 26px;
+  }
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (до 767px) ===== */
+@media (max-width: 767px) {
+  .footer {
+    padding: 3rem 1.5rem 2rem;
+    padding-bottom: 4.5rem;
+  }
+  
+  .footerContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .footerBrand {
+    flex: 1 1 100%;
+  }
+  
+  .footerLogo {
+    font-size: 1.4rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  .footerLinks {
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+  }
+  
+  .linkColumn {
+    align-items: center;
+    gap: 0.625rem;
+  }
+  
+  .linkColumn h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .footerBottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+    margin: 1.5rem auto 0;
+  }
+  
+  .bottomLinks {
+    justify-content: center;
+    gap: 1.25rem;
+  }
+  
+  .footerMeta {
+    justify-content: center;
+    gap: 0.875rem;
+  }
+  
+  .copyright {
+    order: 3;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  
+  .accordionHeader {
+    padding: 1rem 0;
+  }
+  
+  .accordionTitle {
+    font-size: 1.1rem;
+  }
+  
+  .chevron {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .chevron::before {
+    width: 7px;
+    height: 7px;
+  }
+  
+  .accordionContent {
+    gap: 0.875rem;
+    padding: 0 0 1.25rem 0;
+  }
+  
+  .socials {
+    gap: 0.875rem;
+  }
+  
+  .socialLink {
+    font-size: 22px;
+  }
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (до 480px) ===== */
+@media (max-width: 480px) {
+  .footer {
+    padding: 2.5rem 1rem 1.5rem;
+    padding-bottom: 4rem;
+  }
+  
+  .footerContent {
+    gap: 1.5rem;
+    padding-bottom: 1.25rem;
+  }
+  
+  .footerLogo {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .footerLinks {
+    gap: 1.5rem;
+  }
+  
+  .linkColumn {
+    gap: 0.5rem;
+  }
+  
+  .linkColumn h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .footerBottom {
+    gap: 1.25rem;
+    margin: 1.25rem auto 0;
+  }
+  
+  .bottomLinks {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .footerMeta {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .copyright {
+    font-size: 0.8rem;
+  }
+  
+  .accordionHeader {
+    padding: 0.875rem 0;
+  }
+  
+  .accordionTitle {
+    font-size: 1rem;
+  }
+  
+  .chevron {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .chevron::before {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .accordionContent {
+    gap: 0.75rem;
+    padding: 0 0 1rem 0;
+  }
+  
+  .socials {
+    gap: 0.75rem;
+  }
+  
+  .socialLink {
+    font-size: 20px;
+  }
+}
+
+/* ===== ЛАНДШАФТНАЯ ОРИЕНТАЦИЯ НА МОБИЛЬНЫХ ===== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .footer {
+    padding: 2rem 1.5rem 1.5rem;
+    padding-bottom: 3.5rem;
+  }
+  
+  .footerContent {
+    gap: 1.75rem;
+  }
+  
+  .footerBottom {
+    margin: 1.75rem auto 0;
+  }
+  
+  .accordionHeader {
+    padding: 0.75rem 0;
+  }
+  
+  .accordionContent {
+    padding: 0 0 1rem 0;
+  }
+}

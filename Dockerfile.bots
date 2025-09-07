@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем файлы зависимостей
+COPY requirements.txt .
+
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем код ботов
+COPY dashboard_bot.py .
+COPY channel_bot.py .
+COPY start_bots.py .
+
+# Создаем пользователя для безопасности
+RUN useradd --create-home --shell /bin/bash botuser
+RUN chown -R botuser:botuser /app
+USER botuser
+
+# Команда по умолчанию - запуск обоих ботов
+CMD ["python", "start_bots.py"] 

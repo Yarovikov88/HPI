@@ -1,0 +1,438 @@
+/* Основные переменные */
+:root {
+  --container-max-width: 1200px;
+  --container-padding: 2rem;
+  --section-gap: 2rem;
+  --card-radius: 12px;
+  --card-padding: 1.5rem;
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  --shadow-light: 0 2px 6px rgba(0, 0, 0, 0.04);
+  --primary-color: #0a2463;
+  --primary-hover: #1e3a8a;
+  --primary-gradient: linear-gradient(90deg, #0a2463 0%, #4f72b4 100%);
+  --text-color: #111827;
+  --text-color-secondary: #475569;
+  --text-color-light: #64748b;
+  --background-color: var(--background-color);
+  --background-color-secondary: var(--background-color-secondary);
+  --border-color-light: var(--border-color-light);
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #713f12;
+  --warning-bg: #fffbe6;
+  --warning-border: #fde047;
+}
+
+/* Основной контейнер */
+.dashboardContainer {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--background-color);
+  /* Нижний отступ под фиксированную нижнюю панель (62px) */
+  padding-bottom: calc(var(--container-padding) + 70px);
+}
+
+/* Карточки HPI и графиков */
+.hpiCard,
+.chartCard {
+  background-color: var(--background-color-secondary);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: var(--section-gap);
+}
+
+.hpiCard {
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.chartCard {
+  margin-top: 0; /* Убираем отступ для chartCard */
+}
+
+/* Убираем отступ сверху для первого chartCard */
+.chartCard:first-of-type {
+  margin-top: 0;
+  margin-bottom: var(--section-gap);
+}
+
+.hpiDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.hpiCard h2,
+.chartCard h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+}
+
+.hpiValue {
+  font-size: 4.6rem;
+  font-weight: 800;
+  line-height: 1;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hpiChange {
+  font-size: 2rem;
+  font-weight: 700;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+}
+
+.positive {
+  color: var(--success-color);
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.negative {
+  color: var(--error-color);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.cardTitle {
+  margin: 0 0 1rem 0;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.toggleTitle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.chevron {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.chevron::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+  transform: translate(-50%, -60%) rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.chevron.open::before {
+  transform: translate(-50%, -40%) rotate(45deg);
+}
+
+/* Сетка категорий */
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.categoryCard {
+  background: var(--background-color-secondary);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-light);
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.categoryCard:hover {
+  box-shadow: var(--shadow);
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.categoryHeader:hover {
+  background-color: rgba(10, 36, 99, 0.05);
+}
+
+.categoryIcon {
+  font-size: 1.5rem;
+}
+
+.categoryInfo {
+  flex: 1;
+}
+
+.categoryTitle {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.categoryCount {
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+/* Сетка рекомендаций */
+.recsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.recCard {
+  background: var(--background-color-secondary);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-light);
+  text-align: left;
+}
+
+.recHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.recIcon {
+  font-size: 1.5rem;
+}
+
+.recTitle {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0;
+}
+
+.recText {
+  color: #374151;
+}
+
+/* Состояния */
+.loadingState,
+.emptyState {
+  text-align: center;
+  color: var(--text-color-light);
+  padding: 2rem;
+}
+
+.generateButton {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.generateButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.generateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-color-light);
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--error-color);
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--card-radius);
+  margin: 1rem 0;
+}
+
+/* Список элементов */
+.itemsList {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.itemCard {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color-light);
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.itemCard:last-child {
+  border-bottom: none;
+}
+
+.itemCard:hover {
+  background: var(--background-color);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sphereName {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1rem;
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.itemDate {
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  background: var(--background-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.itemText {
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  background: var(--background-color);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Пустое состояние */
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-color-light);
+  background: var(--background-color);
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.emptyState p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 1rem;
+  }
+  
+  .categoriesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .recsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hpiDisplay {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .hpiValue {
+    font-size: 3rem;
+  }
+}
+
+/* Фиксированный контейнер для HPI по центру */
+.fixedHpiContainer {
+  position: sticky;
+  top: 20px;
+  z-index: 1000;
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 0;
+}
+
+.fixedHpiContainer .hpiCard {
+  max-width: 500px;
+  width: 100%;
+  margin: 0;
+  position: relative;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+  border: 3px solid var(--primary-color);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  transform: scale(1.05);
+}
+
+.fixedHpiContainer .hpiCard h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.fixedHpiContainer .hpiValue {
+  font-size: 5rem;
+  font-weight: 900;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} 

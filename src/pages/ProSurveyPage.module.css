@@ -1,0 +1,276 @@
+/* Основные переменные */
+:root {
+  --container-max-width: 1000px;
+  --container-padding: 1rem;
+  --section-gap: 1rem;
+  --border-radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --primary-color: #0A2463;
+  --text-color: #1f2937;
+  --text-color-secondary: #6b7280;
+  --background-color-light: #f9fafb;
+  --border-color: #e5e7eb;
+}
+
+/* Общий контейнер */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  min-height: 100vh;
+  /* Отступ снизу под фиксированную нижнюю панель */
+  padding-bottom: 110px;
+  /* Отступ сверху под основной Header (≈62px) и ProBasicHeader (≈56px) */
+  padding-top: 120px;
+}
+
+/* Заголовок страницы */
+.header {
+  margin-top: 0; /* уже учитыто padding-top контейнера */
+  margin-bottom: var(--section-gap);
+  text-align: center;
+}
+
+.pageTitle {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sphereIcon {
+  font-size: 1.75rem;
+}
+
+.categoryTitle {
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.progress {
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+  background: var(--background-color-light);
+  padding: 0.375rem 0.75rem;
+  border-radius: 16px;
+  display: inline-block;
+}
+
+/* Контейнер форм */
+.formsContainer {
+  display: grid;
+  gap: var(--section-gap);
+  margin-bottom: var(--section-gap);
+}
+
+/* Секция категории */
+.categorySection {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+.categorySection h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Кнопки навигации */
+.navigationButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem; /* небольшой отступ от нижней панели */
+  padding: 1rem;
+  background: var(--background-color-light);
+  border-radius: var(--border-radius);
+}
+
+.navigationButtons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.navigationButtons button:first-child {
+  background-color: #f3f4f6;
+  color: var(--text-color);
+}
+
+.navigationButtons button:first-child:hover {
+  background-color: #e5e7eb;
+}
+
+.navigationButtons button:last-child {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.navigationButtons button:last-child:hover {
+  background-color: #081f54;
+}
+
+.navigationButtons button:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+/* Сообщение об ошибке */
+.errorMessage {
+  color: #dc2626;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+/* Загрузка */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-color-secondary);
+  font-size: 1.1rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+    padding-bottom: 120px; /* больше отступ на мобильных */
+    padding-top: 116px; /* корректируем верхний отступ на мобильных */
+  }
+  
+  .header {
+    margin-top: 0;
+  }
+  
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+  
+  .sphereIcon {
+    font-size: 1.5rem;
+  }
+  
+  .categorySection {
+    padding: 0.75rem;
+  }
+  
+  .categorySection h3 {
+    font-size: 1rem;
+  }
+  
+  .navigationButtons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .navigationButtons button {
+    width: 100%;
+    min-width: auto;
+  }
+} 
+
+.basicQuestionContainer {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.basicQuestionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+}
+
+.basicQuestionOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.optionLabel:hover {
+  background-color: #f1f5f9;
+}
+
+.optionInput {
+  margin: 0;
+  cursor: pointer;
+}
+
+.optionText {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.noQuestionMessage {
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  text-align: center;
+  font-size: 0.9rem;
+} 
+
+.questionText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.questionDescription {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f1f5f9;
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+} 

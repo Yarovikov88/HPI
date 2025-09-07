@@ -1,0 +1,100 @@
+.container {
+  max-width: 420px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+  color: #0A2463;
+}
+
+.subtitle {
+  margin: 0 0 2rem;
+  color: #555;
+  font-size: 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 1.25rem;
+  text-align: left;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #0A2463;
+  box-shadow: 0 0 0 3px rgba(10, 36, 99, 0.1);
+}
+
+.submitButton {
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: #FB3640; /* Red color from screenshot */
+  color: #fff;
+  margin-top: 1rem;
+}
+
+.submitButton:hover:not(:disabled) {
+  filter: brightness(0.95);
+  box-shadow: 0 4px 12px rgba(251, 54, 64, 0.2);
+}
+
+.submitButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.footer {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  color: #666;
+}
+
+.link {
+  color: #0A2463;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover { text-decoration: underline; }
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .container {
+    margin: 1rem;
+    padding: 1.5rem;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+} 

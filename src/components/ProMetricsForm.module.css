@@ -1,0 +1,159 @@
+/* Основные переменные */
+:root {
+  --border-radius: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.05);
+  --border-color: #e0e0e0;
+  --focus-color: #0A2463;
+  --focus-shadow: 0 0 0 3px rgba(10, 36, 99, 0.1);
+  --light-bg: #fafafa;
+  --light-border: #f0f0f0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0; /* убираем внутренние отступы карточки */
+  border: none; /* убираем рамку */
+  border-radius: 0;
+  background-color: transparent; /* без отдельного белого фона */
+  box-shadow: none; /* убираем тень */
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sphereTitle {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.emoji {
+  font-size: 1.1rem;
+}
+
+.questionTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280; /* Серый цвет как в остальных блоках */
+  margin-bottom: 0.5rem;
+  padding: 0; /* убираем отдельный фон-рамку заголовка */
+  background: transparent;
+  border-radius: 0;
+  border: none;
+}
+
+/* Стили для одного большого блока ввода */
+.singleInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.singleTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  background-color: #fafafa; /* Серый фон как в остальных полях */
+  color: #000000;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.singleTextarea:focus {
+  outline: none;
+  border-color: #0A2463;
+  box-shadow: 0 0 0 2px rgba(10, 36, 99, 0.15);
+  background-color: #ffffff; /* Белый фон при фокусе */
+}
+
+.singleTextarea::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Адаптивные стили */
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+    gap: 2rem;
+  }
+  
+  .sphereTitle {
+    font-size: 1.5rem;
+    gap: 0.75rem;
+  }
+  
+  .questionTitle {
+    margin-bottom: 0.5rem; /* Уменьшили отступ и для десктопа */
+  }
+  
+  .singleTextarea {
+    min-height: 150px;
+    padding: 1rem;
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 1.25rem;
+    gap: 1.25rem;
+    border-radius: 8px;
+  }
+  
+  .sphereTitle {
+    font-size: 1.1rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+  }
+  
+  .questionTitle {
+    margin-bottom: 0.5rem; /* Уменьшили отступ и для мобильных */
+  }
+  
+  .singleTextarea {
+    min-height: 100px;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+    gap: 1rem;
+    border-radius: 6px;
+  }
+  
+  .sphereTitle {
+    font-size: 1rem;
+  }
+  
+  .questionTitle {
+    margin-bottom: 0.5rem; /* Уменьшили отступ и для маленьких экранов */
+  }
+  
+  .singleTextarea {
+    min-height: 80px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+} 

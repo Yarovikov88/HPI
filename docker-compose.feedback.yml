@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  # Сервер обратной связи
+  feedback-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.feedback
+    container_name: hpi-feedback-server
+    ports:
+      - "5001:5001"
+    environment:
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - ADMIN_CHAT_ID=1014395380
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  logs: 

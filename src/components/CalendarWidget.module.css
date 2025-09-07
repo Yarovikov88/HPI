@@ -1,0 +1,145 @@
+/*
+  Финальная версия стилей с полным контролем.
+  Стили библиотеки отключены, все правила задаются здесь с нуля,
+  но с правильным использованием :global() для классов библиотеки.
+*/
+
+.calendarContainer { background-color: var(--background-color-secondary); }
+
+/* Снимаем бордер у корневого элемента react-calendar */
+:global(.react-calendar) {
+  border: none !important;
+  box-shadow: none !important;
+  width: 100%;
+  height: 100%;
+}
+
+.reactCalendar {
+  background-color: var(--background-color-secondary);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.reactCalendar .tile {
+    background-color: var(--background-color-secondary);
+    height: 100%;
+}
+
+/* --- ОБЩЕЕ ДЛЯ ВСЕХ КНОПОК --- */
+.reactCalendar :global(button) {
+    margin: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    font-family: inherit;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    font-size: 1.2rem;
+}
+.reactCalendar :global(button:enabled:hover) {
+    cursor: pointer;
+}
+
+/* --- НАВИГАЦИЯ И ЗАГОЛОВОК --- */
+.reactCalendar :global(.react-calendar__navigation) {
+    display: flex;
+    height: 44px;
+    margin-bottom: 0.5em;
+    align-items: center;
+}
+.reactCalendar :global(.react-calendar__navigation button) {
+    min-width: 44px;
+}
+.reactCalendar :global(.react-calendar__navigation button:enabled:hover),
+.reactCalendar :global(.react-calendar__navigation button:enabled:focus) {
+    background-color: #f3f4f6;
+}
+.reactCalendar :global(.react-calendar__navigation__label) {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* --- ДНИ НЕДЕЛИ --- */
+.reactCalendar :global(.react-calendar__month-view__weekdays) {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #6B7280;
+    margin-bottom: 0.5em;
+}
+.reactCalendar :global(.react-calendar__month-view__weekdays__weekday abbr) {
+    text-decoration: none !important;
+}
+
+
+/* --- ЯЧЕЙКИ С ДАТАМИ --- */
+.reactCalendar :global(.react-calendar__tile) {
+    max-width: 100%;
+    padding: 0.55em 0.35em; /* компактнее, чтобы блоки не соприкасались */
+    text-align: center;
+    /* margin удалён, чтобы не съезжали дни недели */
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.reactCalendar :global(.react-calendar__tile:enabled:hover),
+.reactCalendar :global(.react-calendar__tile:enabled:focus) {
+    background-color: #f3f4f6;
+}
+
+/* --- СТИЛИЗАЦИЯ ПО СОСТОЯНИЯМ (правильный приоритет) --- */
+
+/* 1. Даты с полностью завершённой базовой и PRO диагностикой -> синий */
+.completed {
+    background-color: #0A2463 !important; /* синий */
+    color: #FFFFFF !important; /* белый текст для контраста */
+    font-weight: bold;
+    border-radius: 10px !important;
+    box-shadow: inset 0 0 0 2px #fff !important; /* визуальный зазор */
+}
+
+/* 2. Черновики/частично заполнено -> терракотовый */
+.draft {
+    background-color: #E0CBA8 !important; /* терракотовый */
+    color: #333 !important; /* темный текст для контраста */
+    border-radius: 10px !important;
+    box-shadow: inset 0 0 0 2px #fff !important; /* визуальный зазор */
+}
+
+/* 3. Сегодня — красная обводка поверх любых состояний */
+.todayOutline { box-shadow: 0 0 0 2px var(--cta-brand-color) inset !important; }
+
+/* 4. Выбранная дата: зелёная обводка поверх статусов; фон и цвет не трогаем */
+.reactCalendar :global(.react-calendar__tile--active) {
+    outline: 2px solid #34D399 !important; /* light green */
+    outline-offset: -2px; /* внутрь плитки */
+    position: relative;
+    z-index: 2;
+}
+.reactCalendar :global(.react-calendar__tile--active.todayOutline) {
+    outline: 2px solid #34D399 !important;
+    outline-offset: -2px;
+}
+
+/* Активная (выбранная) дата без статусов — делаем текст контрастным */
+.reactCalendar :global(.react-calendar__tile--active):not(.completed):not(.draft) {
+    color: #111827 !important; /* near-black for readability */
+    font-weight: 700;
+}
+
+.reactCalendar :global(.react-calendar__month-view),
+.reactCalendar :global(.react-calendar__month-view__days) {
+  height: 100%;
+}
+
+.reactCalendar :global(.react-calendar__month-view > div) {
+  height: 100%;
+}
+
+.reactCalendar :global(.react-calendar__month-view > div > div) {
+  height: 100%;
+} 

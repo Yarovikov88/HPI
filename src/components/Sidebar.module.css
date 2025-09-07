@@ -1,0 +1,466 @@
+/* Основные переменные */
+:root {
+  --sidebar-width: 160px;
+  --sidebar-padding: 1rem;
+  --sidebar-radius: 16px;
+  --sidebar-shadow: 0 4px 24px rgba(10, 36, 99, 0.06);
+  --sidebar-top: 80px;
+  --sidebar-height: calc(100vh - 100px);
+  --nav-gap: 0.25rem;
+  --link-padding: 0.75rem 1rem;
+  --link-radius: 8px;
+  --link-font-size: 0.95rem;
+  --sub-link-font-size: 0.95rem;
+  --terracotta: #E0CBA8;
+  --terracotta-shadow: rgba(224, 203, 168, 0.4);
+  --text-color: #333;
+  --text-color-light: #555;
+  --text-color-lighter: #718096;
+  --text-color-disabled: #999;
+  --success-color: #16a34a;
+  --border-color: var(--border-color-light);
+  --background-color: var(--background-color);
+  --background-color-secondary: var(--background-color-secondary);
+}
+
+/* Основной сайдбар */
+.sidebar {
+  flex: 0 0 var(--sidebar-width);
+  background-color: var(--background-color-secondary);
+  padding: var(--sidebar-padding);
+  border-radius: var(--sidebar-radius);
+  box-shadow: var(--sidebar-shadow);
+  align-self: flex-start;
+  position: sticky;
+  top: var(--sidebar-top);
+  height: var(--sidebar-height);
+  overflow-y: auto;
+}
+
+/* Информация о пользователе */
+.userInfo {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.userInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  color: var(--text-color);
+}
+
+.userInfo p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-color-lighter);
+}
+
+/* Навигация */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-gap);
+}
+
+.navLink {
+  display: block;
+  padding: var(--link-padding);
+  border-radius: var(--link-radius);
+  text-decoration: none;
+  color: var(--text-color-light);
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navLink:not(.active):hover {
+  background-color: var(--background-color);
+  color: #0A2463;
+}
+
+.navLink.active {
+  background-color: var(--terracotta);
+  color: var(--text-color);
+  font-weight: 700;
+  box-shadow: 0 2px 8px var(--terracotta-shadow);
+}
+
+/* Триггер сворачивания */
+.collapsibleTrigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+button.collapsibleTrigger:not(.childLink) {
+  padding: 0;
+  border: none;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+/* Раскрывающийся раздел */
+.collapsibleSection {
+  display: flex;
+  flex-direction: column;
+}
+
+button.navLink {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  text-align: left;
+}
+
+/* Стрелка */
+.chevron {
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-size: contain;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Содержимое сворачивания */
+.collapsibleContent {
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subLink {
+  font-size: var(--sub-link-font-size);
+  font-weight: 400;
+}
+
+.subLink.activeParent,
+.subLink.active {
+  color: var(--text-color);
+  font-weight: 700;
+  background-color: transparent;
+}
+
+.subLink.active:hover {
+  background-color: var(--background-color);
+}
+
+.subCollapsible {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subLink.activeParent {
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.subSubMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Неактивные дочерние ссылки */
+.childLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--link-padding);
+  font-size: var(--link-font-size);
+  border-radius: var(--link-radius);
+  text-decoration: none;
+  background-color: transparent;
+  color: var(--text-color-lighter);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.childLink.collapsibleTrigger {
+  justify-content: space-between;
+}
+
+.childLink:not(.activeChild):hover {
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.completionCheckmark {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+/* Иконка галочки */
+.checkMark {
+  margin-left: 8px;
+  font-size: 0.9em;
+  display: inline-block;
+  color: var(--success-color);
+  white-space: nowrap;
+}
+
+/* Выравнивание галочки */
+.childLink .checkMark,
+.activeChild .checkMark {
+  margin-left: 8px;
+}
+
+.disabled {
+  color: var(--text-color-disabled);
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Активные дочерние ссылки */
+.activeChild {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--link-padding);
+  font-size: var(--link-font-size);
+  border-radius: var(--link-radius);
+  text-decoration: none;
+  background-color: var(--terracotta);
+  color: var(--text-color);
+  font-weight: 700;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Полная ширина для ссылок */
+.childLink,
+.activeChild {
+  width: 100%;
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ (1024px+) ===== */
+@media (min-width: 1024px) {
+  .sidebar {
+    flex: 0 0 180px;
+    padding: 1.25rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1.2rem;
+  }
+  
+  .userInfo p {
+    font-size: 0.9rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+  
+  .subLink {
+    font-size: 1rem;
+  }
+  
+  .chevron {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ===== ПЛАНШЕТНАЯ ВЕРСИЯ (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar {
+    flex: 0 0 170px;
+    padding: 1.125rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1.15rem;
+  }
+  
+  .userInfo p {
+    font-size: 0.875rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.8125rem 1.125rem;
+    font-size: 0.975rem;
+  }
+  
+  .subLink {
+    font-size: 0.975rem;
+  }
+  
+  .chevron {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (до 767px) ===== */
+@media (max-width: 767px) {
+  .sidebar {
+    width: 100%;
+    position: static;
+    height: auto;
+    flex-shrink: 1;
+    flex: none;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+  
+  .userInfo {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1.05rem;
+  }
+  
+  .userInfo p {
+    font-size: 0.8rem;
+  }
+  
+  .nav {
+    gap: 0.2rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+  
+  .subLink {
+    font-size: 0.9rem;
+  }
+  
+  .collapsibleContent {
+    padding-left: 0.75rem;
+    gap: 0.4rem;
+  }
+  
+  .chevron {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .checkMark {
+    font-size: 0.85em;
+    margin-left: 6px;
+  }
+  
+  .completionCheckmark {
+    margin-left: 6px;
+    font-size: 13px;
+  }
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (до 480px) ===== */
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 0.875rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .userInfo {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .userInfo h4 {
+    font-size: 1rem;
+  }
+  
+  .userInfo p {
+    font-size: 0.75rem;
+  }
+  
+  .nav {
+    gap: 0.15rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 5px;
+  }
+  
+  .subLink {
+    font-size: 0.85rem;
+  }
+  
+  .collapsibleContent {
+    padding-left: 0.625rem;
+    gap: 0.3rem;
+  }
+  
+  .chevron {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .checkMark {
+    font-size: 0.8em;
+    margin-left: 5px;
+  }
+  
+  .completionCheckmark {
+    margin-left: 5px;
+    font-size: 12px;
+  }
+}
+
+/* ===== ПЛАНШЕТЫ В ПОРТРЕТНОЙ ОРИЕНТАЦИИ ===== */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .sidebar {
+    flex: 0 0 160px;
+    padding: 1rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* ===== ЛАНДШАФТНАЯ ОРИЕНТАЦИЯ НА МОБИЛЬНЫХ ===== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .sidebar {
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .userInfo {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .navLink,
+  .childLink,
+  .activeChild {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+  }
+} 

@@ -1,0 +1,51 @@
+services:
+  # Основной сайт с Express сервером
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hpi-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - ADMIN_CHAT_ID=1014395380
+    restart: unless-stopped
+    networks:
+      - hpi-network
+
+  # Telegram боты
+  hpi-bots:
+    build:
+      context: .
+      dockerfile: Dockerfile.bots
+    container_name: hpi-telegram-bots
+    environment:
+      - DASHBOARD_BOT_TOKEN=8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - API_BASE_URL=https://hpi.expert/api
+      - CHANNEL_ID=@hpi_expert_chat
+      - CHANNEL_LINK=https://t.me/hpi_expert_chat
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID:-}
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - hpi-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('https://api.telegram.org/bot8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM/getMe')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  hpi-network:
+    driver: bridge
+
+volumes:
+  logs: 

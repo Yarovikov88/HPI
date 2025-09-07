@@ -1,0 +1,190 @@
+/* Основные переменные */
+:root {
+  --header-height: 62px;
+  --header-bg: #002366;
+  --header-text: #ffffff;
+  --terracotta: #E0CBA8;
+  --terracotta-hover: #d4bda0;
+  --nav-text: #e0e0e0;
+  --nav-text-hover: #ffffff;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --container-max-width: 1100px;
+  --container-padding: 2rem;
+  --nav-gap: 2rem;
+  --controls-gap: 1.5rem;
+}
+
+/* Основной заголовок */
+.header {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  position: sticky;
+  top: 0;
+  z-index: 4000;
+  box-shadow: var(--shadow);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+}
+
+/* Контейнер заголовка */
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 var(--container-padding);
+}
+
+/* Логотип */
+.logo {
+  text-decoration: none;
+  color: var(--header-text);
+}
+
+.logoText {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.logoExpert {
+  color: var(--terracotta);
+}
+
+/* Навигация */
+.nav {
+  display: flex;
+  gap: var(--nav-gap);
+  align-items: center;
+}
+
+.navLink {
+  color: var(--nav-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.navLink:hover {
+  color: var(--nav-text-hover);
+}
+
+.activeLink {
+  color: var(--header-text);
+}
+
+.activeLink::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--terracotta);
+}
+
+/* Элементы управления */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--controls-gap);
+}
+
+.loginButton {
+  background-color: var(--terracotta);
+  color: var(--header-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.loginButton:hover {
+  background-color: var(--terracotta-hover);
+  transform: translateY(-1px);
+}
+
+/* Профиль */
+.profileContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profileLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.profileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--terracotta);
+  object-fit: cover;
+}
+
+/* Меню помощи */
+.helpButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.helpButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.helpMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  min-width: 250px; /* Увеличиваем ширину для текста */
+  max-width: 300px; /* Ограничиваем максимальную ширину */
+  z-index: 5000;
+  margin-top: 0.5rem;
+}
+
+.helpMenuItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem; /* Увеличиваем отступы */
+  color: #333;
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: default; /* Убираем курсор pointer */
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.4; /* Улучшаем читаемость */
+  transition: background-color 0.2s ease;
+  white-space: normal; /* Позволяем перенос строк */
+  word-wrap: break-word; /* Переносим длинные слова */
+}
+
+.helpMenuItem:hover {
+  background-color: #f5f5f5;
+}
+
+.helpIcon {
+  width: 24px;
+  height: 32px;
+  filter: brightness(0) saturate(100%) invert(89%) sepia(8%) saturate(1200%) hue-rotate(315deg) brightness(102%) contrast(89%);
+} 

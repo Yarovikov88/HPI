@@ -1,0 +1,306 @@
+.container {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #4a5568;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.optionCard {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.optionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a2463;
+  margin: 0 0 0.75rem 0;
+}
+
+.optionDescription {
+  color: #4a5568;
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-bottom: 1.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4f72b4;
+  box-shadow: 0 0 0 2px rgba(79, 114, 180, 0.2);
+}
+
+.button {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #0a2463;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: #1e3a8a;
+}
+
+.choiceCard {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.choiceCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #0a2463;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+
+.backButton:hover {
+  text-decoration: underline;
+}
+
+.shareInstructions {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.shareInstructions h4 {
+  margin: 0 0 0.75rem 0;
+  color: #0a2463;
+  font-size: 1rem;
+}
+
+.shareInstructions ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.shareInstructions li {
+  margin-bottom: 0.5rem;
+}
+
+.shareInstructions a {
+  color: #0a2463;
+  text-decoration: underline;
+}
+
+.shareInstructions a:hover {
+  color: #1e3a8a;
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.feedbackType {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.feedbackType label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.feedbackType input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #4f72b4;
+  box-shadow: 0 0 0 2px rgba(79, 114, 180, 0.2);
+}
+
+/* Новые стили для выбора способа отправки */
+.feedbackMethods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.methodCard {
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.methodCard:hover {
+  border-color: #4f72b4;
+  background-color: #f0f4ff;
+  transform: translateY(-2px);
+}
+
+.methodCard h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0a2463;
+  margin: 0 0 0.5rem 0;
+}
+
+.methodCard p {
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Стили для загрузки изображений */
+.imageUpload {
+  margin-bottom: 1rem;
+}
+
+.imageButton {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.imageButton:hover {
+  border-color: #4f72b4;
+  background-color: #f0f4ff;
+  color: #0a2463;
+}
+
+.imageName {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+  text-align: center;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .feedbackMethods {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .feedbackType {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+} 

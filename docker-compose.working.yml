@@ -1,0 +1,127 @@
+version: "3.8"
+
+services:
+  # База данных PostgreSQL (используем существующий контейнер)
+  db:
+    image: postgres:16
+    container_name: hpi-db
+    environment:
+      POSTGRES_DB: hpi
+      POSTGRES_USER: hpi_user
+      POSTGRES_PASSWORD: hpi_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - hpi-network
+    restart: unless-stopped
+    external: true
+
+  # FastAPI бэкенд (используем существующий контейнер)
+  api:
+    image: back-api
+    container_name: fastapi_app
+    environment:
+      DATABASE_URL: postgresql://hpi_user:hpi_password@db:5432/hpi
+      SECRET_KEY: your-secret-key-here
+      JWT_SECRET_KEY: your-jwt-secret-key-here
+    depends_on:
+      - db
+    networks:
+      - hpi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx прокси
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "8443:8443"
+      - "8888:8888"
+    volumes:
+      - ./nginx-working.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - api
+    networks:
+      - hpi-network
+    restart: unless-stopped
+
+  # Основной веб-сервер (фронтенд + прокси)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hpi-web-1
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - nginx
+    networks:
+      - hpi-network
+    restart: unless-stopped
+    environment:
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - ADMIN_CHAT_ID=1014395380
+
+  # Telegram боты
+  bots:
+    build:
+      context: .
+      dockerfile: Dockerfile.bots
+    container_name: hpi-telegram-bots
+    environment:
+      - DASHBOARD_BOT_TOKEN=8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - API_BASE_URL=https://hpi.expert/api
+      - CHANNEL_ID=@hpi_expert_chat
+      - CHANNEL_LINK=https://t.me/hpi_expert_chat
+      - ADMIN_CHAT_ID=1014395380
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - hpi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('https://api.telegram.org/bot8479171638:AAEsGz-TcfxbDkfiJ4a5D4Fr24BUdQmarmM/getMe')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Сервер обратной связи
+  feedback:
+    build:
+      context: .
+      dockerfile: Dockerfile.feedback
+    container_name: hpi-feedback-server
+    ports:
+      - "5001:5001"
+    environment:
+      - CHANNEL_BOT_TOKEN=8371425767:AAHE31OsvZSftj2YNxFa8oaSV7YShvdPk6w
+      - ADMIN_CHAT_ID=1014395380
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - hpi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  hpi-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 
